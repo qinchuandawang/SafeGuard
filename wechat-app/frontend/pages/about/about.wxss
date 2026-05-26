@@ -1,0 +1,266 @@
+/* pages/about/about.wxss - 关于我们样式 */
+
+/* ==================== 页面容器 ==================== */
+.about-page {
+  min-height: 100vh;
+  background-color: var(--bg-color-primary);
+}
+
+.page-content {
+  padding: 0 var(--spacing-lg) 120rpx;
+}
+
+/* ==================== Logo区域 ==================== */
+.logo-section {
+  text-align: center;
+  padding: var(--spacing-xl) 0;
+  margin-bottom: var(--spacing-lg);
+}
+
+.logo-icon {
+  width: 160rpx;
+  height: 160rpx;
+  background: var(--primary-color);
+  border-radius: 40rpx;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--spacing-md);
+  box-shadow: var(--shadow-glow);
+}
+
+.app-name {
+  font-size: var(--font-size-xxl);
+  font-weight: bold;
+  color: var(--text-color-primary);
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.app-version {
+  font-size: 26rpx;
+  color: var(--primary-color);
+  display: block;
+  margin-bottom: 12rpx;
+}
+
+.app-desc {
+  font-size: var(--font-size-md);
+  color: var(--text-color-secondary);
+  display: block;
+}
+
+/* ==================== 功能介绍 ==================== */
+.feature-section {
+  margin-bottom: var(--spacing-lg);
+}
+
+.section-title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-color-primary);
+  margin-bottom: var(--spacing-md);
+  display: block;
+}
+
+.feature-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+}
+
+.feature-icon {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: var(--spacing-md);
+  flex-shrink: 0;
+}
+
+.feature-info {
+  flex: 1;
+}
+
+.feature-name {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--text-color-primary);
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.feature-desc {
+  font-size: var(--font-size-sm);
+  color: var(--text-color-secondary);
+  display: block;
+}
+
+/* ==================== 技术架构 ==================== */
+.tech-section {
+  margin-bottom: var(--spacing-lg);
+}
+
+.tech-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.tech-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.tech-row:last-child {
+  border-bottom: none;
+}
+
+.tech-label {
+  font-size: var(--font-size-sm);
+  color: var(--text-color-tertiary);
+}
+
+/* ==================== 团队成员 ==================== */
+.team-section {
+  margin-bottom: var(--spacing-lg);
+}
+
+.team-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-md);
+}
+
+.team-item {
+  text-align: center;
+  padding: var(--spacing-sm);
+}
+
+.team-name {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--text-color-primary);
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.team-role {
+  font-size: 22rpx;
+  color: var(--primary-color);
+  display: block;
+}
+
+/* ==================== 联系方式 ==================== */
+.contact-section {
+  margin-bottom: var(--spacing-lg);
+}
+
+.contact-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+}
+
+.contact-text {
+  font-size: var(--font-size-md);
+  color: var(--text-color-secondary);
+  margin-left: var(--spacing-sm);
+}
+
+/* ==================== 版权信息 ==================== */
+.copyright {
+  text-align: center;
+  padding: var(--spacing-lg) 0;
+}
+
+.copyright text {
+  font-size: var(--font-size-sm);
+  color: var(--text-color-tertiary);
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+/* ==================== 暗色模式 ==================== */
+@media (prefers-color-scheme: dark) {
+  .about-page {
+    background: #0f172a;
+  }
+
+  .page-navbar {
+    background: #0f172a;
+  }
+
+  .card,
+  .team-item,
+  .contact-item {
+    background: #1e293b;
+  }
+
+  .app-name {
+    color: #f1f5f9;
+  }
+
+  .app-desc {
+    color: #94a3b8;
+  }
+
+  .section-title {
+    color: #f1f5f9;
+  }
+
+  .feature-name {
+    color: #e2e8f0;
+  }
+
+  .feature-desc {
+    color: #94a3b8;
+  }
+
+  .tech-label {
+    color: #94a3b8;
+  }
+
+  .tech-row {
+    border-bottom-color: #334155;
+  }
+
+  .team-name {
+    color: #e2e8f0;
+  }
+
+  .contact-text {
+    color: #94a3b8;
+  }
+
+  .copyright text {
+    color: #64748b;
+  }
+
+  .logo-icon {
+    box-shadow: 0 8rpx 24rpx rgba(0, 180, 216, 0.2);
+  }
+
+  .page-nav-left .t-icon {
+    color: #f1f5f9;
+  }
+
+  .page-nav-title {
+    color: #f1f5f9;
+  }
+}

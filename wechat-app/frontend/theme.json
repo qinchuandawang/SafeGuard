@@ -1,0 +1,26 @@
+{
+  "light": {
+    "mode": "light",
+    "primaryColor": "#00b4d8",
+    "primaryColorLight": "#48cae4",
+    "primaryColorDark": "#0096c7",
+    "textColorPrimary": "#1a1a2e",
+    "textColorSecondary": "#4a5568",
+    "textColorTertiary": "#718096",
+    "backgroundColor": "#e6f7ff",
+    "backgroundColorSecondary": "#ffffff",
+    "borderColor": "#b3e5fc"
+  },
+  "dark": {
+    "mode": "dark",
+    "primaryColor": "#00b4d8",
+    "primaryColorLight": "#48cae4",
+    "primaryColorDark": "#0096c7",
+    "textColorPrimary": "#ffffff",
+    "textColorSecondary": "#a0aec0",
+    "textColorTertiary": "#718096",
+    "backgroundColor": "#1a1a2e",
+    "backgroundColorSecondary": "#16213e",
+    "borderColor": "#2d3748"
+  }
+}

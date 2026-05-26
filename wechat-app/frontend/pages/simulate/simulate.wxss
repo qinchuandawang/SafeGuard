@@ -1,0 +1,469 @@
+/* pages/simulate/simulate.wxss - 模拟诈骗体验样式 */
+
+/* ==================== 页面容器 ==================== */
+.simulate-page {
+  min-height: 100vh;
+  background-color: var(--bg-color-primary);
+}
+
+.page-content { padding-top: var(--spacing-sm);
+  padding-bottom: 160rpx;
+}
+
+/* ==================== 剧本卡片图标 ==================== */
+.script-card-icon {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 24rpx;
+  flex-shrink: 0;
+}
+
+/* ==================== 聊天容器 ==================== */
+.chat-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-color-primary);
+}
+
+/* ==================== 聊天导航 ==================== */
+.chat-nav {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 24rpx;
+  padding-top: calc(constant(safe-area-inset-top) + 20rpx);
+  padding-top: calc(env(safe-area-inset-top) + 20rpx);
+  background-color: var(--bg-color-card);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.nav-left {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-color-primary);
+  display: block;
+}
+
+.status-dot {
+  width: 10rpx;
+  height: 10rpx;
+  background: var(--success-color);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+/* ==================== 警觉指数条 ==================== */
+.suspicion-bar {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 32rpx;
+  background-color: var(--bg-color-card);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.suspicion-track {
+  flex: 1;
+  height: 12rpx;
+  background: var(--bg-color-card);
+  border-radius: 6rpx;
+  overflow: hidden;
+}
+
+.suspicion-fill {
+  height: 100%;
+  border-radius: 6rpx;
+  transition: width 0.5s ease;
+}
+
+.suspicion-fill.low {
+  background: linear-gradient(90deg, var(--success-color), #34d399);
+}
+
+.suspicion-fill.high {
+  background: linear-gradient(90deg, var(--warning-color), var(--danger-color));
+}
+
+.suspicion-value {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--success-color);
+  margin-left: 16rpx;
+  min-width: 80rpx;
+  text-align: right;
+}
+
+.suspicion-value.high {
+  color: var(--danger-color);
+}
+
+/* ==================== 消息列表 ==================== */
+.chat-messages {
+  flex: 1;
+  padding: 24rpx;
+}
+
+.chat-tip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 32rpx;
+}
+
+.tip-line {
+  flex: 1;
+  height: 1px;
+  background: var(--border-color);
+}
+
+.message-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.message-item {
+  display: flex;
+  margin-bottom: 28rpx;
+}
+
+.message-item.user {
+  flex-direction: row-reverse;
+}
+
+/* 头像 */
+.ai-avatar {
+  width: 72rpx;
+  height: 72rpx;
+  background: linear-gradient(135deg, var(--danger-color), #dc2626);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4rpx 12rpx rgba(239, 68, 68, 0.25);
+}
+
+.user-avatar {
+  width: 72rpx;
+  height: 72rpx;
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-color-dark));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4rpx 12rpx rgba(var(--primary-rgb, 0, 180, 216), 0.25);
+}
+
+.avatar-text {
+  font-size: var(--font-size-md);
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.message-main {
+  max-width: 72%;
+  margin: 0 16rpx;
+}
+
+.user-main {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.message-sender {
+  font-size: var(--font-size-xs);
+  color: var(--text-color-tertiary);
+  margin-bottom: 8rpx;
+  margin-left: 16rpx;
+}
+
+/* 气泡 */
+.bubble-text {
+  font-size: var(--font-size-md);
+  color: var(--text-color-primary);
+  line-height: 1.6;
+  word-break: break-all;
+}
+
+.bubble-text.user-text {
+  color: #ffffff;
+}
+
+.bubble-ai {
+  border-top-left-radius: 8rpx;
+}
+
+.bubble-user {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-color-dark)) !important;
+  border-top-right-radius: 8rpx;
+}
+
+/* 打字动画 */
+.typing-dots {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 8rpx 0;
+}
+
+.typing-dots .dot {
+  width: 12rpx;
+  height: 12rpx;
+  background: var(--text-color-tertiary);
+  border-radius: 50%;
+  animation: typingBounce 1.4s infinite ease-in-out;
+}
+
+.typing-dots .dot:nth-child(1) { animation-delay: 0s; }
+.typing-dots .dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots .dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typingBounce {
+  0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+  40% { transform: scale(1.2); opacity: 1; }
+}
+
+/* ==================== 快捷回复 ==================== */
+.quick-reply-section {
+  background-color: var(--bg-color-card);
+  border-top: 1px solid var(--border-color);
+  padding: 16rpx 0;
+}
+
+.quick-scroll {
+  white-space: nowrap;
+}
+
+.quick-list {
+  display: inline-flex;
+  padding: 0 24rpx;
+  gap: 16rpx;
+}
+
+.quick-item {
+  padding: 12rpx 24rpx;
+  border: 1px solid rgba(var(--primary-rgb, 0, 180, 216), 0.25);
+  border-radius: 50rpx;
+}
+
+.quick-item:active {
+  background: rgba(var(--primary-rgb, 0, 180, 216), 0.15);
+}
+
+/* ==================== 输入区域 ==================== */
+.input-section {
+  display: flex;
+  align-items: center;
+  background-color: var(--bg-color-card);
+  border-top: 1px solid var(--border-color);
+}
+
+.input-wrapper {
+  flex: 1;
+  margin-right: 16rpx;
+}
+
+.chat-input {
+  width: 100%;
+  height: 80rpx;
+  background: var(--bg-color-card);
+  border-radius: 40rpx;
+  padding: 0 32rpx;
+  font-size: var(--font-size-md);
+  color: var(--text-color-primary);
+}
+
+.chat-input::placeholder {
+  color: var(--text-color-tertiary);
+}
+
+.send-btn {
+  width: 120rpx;
+  height: 76rpx;
+  background: var(--bg-color-card);
+  border-radius: 38rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.send-btn.active {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-color-dark));
+}
+
+.send-btn text {
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  color: var(--text-color-tertiary);
+}
+
+.send-btn.active text {
+  color: #ffffff;
+}
+
+/* ==================== 弹窗 ==================== */
+.start-popup {
+  width: 600rpx;
+  text-align: center;
+  padding: 40rpx;
+}
+
+.summary-popup {
+  width: 620rpx;
+  text-align: center;
+  padding: 40rpx;
+}
+
+.popup-icon {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24rpx;
+}
+
+.popup-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: var(--text-color-primary);
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.popup-subtitle {
+  font-size: 26rpx;
+  color: var(--text-color-secondary);
+  display: block;
+  margin-bottom: 24rpx;
+}
+
+.popup-desc {
+  font-size: 26rpx;
+  color: var(--text-color-secondary);
+  line-height: 1.6;
+  display: block;
+  margin-bottom: 24rpx;
+  text-align: left;
+}
+
+/* 总结弹窗图标 */
+.summary-icon {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20rpx;
+}
+
+.summary-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: var(--text-color-primary);
+  display: block;
+  margin-bottom: 24rpx;
+}
+
+/* 结果徽章 */
+.result-badge {
+  display: inline-block;
+  padding: 14rpx 40rpx;
+  border-radius: 50rpx;
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  margin-bottom: 24rpx;
+}
+
+.result-badge.excellent {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid var(--success-color);
+  color: var(--success-color);
+}
+
+.result-badge.good {
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid var(--info-color);
+  color: var(--info-color);
+}
+
+.result-badge.poor {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid var(--warning-color);
+  color: var(--warning-color);
+}
+
+/* 统计卡片 */
+.stat-value {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: var(--primary-color);
+  display: block;
+  margin-bottom: 6rpx;
+}
+
+.stat-value.good {
+  color: var(--success-color);
+}
+
+.stat-label {
+  font-size: var(--font-size-sm);
+  color: var(--text-color-secondary);
+}
+
+/* 分析内容 */
+.analysis-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--primary-color);
+  display: block;
+  margin-bottom: 10rpx;
+}
+
+.analysis-text {
+  font-size: 26rpx;
+  color: var(--text-color-secondary);
+  line-height: 1.6;
+}
+
+/* 防骗要点 */
+.tips-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--success-color);
+  display: block;
+  margin-bottom: 16rpx;
+}
+
+.tip-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.tip-item {
+  display: flex;
+  align-items: flex-start;
+}
+
+.tip-item t-icon {
+  margin-right: 12rpx;
+  margin-top: 4rpx;
+  flex-shrink: 0;
+}

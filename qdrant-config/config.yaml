@@ -1,0 +1,22 @@
+# SafeGuard Qdrant 配置
+# RAG 知识库向量检索，1024 维 BGE 嵌入，余弦距离
+
+log_level: INFO
+
+storage:
+  # 向量索引类型：HNSW（默认，适合高精度场景）
+  optimizers:
+    default_segment_number: 2
+    memmap_threshold_kb: 20000
+  performance:
+    max_search_threads: 4
+    max_optimization_threads: 2
+
+service:
+  http_port: 6333
+  grpc_port: 6334
+  # gRPC 最大消息大小（MB），知识库批量写入时可能需要
+  grpc_message_max_length: 104857600
+
+# 集合默认参数（QdrantService 创建集合时自动应用）
+# 实际参数由后端 QdrantService.ensureCollection() 通过 REST API 指定

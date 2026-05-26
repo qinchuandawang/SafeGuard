@@ -1,0 +1,15 @@
+{
+  "usingComponents": {
+    "t-navbar": "tdesign-miniprogram/navbar/navbar",
+    "t-button": "tdesign-miniprogram/button/button",
+    "t-icon": "tdesign-miniprogram/icon/icon",
+    "t-tabs": "tdesign-miniprogram/tabs/tabs",
+    "t-tab-panel": "tdesign-miniprogram/tab-panel/tab-panel",
+    "t-upload": "tdesign-miniprogram/upload/upload",
+    "t-textarea": "tdesign-miniprogram/textarea/textarea",
+    "t-loading": "tdesign-miniprogram/loading/loading",
+    "t-result": "tdesign-miniprogram/result/result"
+  },
+  "navigationBarTitleText": "AI内容检测",
+  "navigationStyle": "custom"
+}

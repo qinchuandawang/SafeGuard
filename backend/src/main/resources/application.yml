@@ -1,0 +1,111 @@
+server:
+  port: 8080
+
+spring:
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 100MB
+  datasource:
+    url: jdbc:mysql://localhost:3306/safeguard?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8&connectionCollation=utf8mb4_unicode_ci&createDatabaseIfNotExist=true
+    username: root
+    password: ""
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      initialization-fail-timeout: 5000
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:sql/schema.sql
+      data-locations: classpath:sql/init-data.sql
+      continue-on-error: true
+  thymeleaf:
+    prefix: classpath:/templates/admin/
+    suffix: .html
+    mode: HTML
+    cache: false
+
+mybatis-plus:
+  type-aliases-package: com.sdu.safeguard.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# JWT 配置
+jwt:
+  secret: SafeGuard-JWT-Secret-Key-2026-Must-Change-In-Production
+  expiration-hours: 72
+
+# 管理员默认凭证（小型团队项目明文保存）
+# 微信小程序配置
+wechat:
+  appid: wx859a5eef3e30a6e5
+  secret: af02d82391171bcf68284f7ebf3c2f59
+  login-url: https://api.weixin.qq.com/sns/jscode2session
+
+# 音频检测服务地址
+audio:
+  service:
+    url: http://localhost:5001/audio/detect
+  detection:
+    api-url: http://localhost:5001/audio/detect
+    health-url: http://localhost:5001/health
+
+# 视频检测服务地址
+video:
+  service:
+    url: http://localhost:5002/video
+    image-url: http://localhost:5002/video
+  preprocess:
+    enabled: true
+    sample-interval-seconds: 1.0
+    max-frames: 24
+    face-padding-ratio: 0.12
+    multipart-field: file
+
+# 大模型配置（SophNet / ShowAPI）
+llm:
+  api-key: ${LLM_API_KEY:3tZkDmHLlPMWCJagVqp_L39-9R-qcnF9swCCZbgcR0B5ZWNpXnnpVOlcJTiEjfObzFnhUivCDUUy0icAmMUQTw}
+  api-url: https://route.showapi.com/openai/v1/chat/completions
+  model: sophnet/deepseek/deepseek-v4-flash
+  temperature: 0.7
+  max-tokens: 2048
+  enable-thinking: false
+
+# SiliconFlow API 配置
+siliconflow:
+  api-key: sk-nkrrixuyvtfgfnatmqcknkjzmlkwkwzrpcsrijanarbltmir
+  embedding-url: https://api.siliconflow.cn/v1/embeddings
+  rerank-url: https://api.siliconflow.cn/v1/rerank
+  embedding-model: BAAI/bge-large-zh-v1.5
+  rerank-model: BAAI/bge-reranker-v2-m3
+
+# RAG 配置
+rag:
+  embedding-dimension: 1024
+  qdrant-host: ${QDRANT_HOST:localhost}
+  qdrant-port: ${QDRANT_PORT:6333}
+  collection-name: anti_fraud_knowledge
+  fixed-chunk-size: 256
+  fixed-chunk-overlap: 32
+  semantic-chunk-min-size: 100
+  semantic-chunk-max-size: 512
+  semantic-similarity-threshold: 0.75
+  hnsw-top-k: 20
+  final-top-k: 5
+  keyword-boost-factor: 1.2
+
+# 记忆系统配置
+memory:
+  short-term-max-size: 50
+  long-term-max-size: 1000
+  long-term-ttl-hours: 168
+  long-term-importance-threshold: 0.6
+  storage-path: ./data/memory
+  memory-retrieval-top-k: 10

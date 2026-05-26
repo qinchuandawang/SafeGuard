@@ -1,0 +1,88 @@
+{
+  "darkmode": true,
+  "pages": [
+    "pages/index/index",
+    "pages/detection/detection",
+    "pages/result/result",
+    "pages/simulate/simulate",
+    "pages/knowledge/knowledge",
+    "pages/article/article",
+    "pages/about/about"
+  ],
+  "window": {
+    "navigationBarTitleText": "诈骗克星",
+    "navigationBarBackgroundColor": "#e6f7ff",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#e6f7ff",
+    "backgroundTextStyle": "light",
+    "enablePullDownRefresh": false,
+    "onReachBottomDistance": 50
+  },
+  "tabBar": {
+    "color": "#666666",
+    "selectedColor": "#00b4d8",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页",
+        "iconPath": "assets/images/tabbar/index.png",
+        "selectedIconPath": "assets/images/tabbar/index.png"
+      },
+      {
+        "pagePath": "pages/detection/detection",
+        "text": "检测",
+        "iconPath": "assets/images/tabbar/detection.png",
+        "selectedIconPath": "assets/images/tabbar/detection.png"
+      },
+      {
+        "pagePath": "pages/simulate/simulate",
+        "text": "模拟",
+        "iconPath": "assets/images/tabbar/simulate.png",
+        "selectedIconPath": "assets/images/tabbar/simulate.png"
+      },
+      {
+        "pagePath": "pages/knowledge/knowledge",
+        "text": "知识库",
+        "iconPath": "assets/images/tabbar/knowledge.png",
+        "selectedIconPath": "assets/images/tabbar/knowledge.png"
+      }
+    ]
+  },
+  "usingComponents": {
+    "t-navbar": "tdesign-miniprogram/navbar/navbar",
+    "t-button": "tdesign-miniprogram/button/button",
+    "t-icon": "tdesign-miniprogram/icon/icon",
+    "t-cell": "tdesign-miniprogram/cell/cell",
+    "t-cell-group": "tdesign-miniprogram/cell-group/cell-group",
+    "t-result": "tdesign-miniprogram/result/result",
+    "t-empty": "tdesign-miniprogram/empty/empty",
+    "t-loading": "tdesign-miniprogram/loading/loading",
+    "t-toast": "tdesign-miniprogram/toast/toast",
+    "t-dialog": "tdesign-miniprogram/dialog/dialog",
+    "t-popup": "tdesign-miniprogram/popup/popup",
+    "t-input": "tdesign-miniprogram/input/input",
+    "t-textarea": "tdesign-miniprogram/textarea/textarea",
+    "t-tag": "tdesign-miniprogram/tag/tag",
+    "t-avatar": "tdesign-miniprogram/avatar/avatar",
+    "t-badge": "tdesign-miniprogram/badge/badge",
+    "t-grid": "tdesign-miniprogram/grid/grid",
+    "t-grid-item": "tdesign-miniprogram/grid-item/grid-item",
+    "t-image": "tdesign-miniprogram/image/image",
+    "t-search": "tdesign-miniprogram/search/search",
+    "t-tabs": "tdesign-miniprogram/tabs/tabs",
+    "t-tab-panel": "tdesign-miniprogram/tab-panel/tab-panel",
+    "t-upload": "tdesign-miniprogram/upload/upload"
+  },
+  "networkTimeout": {
+    "request": 120000,
+    "connectSocket": 120000,
+    "uploadFile": 120000,
+    "downloadFile": 120000
+  },
+  "themeLocation": "theme.json",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents",
+  "style": "v2"
+}

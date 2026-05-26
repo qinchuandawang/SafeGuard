@@ -1,0 +1,21 @@
+{
+  "name": "fraud-killer",
+  "version": "1.0.0",
+  "description": "诈骗克星 - AI反诈骗检测系统",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "wechat",
+    "miniprogram",
+    "anti-fraud",
+    "ai-detection"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "tdesign-miniprogram": "^1.14.0",
+    "tslib": "^2.8.1"
+  }
+}

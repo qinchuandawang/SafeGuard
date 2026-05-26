@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- 保留 Spring Boot 默认控制台输出风格 -->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+
+    <!-- Qdrant 客户端日志：只打印 WARN 以上 -->
+    <logger name="org.springframework.web.client.RestTemplate" level="WARN"/>
+
+    <!-- MyBatis mapper：改为 SLF4J 集成后只打印 WARN，屏蔽 SQL 明细 -->
+    <logger name="com.sdu.safeguard.mapper" level="WARN"/>
+
+    <!-- MyBatis-Spring 内部连接管理日志（Creating/Closing SqlSession 等） -->
+    <logger name="org.mybatis.spring" level="WARN"/>
+
+    <!-- Devtools：屏蔽 ChangeableUrls / PropertyDefaults 等噪音日志 -->
+    <logger name="org.springframework.boot.devtools" level="WARN"/>
+
+    <!-- 应用自身日志保持 INFO -->
+    <logger name="com.sdu.safeguard" level="INFO"/>
+</configuration>

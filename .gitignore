@@ -1,0 +1,87 @@
+# 操作系统文件
+.DS_Store
+Thumbs.db
+
+# IDE 文件
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# 编译文件
+target/
+build/
+dist/
+*.class
+*.jar
+*.war
+
+# 日志文件
+*.log
+logs/
+
+# 临时文件
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
+*~
+
+# 项目特定
+*.zip
+*.gz
+项目实训/
+*.pdf
+*.docx
+*.txt
+
+# 配置文件（含敏感信息）
+.env
+
+# 大文件：训练数据集
+ai-services/audio/data/
+ai-services/video/checkpoints/
+*.pth
+
+# JVM 崩溃日志
+hs_err_pid*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# 微信开发者工具
+.project.private.config.json
+.local/
+
+# Git 备份目录
+.git.backup
+
+# 缓存
+.mcp-cache/
+
+# AI 服务 — 大文件（模型权重、数据集）
+ai-services/audio/outputs/**/*.bin
+ai-services/audio/outputs/**/*.safetensors
+ai-services/audio/outputs/**/*.pt
+ai-services/audio/pretrained/**/*.bin
+ai-services/audio/pretrained/**/*.safetensors
+# 但保留目录结构
+ai-services/audio/outputs/*/best/config.json
+ai-services/audio/outputs/*/best/processor_config.json

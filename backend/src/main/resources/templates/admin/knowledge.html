@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>SafeGuard 管理后台 - 知识库</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/admin/css/admin.css">
+</head>
+<body>
+    <div class="layout">
+        <nav class="sidebar">
+            <div class="sidebar-header"><h2>SafeGuard</h2><span class="version">v2.0</span></div>
+            <ul class="nav-list">
+                <li><a href="/admin/dashboard">概览</a></li>
+                <li><a href="/admin/users">用户管理</a></li>
+                <li><a href="/admin/knowledge" class="active">知识库</a></li>
+                <li><a href="/admin/records">检测记录</a></li>
+                <li><a href="/admin/models">模型管理</a></li>
+            </ul>
+        </nav>
+        <main class="main-content">
+            <header class="topbar"><h1>知识库管理</h1><div class="topbar-right"><a href="/admin/login" class="logout-btn">退出</a></div></header>
+            <div class="content">
+                <div class="card">
+                    <h3>反诈知识条目</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr><th>ID</th><th>分类</th><th>问题</th><th>答案</th><th>标签</th><th>优先级</th><th>状态</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="item : ${items}">
+                                <td th:text="${item.id}"></td>
+                                <td><span class="badge badge-category" th:text="${item.category}"></span></td>
+                                <td th:text="${item.question}" class="text-max-200"></td>
+                                <td th:text="${item.answer}" class="text-max-300"></td>
+                                <td th:text="${item.tags}"></td>
+                                <td th:text="${item.priority}"></td>
+                                <td><span class="badge" th:classappend="${item.enabled} ? 'badge-ok' : 'badge-disabled'" th:text="${item.enabled} ? '启用' : '禁用'"></span></td>
+                            </tr>
+                            <tr th:if="${items.isEmpty()}">
+                                <td colspan="7" class="text-center text-muted">暂无知识条目</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

@@ -1,0 +1,148 @@
+# SafeGuard 一键部署配置
+# ============================================
+# 用法：
+#   docker compose up -d                         # 核心服务（MySQL + Qdrant + 后端）
+#   docker compose --profile ai up -d            # 核心 + AI 检测服务
+#   docker compose --profile web up -d           # 核心 + 管理后台 SPA
+#   docker compose --profile ai --profile web up -d  # 全部服务
+# ============================================
+#
+# 环境变量文件：创建 .env 文件，填入对应 API Key
+#   DEEPSEEK_API_KEY=your_key     # AI 对话功能必需
+#   SILICONFLOW_API_KEY=your_key  # RAG 向量检索必需
+#   WECHAT_APPID=your_appid       # 微信小程序登录必需
+#   WECHAT_SECRET=your_secret     # 微信小程序登录必需
+
+services:
+  # ==========================================
+  # 核心服务（默认启动，不依赖特殊硬件）
+  # ==========================================
+
+  # MySQL 8.0 数据库
+  db:
+    image: mysql:8.0
+    container_name: safeguard-db
+    restart: unless-stopped
+    mem_limit: 512m
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root123}
+      MYSQL_DATABASE: safeguard
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4
+      MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend/src/main/resources/sql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$${DB_PASSWORD:-root123}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Qdrant 向量数据库（RAG 知识检索）
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: safeguard-qdrant
+    restart: unless-stopped
+    mem_limit: 512m
+    volumes:
+      - qdrant_data:/qdrant/storage
+      - ./qdrant-config:/qdrant/config
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:6333/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # Spring Boot 后端
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: safeguard-backend
+    restart: unless-stopped
+    mem_limit: 512m
+    depends_on:
+      db:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:mysql://db:3306/safeguard?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_PASSWORD:-root123}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      SILICONFLOW_API_KEY: ${SILICONFLOW_API_KEY:-}
+      WECHAT_APPID: ${WECHAT_APPID:-}
+      WECHAT_SECRET: ${WECHAT_SECRET:-}
+      QDRANT_HOST: qdrant
+      QDRANT_PORT: 6333
+    ports:
+      - "8080:8080"
+    volumes:
+      - backend_data:/app/data
+
+  # ==========================================
+  # AI 检测服务（--profile ai，需更多内存/可选 GPU）
+  # ==========================================
+
+  # 音频检测服务 (Flask + Wav2Vec2)
+  audio-detection:
+    profiles: ["ai"]
+    build:
+      context: ./ai-services/audio
+      dockerfile: Dockerfile
+    container_name: safeguard-audio
+    restart: unless-stopped
+    mem_limit: 1g
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./ai-services/audio/pretrained:/app/pretrained
+      - audio_data:/app/data
+
+  # 视频检测服务 (Flask + XceptionNet)
+  video-detection:
+    profiles: ["ai"]
+    build:
+      context: ./ai-services/video
+      dockerfile: Dockerfile
+    container_name: safeguard-video
+    restart: unless-stopped
+    mem_limit: 1g
+    ports:
+      - "5002:5002"
+    volumes:
+      - video_data:/app/data
+
+  # ==========================================
+  # Web 管理后台（--profile web）
+  # ==========================================
+
+  # 管理后台前端 (Vue.js SPA，独立静态服务器)
+  admin-panel:
+    profiles: ["web"]
+    build:
+      context: ./web-admin
+      dockerfile: Dockerfile
+    container_name: safeguard-admin
+    restart: unless-stopped
+    mem_limit: 64m
+    ports:
+      - "8085:80"
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:
+  backend_data:
+  audio_data:
+  video_data:
+  qdrant_data:

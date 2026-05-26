@@ -1,0 +1,370 @@
+<!-- pages/detection/detection.wxml - 内容检测页面 -->
+<view class="detection-page">
+  <!-- 自定义导航栏 -->
+  <view class="page-navbar">
+    <view class="page-nav-left flex-center" bindtap="onBack">
+      <t-icon name="chevron-left" size="48rpx" color="var(--text-color-primary)" />
+    </view>
+    <text class="page-nav-title">AI内容检测</text>
+    <view class="page-nav-right"></view>
+  </view>
+
+  <!-- 页面内容 -->
+  <view class="page-content">
+    <!-- Tab切换 -->
+    <t-tabs
+      default-value="{{currentType}}"
+      bind:change="onTabChange"
+      theme="card"
+      swipeable
+    >
+      <t-tab-panel value="audio" label="音频检测">
+        <view class="tab-content anim-fadeIn">
+          <!-- 音频上传区域 -->
+          <view class="upload-section">
+            <view class="upload-area {{audioFile ? 'has-file' : ''}}" bindtap="chooseAudio">
+              <block wx:if="{{!audioFile}}">
+                <view class="upload-icon flex-center">
+                  <t-icon name="microphone" size="80rpx" color="var(--primary-color)" />
+                </view>
+                <text class="upload-text">点击上传可疑音频</text>
+                <text class="upload-hint text-xs">支持 MP3、WAV 格式，最大 10MB</text>
+              </block>
+              <block wx:else>
+                <view class="file-preview">
+                  <view class="file-icon flex-center">
+                    <t-icon name="microphone" size="64rpx" color="var(--primary-color)" />
+                  </view>
+                  <view class="file-info">
+                    <text class="file-name text-ellipsis">{{audioFile.name}}</text>
+                    <text class="file-size text-xs">{{audioFile.size}}</text>
+                  </view>
+                  <view class="file-remove flex-center" bindtap="removeAudio">
+                    <t-icon name="close" size="32rpx" color="var(--text-color-tertiary)" />
+                  </view>
+                </view>
+              </block>
+            </view>
+          </view>
+
+          <!-- 检测说明 -->
+          <view class="info-card card-bordered">
+            <view class="info-header flex">
+              <t-icon name="info-circle" size="32rpx" color="var(--primary-color)" />
+              <text class="info-title">音频检测说明</text>
+            </view>
+            <view class="info-list">
+              <text class="info-item">• 基于 Wav2Vec2 模型深度学习</text>
+              <text class="info-item">• 识别 AI 语音合成、TTS 转换</text>
+              <text class="info-item">• 支持真人录音与合成音鉴别</text>
+              <text class="info-item">• 检测结果仅供参考</text>
+            </view>
+          </view>
+        </view>
+      </t-tab-panel>
+
+      <t-tab-panel value="video" label="视频检测">
+        <view class="tab-content anim-fadeIn">
+          <!-- 视频上传区域 -->
+          <view class="upload-section">
+            <view class="upload-area video-upload {{videoFile ? 'has-file' : ''}}" bindtap="chooseVideo">
+              <block wx:if="{{!videoFile}}">
+                <view class="upload-icon flex-center">
+                  <t-icon name="video" size="80rpx" color="var(--info-color)" />
+                </view>
+                <text class="upload-text">点击上传可疑视频</text>
+                <text class="upload-hint text-xs">支持 MP4、MOV 格式，最大 50MB</text>
+              </block>
+              <block wx:else>
+                <video
+                  class="video-preview"
+                  src="{{videoFile.path}}"
+                  controls
+                  show-center-play-btn
+                  show-fullscreen-btn
+                ></video>
+                <view class="video-overlay flex-center" bindtap="removeVideo">
+                  <t-icon name="close" size="48rpx" color="#ffffff" />
+                </view>
+              </block>
+            </view>
+          </view>
+
+          <!-- 检测说明 -->
+          <view class="info-card card-bordered" style="border-color: rgba(59, 130, 246, 0.3);">
+            <view class="info-header flex">
+              <t-icon name="info-circle" size="32rpx" color="var(--info-color)" />
+              <text class="info-title">视频检测说明</text>
+            </view>
+            <view class="info-list">
+              <text class="info-item">• 基于 XceptionNet 深度神经网络</text>
+              <text class="info-item">• 识别 AI 换脸、面部篡改</text>
+              <text class="info-item">• 支持常见换脸算法检测</text>
+              <text class="info-item">• 检测结果仅供参考</text>
+            </view>
+          </view>
+        </view>
+      </t-tab-panel>
+
+      <t-tab-panel value="text" label="文本检测">
+        <view class="tab-content anim-fadeIn">
+          <!-- 文本输入区域 -->
+          <view class="text-input-section card">
+            <t-textarea
+              placeholder="请输入可疑的短信、聊天内容或话术..."
+              value="{{textContent}}"
+              bind:change="onTextChange"
+              maxlength="2000"
+              indicator
+            />
+          </view>
+
+          <!-- 字数统计 -->
+          <view class="text-stats flex-right mb-sm">
+            <text class="text-count text-xs">{{textContent.length || 0}}/2000</text>
+          </view>
+
+          <!-- 常见诈骗话术示例 -->
+          <view class="examples-card card">
+            <text class="examples-title">常见诈骗话术示例</text>
+            <view class="examples-list">
+              <view
+                class="example-item"
+                wx:for="{{examples}}"
+                wx:key="index"
+                bindtap="useExample"
+                data-text="{{item}}"
+              >
+                <text class="example-text">{{item}}</text>
+              </view>
+            </view>
+          </view>
+
+          <!-- 检测说明 -->
+          <view class="info-card card-bordered" style="border-color: rgba(16, 185, 129, 0.3);">
+            <view class="info-header flex">
+              <t-icon name="info-circle" size="32rpx" color="var(--success-color)" />
+              <text class="info-title">文本检测说明</text>
+            </view>
+            <view class="info-list">
+              <text class="info-item">• 基于大模型智能分析</text>
+              <text class="info-item">• 识别常见诈骗话术模式</text>
+              <text class="info-item">• 提供风险评估和建议</text>
+              <text class="info-item">• 检测结果仅供参考</text>
+            </view>
+          </view>
+        </view>
+      </t-tab-panel>
+
+      <t-tab-panel value="multi" label="综合检测">
+        <view class="tab-content anim-fadeIn">
+          <!-- 综合上传提示 -->
+          <view class="multi-tip flex">
+            <t-icon name="info-circle" size="40rpx" color="var(--warning-color)" />
+            <text class="multi-tip-text">同时上传音频、视频和文本，获得更全面的风险评估</text>
+          </view>
+
+          <!-- 多文件上传 -->
+          <view class="upload-section">
+            <view class="upload-area {{audioFile ? 'has-file' : ''}}" bindtap="chooseAudio">
+              <block wx:if="{{!audioFile}}">
+                <t-icon name="microphone" size="48rpx" color="var(--primary-color)" />
+                <text class="upload-mini-text">添加音频</text>
+              </block>
+              <block wx:else>
+                <t-icon name="check-circle" size="48rpx" color="var(--success-color)" />
+                <text class="upload-mini-text">音频已添加</text>
+              </block>
+            </view>
+
+            <view class="upload-area {{videoFile ? 'has-file' : ''}}" bindtap="chooseVideo">
+              <block wx:if="{{!videoFile}}">
+                <t-icon name="video" size="48rpx" color="var(--info-color)" />
+                <text class="upload-mini-text">添加视频</text>
+              </block>
+              <block wx:else>
+                <t-icon name="check-circle" size="48rpx" color="var(--success-color)" />
+                <text class="upload-mini-text">视频已添加</text>
+              </block>
+            </view>
+          </view>
+
+          <!-- 文本输入 -->
+          <view class="text-input-section card">
+            <t-textarea
+              placeholder="输入可疑文本内容..."
+              value="{{textContent}}"
+              bind:change="onTextChange"
+              maxlength="2000"
+            />
+          </view>
+
+          <!-- 检测说明 -->
+          <view class="info-card card-bordered" style="border-color: rgba(245, 158, 11, 0.3);">
+            <view class="info-header flex">
+              <t-icon name="info-circle" size="32rpx" color="var(--warning-color)" />
+              <text class="info-title">综合检测说明</text>
+            </view>
+            <view class="info-list">
+              <text class="info-item">• 多模态信息联合分析</text>
+              <text class="info-item">• 大模型智能综合研判</text>
+              <text class="info-item">• 提供详细风险报告</text>
+              <text class="info-item">• 检测结果仅供参考</text>
+            </view>
+          </view>
+        </view>
+      </t-tab-panel>
+    </t-tabs>
+
+    <!-- 检测按钮 -->
+    <view class="action-section anim-fadeIn">
+      <t-button
+        theme="primary"
+        size="large"
+        block
+        disabled="{{!canDetect}}"
+        loading="{{isDetecting}}"
+        bind:tap="startDetection"
+      >
+        {{isDetecting ? '检测中...' : '开始检测'}}
+      </t-button>
+    </view>
+  </view>
+
+  <!-- 检测结果弹窗 -->
+  <t-popup
+    visible="{{showResult}}"
+    bind:visible-change="onResultVisibleChange"
+    placement="bottom"
+  >
+    <view class="result-popup anim-fadeIn">
+      <!-- 标题 -->
+      <view class="result-header flex-between">
+        <text class="result-title">检测结果</text>
+        <view class="result-close flex-center" bindtap="closeResult">
+          <t-icon name="close" size="40rpx" color="var(--text-color-tertiary)" />
+        </view>
+      </view>
+
+      <!-- 结果内容 -->
+      <scroll-view scroll-y class="result-content">
+        <!-- 风险等级 -->
+        <view class="risk-level {{resultLevel}} card">
+          <view class="risk-icon flex-center">
+            <t-icon name="{{resultIcon}}" size="64rpx" color="{{resultIconColor}}" />
+          </view>
+          <view class="risk-info">
+            <text class="risk-name">{{resultName}}</text>
+            <text class="risk-desc">{{resultDesc}}</text>
+          </view>
+        </view>
+
+        <!-- 详细指标 -->
+        <view class="metrics-card card" wx:if="{{detectionResult}}">
+          <text class="metrics-title">详细指标</text>
+
+          <!-- 置信度 -->
+          <view class="metric-item" wx:if="{{detectionResult.confidence}}">
+            <text class="metric-label">置信度</text>
+            <view class="metric-value-row flex">
+              <view class="progress-bar">
+                <view
+                  class="progress-bar-fill {{resultLevel}}"
+                  style="width: {{detectionResult.confidence * 100}}%"
+                ></view>
+              </view>
+              <text class="metric-value text-sm">{{detectionResult.confidenceText}}%</text>
+            </view>
+          </view>
+
+          <!-- 概率分布 -->
+          <view class="metric-item" wx:if="{{detectionResult.probabilities}}">
+            <text class="metric-label">真实验概率</text>
+            <view class="probability-bar">
+              <view class="prob-real" style="width: {{detectionResult.probabilities.real * 100}}%"></view>
+              <view class="prob-fake" style="width: {{detectionResult.probabilities.fake * 100}}%"></view>
+            </view>
+            <view class="probability-labels flex-between">
+              <text class="prob-label real">真实 {{detectionResult.realText}}%</text>
+              <text class="prob-label fake">伪造 {{detectionResult.fakeText}}%</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- AI分析报告 -->
+        <view class="report-card card" wx:if="{{detectionResult && detectionResult.report}}">
+          <text class="report-title">AI 分析报告</text>
+          <text class="report-content">{{detectionResult.report}}</text>
+        </view>
+
+        <!-- 🤖 Agent 分析过程 -->
+        <view class="agent-card card" wx:if="{{detectionResult && detectionResult.agentSteps}}">
+          <view class="agent-header flex-between" bindtap="toggleAgentProcess">
+            <view class="agent-header-left flex">
+              <t-icon name="mind" size="32rpx" color="var(--info-color)" />
+              <text class="agent-title">AI 分析过程</text>
+            </view>
+            <view class="agent-toggle {{showAgentProcess ? 'expanded' : ''}} flex-center">
+              <t-icon name="chevron-down" size="28rpx" color="var(--text-color-tertiary)" />
+            </view>
+          </view>
+          <view class="agent-body" wx:if="{{showAgentProcess}}">
+            <view class="agent-step flex" wx:for="{{detectionResult.agentSteps}}" wx:key="index">
+              <view class="step-timeline flex-col flex-center">
+                <view class="step-dot {{item.status}}"></view>
+                <view class="step-line" wx:if="{{index < detectionResult.agentSteps.length - 1}}"></view>
+              </view>
+              <view class="step-content">
+                <text class="step-label">{{item.label}}</text>
+                <text class="step-desc text-xs">{{item.desc}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 📚 参考知识源 -->
+        <view class="ref-card card" wx:if="{{detectionResult && detectionResult.referenceSources}}">
+          <view class="ref-header flex-between" bindtap="toggleKnowledgeSources">
+            <view class="ref-header-left flex">
+              <t-icon name="book-open" size="32rpx" color="var(--success-color)" />
+              <text class="ref-title">参考知识源</text>
+            </view>
+            <view class="ref-count">{{detectionResult.referenceSources.length}}条</view>
+          </view>
+          <view class="ref-body" wx:if="{{showKnowledgeSources}}">
+            <view class="ref-item flex-between" wx:for="{{detectionResult.referenceSources}}" wx:key="index">
+              <view class="ref-item-left">
+                <text class="ref-item-name">{{item.title}}</text>
+                <text class="ref-item-cat text-xs">{{item.category}}</text>
+              </view>
+              <view class="ref-item-match">{{item.match}}</view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 防范建议 -->
+        <view class="advice-card" wx:if="{{detectionResult && detectionResult.advice}}">
+          <text class="advice-title">防范建议</text>
+          <view class="advice-list">
+            <view class="advice-item flex" wx:for="{{detectionResult.advice}}" wx:key="index">
+              <t-icon name="check-circle-filled" size="32rpx" color="var(--success-color)" />
+              <text class="advice-text">{{item}}</text>
+            </view>
+          </view>
+        </view>
+      </scroll-view>
+
+      <!-- 操作按钮 -->
+      <view class="result-actions">
+        <t-button theme="primary" size="large" block bind:tap="viewFullReport">
+          查看完整报告
+        </t-button>
+      </view>
+    </view>
+  </t-popup>
+  <!-- AI问答浮动按钮 -->
+  <view class="qa-float-btn flex flex-col flex-center" bindtap="openQA">
+    <t-icon name="chat" size="36rpx" color="#ffffff" />
+    <text class="text-xs" style="color:#ffffff;margin-top:4rpx">问 AI</text>
+  </view>
+</view>

@@ -1,0 +1,45 @@
+# 微信开发者工具临时文件
+.DS_Store
+*.log
+frontend/node_modules/
+frontend/miniprogram_npm/
+frontend/package-lock.json
+
+# 本地配置
+*.local
+
+# 训练数据（文件较大）
+audio-training/data/
+audio-training/models/
+video-training/data/
+video-training/models/
+
+# 训练日志
+*.log
+wandb/
+runs/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.env
+.venv
+venv/
+env/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# Java后端构建
+backend/target/
+backend/*.jar

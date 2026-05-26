@@ -1,0 +1,143 @@
+<view class="page">
+  <!-- ===== 自定义顶部导航 ===== -->
+  <view class="header-bar" style="height:{{navBarHeight}}px; padding-top:{{statusBarHeight}}px;">
+    <image class="header-icon" src="/assets/小程序图标.jpg" mode="aspectFill" />
+    <text class="header-title">诈骗克星</text>
+  </view>
+  <view class="header-placeholder" style="height:{{navBarHeight}}px;"></view>
+
+  <!-- ===== Hero：安全总览 ===== -->
+  <view class="hero-section">
+    <view class="hero-content">
+      <view class="hero-left">
+        <view class="hero-greeting">
+          <text class="hero-emoji">{{greeting === '早上好' ? '☀️' : greeting === '上午好' ? '🌤' : greeting === '中午好' ? '🌞' : greeting === '下午好' ? '🌅' : greeting === '晚上好' ? '🌙' : '🌃'}}</text>
+          <text class="hero-title">{{greeting}}，欢迎回来</text>
+        </view>
+        <text class="hero-date">{{todayDate}}</text>
+        <text class="hero-quote">AI 守护您的数字生活安全</text>
+      </view>
+      <view class="score-ring-wrap">
+        <canvas type="2d" id="scoreCanvas" class="score-ring-canvas"></canvas>
+        <text class="score-ring-label" style="color:{{threatColor}}">{{threatLabel}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- ===== 项目介绍 ===== -->
+  <view class="intro-card">
+    <view class="intro-icon-wrap">
+      <t-icon name="secured" size="40rpx" color="#00b4d8" />
+    </view>
+    <view class="intro-body">
+      <text class="intro-title">AI 反诈骗检测系统</text>
+      <text class="intro-desc">基于深度学习多模态鉴伪技术，精准识别 AI 合成语音、深度伪造视频和虚假文本信息，为您筑牢网络安全防线。</text>
+    </view>
+  </view>
+
+  <!-- ===== 数据看板 ===== -->
+  <view class="section-label-wrap">
+    <t-icon name="chart" size="26rpx" color="var(--text-color-secondary)" />
+    <text>数据看板</text>
+  </view>
+
+  <!-- 统计 -->
+  <view class="stats-row">
+    <view class="stat-card card-d">
+      <view class="stat-icon si-d"><t-icon name="search" size="28rpx" color="#00b4d8" /></view>
+      <text class="stat-val">{{stats.detectionCount}}</text>
+      <text class="stat-lbl">总检测</text>
+    </view>
+    <view class="stat-card card-a">
+      <view class="stat-icon si-a"><t-icon name="secured" size="28rpx" color="#6366f1" /></view>
+      <text class="stat-val">{{stats.accuracy}}{{stats.accuracy === '--' ? '' : '%'}}</text>
+      <text class="stat-lbl">准确率</text>
+    </view>
+    <view class="stat-card card-s">
+      <view class="stat-icon si-s"><t-icon name="heart" size="28rpx" color="#10b981" /></view>
+      <text class="stat-val" style="color:{{threatColor}}">{{stats.safeRate}}{{stats.safeRate === '--' ? '' : '%'}}</text>
+      <text class="stat-lbl">安全率</text>
+    </view>
+  </view>
+
+  <!-- 风险分布 -->
+  <view class="risk-bar-wrap">
+    <view class="risk-bar-hd">
+      <text class="risk-bar-title">安全/风险分布</text>
+      <view class="risk-bar-lgd">
+        <view class="lgd-item"><view class="lgd-dot safe-dot"></view><text class="text-xs text-tertiary">安全 {{stats.safeRate}}%</text></view>
+        <view class="lgd-item"><view class="lgd-dot dgr-dot"></view><text class="text-xs text-tertiary">风险 {{stats.safeRate === '--' ? 0 : 100 - stats.safeRate}}%</text></view>
+      </view>
+    </view>
+    <view class="risk-track">
+      <view class="risk-fill safe-fill" style="width:{{stats.safeRate}}{{stats.safeRate === '--' ? '50' : ''}}%"></view>
+      <view class="risk-fill dgr-fill" style="width:{{stats.safeRate === '--' ? 50 : 100 - stats.safeRate}}%"></view>
+    </view>
+  </view>
+
+  <!-- 近期记录 -->
+  <view class="section-label-wrap" wx:if="{{recentDetections.length > 0}}">
+    <t-icon name="time" size="26rpx" color="var(--text-color-secondary)" />
+    <text>检测记录</text>
+  </view>
+  <view class="rec-list" wx:if="{{recentDetections.length > 0}}">
+    <view class="rec-item" wx:for="{{recentDetections}}" wx:for-index="idx" bindtap="goToResult" data-index="{{idx}}">
+      <view class="rec-left">
+        <view class="rec-iwrap {{item.result === 'danger' || item.result === 'dangerous' ? 'iw-dgr' : item.result === 'warning' ? 'iw-wrn' : 'iw-sfe'}}">
+          <t-icon name="{{item.type === 'audio' ? 'sound' : item.type === 'video' ? 'video' : 'text'}}" size="26rpx" color="#ffffff" />
+        </view>
+        <view class="rec-info">
+          <text class="rec-name">{{item.fileName || (item.type === 'audio' ? '音频' : item.type === 'video' ? '视频' : '文本')}}检测</text>
+          <text class="rec-time">{{item.time}}</text>
+        </view>
+      </view>
+      <text class="rec-badge {{item.result === 'danger' || item.result === 'dangerous' ? 'bd-dgr' : item.result === 'warning' ? 'bd-wrn' : 'bd-sfe'}}">{{item.result === 'danger' || item.result === 'dangerous' ? '风险' : item.result === 'warning' ? '可疑' : '安全'}}</text>
+    </view>
+  </view>
+
+  <!-- ===== 空状态 ===== -->
+  <view class="empty-card" wx:if="{{stats.detectionCount === '0'}}" bindtap="goToDetection">
+    <view class="empty-icon">
+      <t-icon name="secured" size="72rpx" color="#00b4d8" />
+    </view>
+    <text class="empty-title">开始您的安全之旅</text>
+    <text class="empty-desc">上传可疑音频、视频或文本，AI 秒级检测真伪</text>
+    <view class="empty-arrow">
+      <t-icon name="chevron-right" size="28rpx" color="var(--text-color-tertiary)" />
+    </view>
+  </view>
+
+  <!-- ===== 贴心提醒 ===== -->
+  <view class="section-label-wrap">
+    <t-icon name="lightbulb" size="26rpx" color="#d97706" />
+    <text>今日防骗提醒</text>
+  </view>
+  <view class="tip-main-card">
+    <view class="tip-badge">AI 提示</view>
+    <text class="tip-content">{{dailyTip.content}}</text>
+    <view class="tip-foot">
+      <text class="tip-source">诈骗克星 · 安全实验室</text>
+      <view class="tip-refresh-btn" bindtap="refreshTip">
+        <t-icon name="refresh" size="22rpx" color="var(--text-color-tertiary)" />
+        <text>换一条</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- ===== 开始检测入口 ===== -->
+  <view class="cta-section">
+    <view class="cta-btn" bindtap="goToDetection">
+      <t-icon name="search" size="36rpx" color="#ffffff" />
+      <text class="cta-text">开始检测</text>
+    </view>
+    <view class="cta-sub">AI 多模态深度伪造识别</view>
+  </view>
+
+  <!-- ===== AI问答浮窗 ===== -->
+  <view class="qa-float-btn flex flex-col flex-center" bindtap="openQA">
+    <t-icon name="chat" size="36rpx" color="#ffffff" />
+    <text class="text-xs" style="color:#ffffff;margin-top:4rpx">问 AI</text>
+  </view>
+
+  <view class="safe-area-btm" style="height:32rpx"></view>
+</view>

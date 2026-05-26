@@ -1,0 +1,63 @@
+<!-- pages/article/article.wxml - 文章详情 -->
+<view class="article-page">
+  <!-- 自定义导航栏 -->
+  <view class="page-navbar">
+    <view class="page-nav-left" bindtap="onBack">
+      <t-icon name="chevron-left" size="48rpx" color="#333333" />
+    </view>
+    <text class="page-nav-title">文章详情</text>
+    <view class="page-nav-right"></view>
+  </view>
+
+  <view class="page-content">
+    <!-- 文章头部 -->
+    <view class="article-header" wx:if="{{article}}">
+      <text class="article-title">{{article.title}}</text>
+    </view>
+
+    <!-- 文章封面 -->
+    <view class="article-cover" wx:if="{{article.cover}}">
+      <image src="{{article.cover}}" mode="aspectFill" class="cover-image" lazy-load />
+    </view>
+
+    <!-- 文章元信息 -->
+    <view class="article-meta" wx:if="{{article}}">
+      <view class="article-tags">
+        <text class="tag tag-primary" wx:for="{{article.tags}}" wx:for-item="tag">{{tag}}</text>
+      </view>
+      <text class="article-date">{{article.date}}</text>
+    </view>
+
+    <!-- 文章内容 -->
+    <view class="card article-body">
+      <text class="article-content">{{articleContent}}</text>
+    </view>
+
+    <!-- 相关推荐 -->
+    <view class="related-section" wx:if="{{relatedArticles.length > 0}}">
+      <text class="section-title">相关推荐</text>
+      <view class="related-list">
+        <view class="card stagger-{{index + 1}} related-item" wx:for="{{relatedArticles}}" wx:key="id" bindtap="viewRelated" data-id="{{item.id}}">
+          <text class="related-title">{{item.title}}</text>
+          <text class="related-date">{{item.date}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 底部操作 -->
+    <view class="action-bar">
+      <view class="action-item" bindtap="onBack">
+        <t-icon name="arrow-left" size="40rpx" color="var(--text-color-tertiary)" />
+        <text class="action-text">返回</text>
+      </view>
+      <view class="action-item" bindtap="backToTop">
+        <t-icon name="backtop" size="40rpx" color="var(--text-color-tertiary)" />
+        <text class="action-text">回到顶部</text>
+      </view>
+      <view class="action-item" bindtap="shareArticle">
+        <t-icon name="share" size="40rpx" color="var(--text-color-tertiary)" />
+        <text class="action-text">分享文章</text>
+      </view>
+    </view>
+  </view>
+</view>

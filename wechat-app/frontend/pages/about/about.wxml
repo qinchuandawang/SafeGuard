@@ -1,0 +1,137 @@
+<!-- pages/about/about.wxml - 关于我们 -->
+<view class="about-page">
+  <!-- 自定义导航栏 -->
+  <view class="page-navbar">
+    <view class="page-nav-left" bindtap="onBack">
+      <t-icon name="chevron-left" size="48rpx" color="#333333" />
+    </view>
+    <text class="page-nav-title">关于我们</text>
+    <view class="page-nav-right"></view>
+  </view>
+
+  <view class="page-content">
+    <!-- Logo区域 -->
+    <view class="logo-section">
+      <view class="logo-icon">
+        <t-icon name="shield-check" size="80rpx" color="#ffffff" />
+      </view>
+      <text class="app-name">诈骗克星</text>
+      <text class="app-version">版本 1.0.0</text>
+      <text class="app-desc">基于大模型智能体的AI反诈骗检测系统</text>
+    </view>
+
+    <!-- 功能介绍 -->
+    <view class="feature-section">
+      <text class="section-title">核心功能</text>
+      <view class="feature-list">
+        <view class="card-featured feature-item stagger-1">
+          <view class="feature-icon" style="background: var(--primary-color);">
+            <t-icon name="microphone" size="48rpx" color="#ffffff" />
+          </view>
+          <view class="feature-info">
+            <text class="feature-name">音频伪造检测</text>
+            <text class="feature-desc">基于Wav2Vec2模型，识别AI合成语音</text>
+          </view>
+        </view>
+        <view class="card-featured feature-item stagger-2">
+          <view class="feature-icon" style="background: linear-gradient(135deg, #7c3aed, #6d28d9);">
+            <t-icon name="video" size="48rpx" color="#ffffff" />
+          </view>
+          <view class="feature-info">
+            <text class="feature-name">视频换脸检测</text>
+            <text class="feature-desc">基于XceptionNet模型，识别AI换脸视频</text>
+          </view>
+        </view>
+        <view class="card-featured feature-item stagger-3">
+          <view class="feature-icon" style="background: var(--success-color);">
+            <t-icon name="chat" size="48rpx" color="#ffffff" />
+          </view>
+          <view class="feature-info">
+            <text class="feature-name">文本话术分析</text>
+            <text class="feature-desc">大模型智能分析，识别诈骗话术</text>
+          </view>
+        </view>
+        <view class="card-featured feature-item stagger-4">
+          <view class="feature-icon" style="background: var(--warning-color);">
+            <t-icon name="play-circle" size="48rpx" color="#ffffff" />
+          </view>
+          <view class="feature-info">
+            <text class="feature-name">模拟诈骗体验</text>
+            <text class="feature-desc">安全环境学习，提升防范意识</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 技术架构 -->
+    <view class="tech-section">
+      <text class="section-title">技术架构</text>
+      <view class="card tech-card">
+        <view class="tech-row">
+          <text class="tech-label">前端框架</text>
+          <text class="tag tag-primary">微信小程序 + TDesign</text>
+        </view>
+        <view class="tech-row">
+          <text class="tech-label">后端服务</text>
+          <text class="tag tag-primary">Java Spring Boot</text>
+        </view>
+        <view class="tech-row">
+          <text class="tech-label">大模型</text>
+          <text class="tag tag-primary">DeepSeek / 通义千问</text>
+        </view>
+        <view class="tech-row">
+          <text class="tech-label">音频检测</text>
+          <text class="tag tag-primary">Wav2Vec2 + LoRA微调</text>
+        </view>
+        <view class="tech-row">
+          <text class="tech-label">视频检测</text>
+          <text class="tag tag-primary">XceptionNet + 迁移学习</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 团队成员 -->
+    <view class="team-section">
+      <text class="section-title">开发团队</text>
+      <view class="team-list">
+        <view class="card team-item stagger-1">
+          <text class="team-name">刘志恒</text>
+          <text class="team-role">音频检测模型开发</text>
+        </view>
+        <view class="card team-item stagger-2">
+          <text class="team-name">王家和</text>
+          <text class="team-role">视频检测模型开发</text>
+        </view>
+        <view class="card team-item stagger-3">
+          <text class="team-name">彭宏缤</text>
+          <text class="team-role">后端与大模型集成</text>
+        </view>
+        <view class="card team-item stagger-4">
+          <text class="team-name">朱乘雨</text>
+          <text class="team-role">小程序前端开发</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 联系方式 -->
+    <view class="contact-section">
+      <text class="section-title">联系我们</text>
+      <view class="contact-list">
+        <view class="card contact-item">
+          <t-icon name="mail" size="32rpx" color="var(--primary-color)" />
+          <text class="contact-text">contact@fraud-killer.com</text>
+        </view>
+        <view class="card contact-item">
+          <t-icon name="service" size="32rpx" color="var(--primary-color)" />
+          <text class="contact-text">反诈热线: 96110</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 版权信息 -->
+    <view class="copyright">
+      <text>© 2024 诈骗克星 All Rights Reserved</text>
+      <text>本项目仅供学习和研究使用</text>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,47 @@
+# Git
+.git
+.gitignore
+
+# Node
+node_modules/
+npm-debug.log
+web-admin/node_modules/
+web-admin/dist/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+venv/
+.venv/
+
+# Java
+backend/target/
+*.class
+*.jar
+!backend/target/*.jar
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+hs_err_*
+
+# Temp
+tmp/
+temp/
+uploads/
+data/memory/
+
+# Large files
+*.zip
+*.tar.gz
+*.rar

@@ -1,0 +1,7 @@
+{
+  "usingComponents": {
+    "t-icon": "tdesign-miniprogram/icon/icon"
+  },
+  "navigationBarTitleText": "诈骗克星",
+  "navigationStyle": "custom"
+}

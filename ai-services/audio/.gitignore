@@ -1,0 +1,14 @@
+# 训练输出
+outputs/
+
+# 运行时临时上传目录
+tmp_uploads/
+
+# Python 缓存
+__pycache__/
+*.py[cod]
+*.pyo
+
+# IDE
+.idea/
+*.iml

@@ -1,0 +1,314 @@
+<!-- pages/simulate/simulate.wxml - 模拟诈骗体验 -->
+<view class="simulate-page">
+
+  <!-- ========== 剧本选择界面 ========== -->
+  <view class="page-content anim-fadeIn" wx:if="{{!selectedScript}}">
+    <!-- 顶部导航 -->
+    <view class="page-navbar px-lg">
+      <view class="page-nav-left" bindtap="onBack">
+        <t-icon name="chevron-left" size="48rpx" color="var(--text-color-primary)" />
+      </view>
+      <text class="page-nav-title">模拟诈骗体验</text>
+      <view class="page-nav-right"></view>
+    </view>
+
+    <!-- 安全提示横幅 -->
+    <view class="flex card-bordered bg-success-light mb-lg mx-lg" style="gap:20rpx;padding:24rpx">
+      <view class="flex-center" style="width:72rpx;height:72rpx;border-radius:50%;background:rgba(16,185,129,0.15);flex-shrink:0">
+        <t-icon name="secured" size="40rpx" color="#10b981" />
+      </view>
+      <view class="flex-1">
+        <text class="text-sm font-bold block" style="color:var(--success-color);margin-bottom:6rpx">安全模拟环境</text>
+        <text class="text-xs text-secondary block" style="line-height:1.4">在虚拟环境中体验真实诈骗话术，提升防范能力</text>
+      </view>
+    </view>
+
+    <!-- 剧本列表 -->
+    <view class="px-lg">
+      <text class="text-lg font-bold mb-sm block">选择诈骗剧本</text>
+
+      <!-- 冒充公检法 -->
+      <view class="card-featured flex stagger-1" style="--gradient-primary:linear-gradient(135deg,var(--danger-color),#dc2626);margin-bottom:20rpx" bindtap="selectScript" data-id="police">
+        <view class="script-card-icon" style="background:linear-gradient(135deg,var(--danger-color),#dc2626)">
+          <t-icon name="user" size="44rpx" color="#ffffff" />
+        </view>
+        <view class="flex-1">
+          <view class="flex flex-center mb-xs" style="gap:16rpx;justify-content:flex-start">
+            <text class="text-md font-bold">冒充公检法</text>
+            <text class="badge badge-danger">高难度</text>
+          </view>
+          <text class="text-sm text-secondary block" style="line-height:1.4;margin-bottom:12rpx">诈骗者冒充警察、检察官等，声称您涉嫌犯罪，要求转账到安全账户</text>
+          <view class="flex" style="gap:12rpx">
+            <text class="tag tag-danger">高发诈骗</text>
+            <text class="tag tag-danger">转账诈骗</text>
+          </view>
+        </view>
+        <view class="flex-center" style="margin-left:16rpx;flex-shrink:0">
+          <t-icon name="chevron-right" size="36rpx" color="var(--text-color-tertiary)" />
+        </view>
+      </view>
+
+      <!-- 冒充熟人 -->
+      <view class="card-featured flex stagger-2" style="--gradient-primary:linear-gradient(135deg,var(--warning-color),#d97706);margin-bottom:20rpx" bindtap="selectScript" data-id="relative">
+        <view class="script-card-icon" style="background:linear-gradient(135deg,var(--warning-color),#d97706)">
+          <t-icon name="user" size="44rpx" color="#ffffff" />
+        </view>
+        <view class="flex-1">
+          <view class="flex flex-center mb-xs" style="gap:16rpx;justify-content:flex-start">
+            <text class="text-md font-bold">冒充熟人诈骗</text>
+            <text class="badge badge-warning">中等难度</text>
+          </view>
+          <text class="text-sm text-secondary block" style="line-height:1.4;margin-bottom:12rpx">诈骗者冒充您的亲友，以紧急情况为由请求汇款，利用情感操控</text>
+          <view class="flex" style="gap:12rpx">
+            <text class="tag tag-warning">熟人诈骗</text>
+            <text class="tag tag-warning">情感操控</text>
+          </view>
+        </view>
+        <view class="flex-center" style="margin-left:16rpx;flex-shrink:0">
+          <t-icon name="chevron-right" size="36rpx" color="var(--text-color-tertiary)" />
+        </view>
+      </view>
+
+      <!-- 投资理财 -->
+      <view class="card-featured flex stagger-3" style="--gradient-primary:linear-gradient(135deg,var(--success-color),#059669);margin-bottom:20rpx" bindtap="selectScript" data-id="investment">
+        <view class="script-card-icon" style="background:linear-gradient(135deg,var(--success-color),#059669)">
+          <t-icon name="chart" size="44rpx" color="#ffffff" />
+        </view>
+        <view class="flex-1">
+          <view class="flex flex-center mb-xs" style="gap:16rpx;justify-content:flex-start">
+            <text class="text-md font-bold">投资理财诈骗</text>
+            <text class="badge badge-warning">中等难度</text>
+          </view>
+          <text class="text-sm text-secondary block" style="line-height:1.4;margin-bottom:12rpx">以高收益投资机会为诱饵，诱导您投入资金，实为非法集资陷阱</text>
+          <view class="flex" style="gap:12rpx">
+            <text class="tag tag-warning">高收益陷阱</text>
+            <text class="tag tag-warning">非法集资</text>
+          </view>
+        </view>
+        <view class="flex-center" style="margin-left:16rpx;flex-shrink:0">
+          <t-icon name="chevron-right" size="36rpx" color="var(--text-color-tertiary)" />
+        </view>
+      </view>
+
+      <!-- 网购客服 -->
+      <view class="card-featured flex stagger-4" style="--gradient-primary:linear-gradient(135deg,var(--info-color),#2563eb);margin-bottom:20rpx" bindtap="selectScript" data-id="online">
+        <view class="script-card-icon" style="background:linear-gradient(135deg,var(--info-color),#2563eb)">
+          <t-icon name="shop" size="44rpx" color="#ffffff" />
+        </view>
+        <view class="flex-1">
+          <view class="flex flex-center mb-xs" style="gap:16rpx;justify-content:flex-start">
+            <text class="text-md font-bold">网购客服诈骗</text>
+            <text class="badge badge-info">入门难度</text>
+          </view>
+          <text class="text-sm text-secondary block" style="line-height:1.4;margin-bottom:12rpx">冒充电商客服，以退款、补偿为由骗取信息或钱财，钓鱼链接陷阱</text>
+          <view class="flex" style="gap:12rpx">
+            <text class="tag tag-info">网购诈骗</text>
+            <text class="tag tag-info">钓鱼链接</text>
+          </view>
+        </view>
+        <view class="flex-center" style="margin-left:16rpx;flex-shrink:0">
+          <t-icon name="chevron-right" size="36rpx" color="var(--text-color-tertiary)" />
+        </view>
+      </view>
+    </view>
+
+    <!-- 学习提示 -->
+    <view class="flex card-bordered bg-warning-light mx-lg" style="gap:12rpx;padding:20rpx 24rpx">
+      <t-icon name="lightbulb" size="32rpx" color="var(--warning-color)" />
+      <text class="text-sm text-secondary flex-1">提示：体验不同剧本可以学习识别各类诈骗手法，提升防骗能力</text>
+    </view>
+  </view>
+
+  <!-- ========== 聊天对话界面 ========== -->
+  <view class="chat-container anim-fadeIn" wx:if="{{selectedScript}}">
+
+    <!-- 顶部导航 -->
+    <view class="chat-nav flex-between">
+      <view class="nav-left" bindtap="backToList">
+        <t-icon name="chevron-left" size="48rpx" color="var(--text-color-primary)" />
+      </view>
+      <view class="flex-1 text-center">
+        <text class="nav-title">{{currentScript.name}}</text>
+        <view class="nav-status flex-center" style="gap:8rpx;margin-top:4rpx">
+          <view class="status-dot"></view>
+          <text class="text-xs text-tertiary">模拟演练中</text>
+        </view>
+      </view>
+      <view class="nav-left" bindtap="showScriptInfo">
+        <t-icon name="info-circle" size="48rpx" color="var(--text-color-primary)" />
+      </view>
+    </view>
+
+    <!-- 警觉指数条 -->
+    <view class="suspicion-bar">
+      <view class="flex flex-center" style="gap:8rpx;font-size:var(--font-size-sm);color:var(--text-color-secondary);margin-right:16rpx;flex-shrink:0">
+        <t-icon name="warning" size="24rpx" color="{{suspicionScore >= 60 ? 'var(--danger-color)' : 'var(--success-color)'}}" />
+        <text>警觉指数</text>
+      </view>
+      <view class="suspicion-track">
+        <view class="suspicion-fill {{suspicionScore >= 60 ? 'high' : 'low'}}" style="width: {{suspicionScore}}%"></view>
+      </view>
+      <text class="suspicion-value {{suspicionScore >= 60 ? 'high' : ''}}">{{suspicionScore}}%</text>
+    </view>
+
+    <!-- 消息列表 -->
+    <scroll-view scroll-y class="chat-messages" scroll-top="{{scrollTop}}" scroll-with-animation enhanced bindscrolltoupper="loadMore">
+      
+      <!-- 开始提示 -->
+      <view class="chat-tip">
+        <view class="tip-line"></view>
+        <text class="text-xs text-tertiary" style="padding:0 20rpx;white-space:nowrap">模拟开始，请保持警惕</text>
+        <view class="tip-line"></view>
+      </view>
+
+      <view class="message-list">
+        <block wx:for="{{messages}}" wx:key="id">
+          
+          <!-- AI 消息 -->
+          <view class="message-item ai anim-scaleIn" wx:if="{{item.role === 'ai'}}">
+            <view class="ai-avatar">
+              <t-icon name="user" size="36rpx" color="#ffffff" />
+            </view>
+            <view class="message-main">
+              <text class="message-sender">{{currentScript.name}}</text>
+              <view class="card bubble-ai">
+                <text class="bubble-text">{{item.content}}</text>
+              </view>
+            </view>
+          </view>
+
+          <!-- 用户消息 -->
+          <view class="message-item user anim-scaleIn" wx:if="{{item.role === 'user'}}">
+            <view class="message-main user-main">
+              <view class="bg-primary-light bubble-user">
+                <text class="bubble-text user-text">{{item.content}}</text>
+              </view>
+            </view>
+            <view class="user-avatar">
+              <text class="avatar-text">我</text>
+            </view>
+          </view>
+        </block>
+
+        <!-- 打字中动画 -->
+        <view class="message-item ai typing" wx:if="{{isTyping}}">
+          <view class="ai-avatar">
+            <t-icon name="user" size="36rpx" color="#ffffff" />
+          </view>
+          <view class="message-main">
+            <text class="message-sender">{{currentScript.name}}</text>
+            <view class="card bubble-ai">
+              <view class="typing-dots">
+                <view class="dot"></view>
+                <view class="dot"></view>
+                <view class="dot"></view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+
+    <!-- 快捷回复 -->
+    <view class="quick-reply-section" wx:if="{{quickReplies.length > 0 && !isTyping}}">
+      <scroll-view scroll-x class="quick-scroll">
+        <view class="quick-list">
+          <view class="quick-item tag tag-primary" wx:for="{{quickReplies}}" wx:key="index" bindtap="sendQuickReply" data-text="{{item}}">
+            <text>{{item}}</text>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+
+    <!-- 输入区域 -->
+    <view class="input-section flex-between" style="padding:16rpx 24rpx;padding-bottom:calc(16rpx + constant(safe-area-inset-bottom));padding-bottom:calc(16rpx + env(safe-area-inset-bottom))">
+      <view class="input-wrapper">
+        <input class="chat-input" type="text" placeholder="输入你的回复..." value="{{inputText}}" bindinput="onInput" bindconfirm="sendMessage" confirm-type="send" />
+      </view>
+      <view class="send-btn {{inputText.trim() ? 'active' : ''}}" bindtap="sendMessage">
+        <text>发送</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- ========== 开始提示弹窗 ========== -->
+  <t-popup visible="{{showStartTip}}" bind:visible-change="onTipVisibleChange" placement="center">
+    <view class="card start-popup anim-scaleIn">
+      <view class="popup-icon" style="background:rgba(239,68,68,0.12)">
+        <t-icon name="error-circle" size="56rpx" color="var(--danger-color)" />
+      </view>
+      <text class="popup-title">即将开始模拟</text>
+      <text class="popup-subtitle">{{currentScript.name}} · {{currentScript.difficultyText}}</text>
+      
+      <view class="divider"></view>
+
+      <text class="popup-desc">{{currentScript.description}}</text>
+
+      <view class="flex bg-warning-light card-bordered mb-lg" style="gap:12rpx;padding:16rpx 20rpx">
+        <t-icon name="info-circle" size="28rpx" color="var(--warning-color)" />
+        <text class="text-sm flex-1 text-left" style="color:var(--warning-color)">这是模拟环境，所有对话都是虚构的，请勿当真</text>
+      </view>
+
+      <view class="popup-actions flex" style="gap:20rpx">
+        <t-button theme="default" size="large" block bind:tap="onTipVisibleChange" data-visible="false">取消</t-button>
+        <t-button theme="danger" size="large" block bind:tap="startSimulation">开始体验</t-button>
+      </view>
+    </view>
+  </t-popup>
+
+  <!-- ========== 结束总结弹窗 ========== -->
+  <t-popup visible="{{showSummary}}" bind:visible-change="onSummaryVisibleChange" placement="center">
+    <view class="card summary-popup anim-scaleIn">
+      <view class="summary-icon" style="background:rgba(var(--primary-rgb, 0, 180, 216), 0.12)">
+        <t-icon name="flag" size="56rpx" color="var(--primary-color)" />
+      </view>
+      <text class="summary-title">模拟结束</text>
+
+      <!-- 评估徽章 -->
+      <view class="result-badge {{suspicionScore >= 80 ? 'excellent' : suspicionScore >= 60 ? 'good' : 'poor'}}">
+        {{suspicionScore >= 80 ? '防骗达人' : suspicionScore >= 60 ? '警惕性强' : '需要提高'}}
+      </view>
+
+      <!-- 统计卡片 -->
+      <view class="card stats-card" style="padding:24rpx;margin-bottom:24rpx">
+        <view class="flex-1 text-center">
+          <text class="stat-value">{{responseCount}}</text>
+          <text class="stat-label">对话轮次</text>
+        </view>
+        <view class="divider-vertical"></view>
+        <view class="flex-1 text-center">
+          <text class="stat-value {{suspicionScore >= 60 ? 'good' : ''}}">{{suspicionScore}}%</text>
+          <text class="stat-label">警觉指数</text>
+        </view>
+      </view>
+
+      <!-- 分析内容 -->
+      <view class="card-bordered mb-md" style="padding:20rpx 24rpx;text-align:left">
+        <text class="analysis-title">AI 分析</text>
+        <text class="analysis-text">{{analysis}}</text>
+      </view>
+
+      <!-- 防骗要点 -->
+      <view class="card-bordered bg-success-light mb-lg" style="padding:20rpx 24rpx;text-align:left">
+        <text class="tips-title">防骗要点</text>
+        <view class="tip-list">
+          <view class="tip-item" wx:for="{{tips}}" wx:key="index">
+            <t-icon name="check-circle" size="28rpx" color="var(--success-color)" />
+            <text class="text-sm text-secondary flex-1" style="line-height:1.5">{{item}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 操作按钮 -->
+      <view class="flex flex-col" style="gap:16rpx">
+        <t-button theme="default" size="large" block bind:tap="backToList">返回剧本</t-button>
+        <t-button theme="primary" size="large" block bind:tap="restartSimulation">再体验一次</t-button>
+      </view>
+    </view>
+  </t-popup>
+  <!-- AI问答浮动按钮 -->
+  <view class="qa-float-btn flex flex-col flex-center" bindtap="openQA">
+    <t-icon name="chat" size="36rpx" color="#ffffff" />
+    <text class="text-xs" style="color:#ffffff;margin-top:4rpx">问 AI</text>
+  </view>
+</view>

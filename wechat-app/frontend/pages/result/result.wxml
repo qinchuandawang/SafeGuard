@@ -1,0 +1,158 @@
+<!-- pages/result/result.wxml - 检测结果页 -->
+
+<view class="result-page">
+  <!-- 自定义导航栏 -->
+  <view class="page-navbar">
+    <view class="page-nav-left" bindtap="onBack">
+      <t-icon name="chevron-left" size="48rpx" color="#333333" />
+    </view>
+    <text class="page-nav-title">检测结果</text>
+    <view class="page-nav-right"></view>
+  </view>
+
+  <!-- 页面内容 -->
+  <view class="page-content">
+
+    <!-- 结果状态卡片 -->
+    <view class="status-card card" style="border-left: 8rpx solid var(--{{resultLevel}}-color);">
+      <view class="status-icon-wrapper {{resultLevel}}">
+        <t-icon
+          name="{{resultIcon}}"
+          size="80rpx"
+          color="#ffffff"
+        />
+      </view>
+      <view class="status-info">
+        <text class="status-name">{{resultName}}</text>
+        <view class="badge badge-{{resultLevel}}">{{resultBadge}}</view>
+      </view>
+    </view>
+
+    <!-- 置信度卡片 -->
+    <view class="confidence-card card">
+      <view class="confidence-header">
+        <t-icon name="chart" size="36rpx" color="var(--primary-color)" />
+        <text class="card-title">置信度分析</text>
+      </view>
+
+      <!-- 主置信度 -->
+      <view class="main-confidence">
+        <text class="confidence-label">检测置信度</text>
+        <view class="confidence-ring">
+          <view
+            class="ring-bg {{resultLevel}}"
+            style="--percent: {{confidencePercent}}%"
+          ></view>
+          <view class="ring-fill"></view>
+          <view class="ring-text">
+            <text class="ring-value">{{confidenceText}}%</text>
+            <text class="ring-label">置信度</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 概率分布 -->
+      <view class="probability-section">
+        <view class="probability-item">
+          <view class="probability-header">
+            <view class="probability-dot" style="background: var(--success-color);"></view>
+            <text class="probability-label">真实概率</text>
+            <text class="probability-value" style="color: var(--success-color);">{{realText}}%</text>
+          </view>
+          <view class="progress-bar">
+            <view
+              class="progress-bar-fill success"
+              style="width: {{realPercent}}%"
+            ></view>
+          </view>
+        </view>
+
+        <view class="probability-item">
+          <view class="probability-header">
+            <view class="probability-dot" style="background: var(--danger-color);"></view>
+            <text class="probability-label">伪造概率</text>
+            <text class="probability-value" style="color: var(--danger-color);">{{fakeText}}%</text>
+          </view>
+          <view class="progress-bar">
+            <view
+              class="progress-bar-fill danger"
+              style="width: {{fakePercent}}%"
+            ></view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- AI分析报告 -->
+    <view class="card mb-md">
+      <view class="section-header">
+        <t-icon name="document" size="36rpx" color="var(--primary-color)" />
+        <text class="card-title">AI 分析报告</text>
+      </view>
+      <view class="report-content">
+        <text>{{reportContent}}</text>
+      </view>
+    </view>
+
+    <!-- 风险特征 -->
+    <view class="card-bordered bg-danger-light mb-md" wx:if="{{features.length > 0}}">
+      <view class="section-header">
+        <t-icon name="search" size="36rpx" color="var(--danger-color)" />
+        <text class="card-title" style="color: var(--danger-color);">检测到的风险特征</text>
+      </view>
+      <view class="features-list">
+        <view
+          class="feature-item"
+          wx:for="{{features}}"
+          wx:key="index"
+        >
+          <view class="feature-dot"></view>
+          <text>{{item}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 防范建议 -->
+    <view class="card-bordered bg-success-light mb-md">
+      <view class="section-header">
+        <t-icon name="help-circle" size="36rpx" color="var(--success-color)" />
+        <text class="card-title" style="color: var(--success-color);">防范建议</text>
+      </view>
+      <view class="advice-list">
+        <view
+          class="advice-item"
+          wx:for="{{adviceList}}"
+          wx:key="index"
+        >
+          <view class="tag tag-primary advice-number">{{index + 1}}</view>
+          <text class="advice-text">{{item}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 温馨提示 -->
+    <view class="card-bordered bg-warning-light mb-md">
+      <view class="section-header" style="border-bottom: none; margin-bottom: 12rpx;">
+        <t-icon name="info-circle" size="32rpx" color="var(--warning-color)" />
+        <text style="font-size: 24rpx; font-weight: 600; color: var(--warning-color); margin-left: 8rpx;">温馨提示</text>
+      </view>
+      <text class="tips-content">检测结果仅供参考，不能作为法律证据。如有疑问，请拨打反诈热线 96110 咨询。</text>
+    </view>
+
+  </view>
+
+  <!-- 底部操作栏 -->
+  <view class="bottom-actions">
+    <view class="action-item" bindtap="onShare">
+      <t-icon name="share" size="40rpx" color="var(--text-color-secondary)" />
+      <text>分享</text>
+    </view>
+    <button class="btn btn-primary" bindtap="detectAgain">
+      再次检测
+    </button>
+    <view class="action-item" bindtap="onCollect">
+      <t-icon name="{{isCollected ? 'bookmark-checked' : 'bookmark'}}" size="40rpx" color="{{isCollected ? '#f59e0b' : 'var(--text-color-secondary)'}}" />
+      <text>收藏</text>
+    </view>
+  </view>
+</view>

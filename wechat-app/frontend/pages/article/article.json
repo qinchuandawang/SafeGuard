@@ -1,0 +1,10 @@
+{
+  "usingComponents": {
+    "t-navbar": "tdesign-miniprogram/navbar/navbar",
+    "t-icon": "tdesign-miniprogram/icon/icon",
+    "t-image": "tdesign-miniprogram/image/image",
+    "t-button": "tdesign-miniprogram/button/button"
+  },
+  "navigationBarTitleText": "文章详情",
+  "navigationStyle": "custom"
+}
