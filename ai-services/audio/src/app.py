@@ -30,7 +30,7 @@ from utils import (
 app = Flask(__name__)
 
 # ---- 配置 ---- #
-MODEL_DIR = Path(os.getenv("MODEL_DIR", "outputs/wav2vec2-mid/best"))
+MODEL_DIR = Path(os.getenv("MODEL_DIR", "pretrained/asvspoof-finetuned"))
 FALLBACK_MODEL = os.getenv("FALLBACK_MODEL", "true").lower() == "true"
 FALLBACK_MODEL_DIR = Path("pretrained/wav2vec2-base")
 SAMPLE_RATE = int(os.getenv("SAMPLE_RATE", "16000"))

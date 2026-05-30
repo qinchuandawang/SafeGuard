@@ -4,8 +4,7 @@
 
 $models = @(
     @{Name="视频检测模型 (XceptionNet, 245MB)"; Url=""; Path="ai-services/video/pretrained/best_model.pth"},
-    @{Name="音频检测模型 (Wav2Vec2 ASVspoof5, 361MB)"; Url=""; Path="ai-services/audio/pretrained/asvspoof-finetuned/model.safetensors"},
-    @{Name="预训练基座模型 (Wav2Vec2 Base, 363MB)"; Url=""; Path="ai-services/audio/pretrained/wav2vec2-base/model.safetensors"}
+    @{Name="音频检测模型 (Wav2Vec2 ASVspoof5, 361MB)"; Url=""; Path="ai-services/audio/pretrained/asvspoof-finetuned/model.safetensors"}
 )
 
 Write-Host "=== SafeGuard 模型文件下载 ===" -ForegroundColor Cyan
