@@ -21,11 +21,16 @@ public class RAGConfig {
     private int semanticChunkMaxSize = 512;
     private double semanticSimilarityThreshold = 0.75;
     private int hnswTopK = 20;
+    private int rerankTopK = 10;
     private int finalTopK = 5;
     private double keywordBoostFactor = 1.2;
+    private double dedupThreshold = 0.92;
+    private boolean allowInMemoryFallback = false;
+    private String rulesPath = "config/rules.json";
 
     @PostConstruct
     public void validate() {
-        log.info("RAG配置加载完成: collection={}, dim={}", collectionName, embeddingDimension);
+        log.info("RAG配置加载完成: collection={}, dim={}, rerankTopK={}, dedupThreshold={}, allowInMemoryFallback={}",
+                collectionName, embeddingDimension, rerankTopK, dedupThreshold, allowInMemoryFallback);
     }
 }

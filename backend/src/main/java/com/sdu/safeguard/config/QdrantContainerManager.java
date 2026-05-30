@@ -44,6 +44,9 @@ public class QdrantContainerManager {
     @Value("${rag.qdrant-port:6333}")
     private int qdrantPort;
 
+    @Value("${rag.allow-in-memory-fallback:false}")
+    private boolean allowInMemoryFallback;
+
     private boolean startedByMe = false;
 
     @PostConstruct
@@ -57,8 +60,18 @@ public class QdrantContainerManager {
             return;
         }
         if (!isDockerAvailable()) {
-            log.warn("Docker 不可用，请手动启动 Qdrant: docker compose up -d qdrant");
-            return;
+            if (allowInMemoryFallback) {
+                log.warn("Qdrant 未运行且 Docker 不可用, 使用内存回退模式。"
+                        + "生产环境请启动 Qdrant 并设置 rag.allow-in-memory-fallback=false");
+                return;
+            }
+            throw new IllegalStateException(
+                "Qdrant 未运行 且 Docker 不可用。请执行以下任一操作启动 Qdrant：\n" +
+                "  1) docker compose up -d qdrant\n" +
+                "  2) 或直接运行: docker run -d --name safeguard-qdrant -p 6333:6333 -p 6334:6334 qdrant/qdrant\n" +
+                "  3) 或手动下载 Qdrant 二进制文件运行\n" +
+                "若要在没有 Qdrant 的环境下开发调试，请在 application.yml 中设置: rag.allow-in-memory-fallback: true"
+            );
         }
         startQdrantContainer();
     }

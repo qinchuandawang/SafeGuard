@@ -7,13 +7,11 @@ import com.sdu.safeguard.rag.RAGService;
 import com.sdu.safeguard.util.PromptLoader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.*;
 
@@ -26,8 +24,18 @@ public class CoTService {
     private final PromptLoader promptLoader;
     private final RAGService ragService;
     private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper;
 
     public CoTResult analyzeWithCoT(String text) {
+        return analyzeWithCoT(text, null);
+    }
+
+    /**
+     * 支持外部传入 RAG context 的重载版本。
+     * @param text  待分析文本
+     * @param externalKnowledge 外部 RAG context（如果为 null 则内部自动查询）
+     */
+    public CoTResult analyzeWithCoT(String text, String externalKnowledge) {
         long startTime = System.currentTimeMillis();
 
         if (text == null || text.isBlank()) {
@@ -44,8 +52,14 @@ public class CoTService {
             return empty;
         }
 
-        List<RagQueryResult> ragResults = ragService.query(text);
-        String knowledge = ragService.formatRagContext(ragResults);
+        String knowledge;
+        if (externalKnowledge != null && !externalKnowledge.isBlank()) {
+            // 使用外部传入的 RAG context（避免 Orchestrator 层面的冗余 RAG 调用）
+            knowledge = externalKnowledge;
+        } else {
+            List<RagQueryResult> ragResults = ragService.query(text);
+            knowledge = ragService.formatRagContext(ragResults);
+        }
 
         String prompt = promptLoader.loadPrompt("cot_analysis", Map.of(
                 "text", text,
@@ -62,6 +76,7 @@ public class CoTService {
         return result;
     }
 
+    @SuppressWarnings("unchecked")
     CoTResult parseCoTResult(String llmOutput, String originalInput) {
         CoTResult.CoTResultBuilder builder = CoTResult.builder()
                 .originalInput(originalInput);
@@ -78,47 +93,37 @@ public class CoTService {
             int jsonEnd = llmOutput.lastIndexOf("}");
             if (jsonStart >= 0 && jsonEnd > jsonStart) {
                 String jsonPart = llmOutput.substring(jsonStart, jsonEnd + 1);
+                Map<String, Object> parsed = objectMapper.readValue(jsonPart,
+                        new TypeReference<Map<String, Object>>() {});
 
-                scamType = extractJsonField(jsonPart, "scamType", scamType);
-                riskLevel = extractJsonField(jsonPart, "riskLevel", riskLevel);
-
-                String probStr = extractJsonField(jsonPart, "riskProbability", "0.0");
-                try {
-                    riskProbability = Double.parseDouble(probStr);
-                } catch (NumberFormatException ignored) {}
-
-                advice = extractJsonField(jsonPart, "advice", "");
-
-                String pointsStr = extractJsonField(jsonPart, "suspiciousPoints", "[]");
-                if (pointsStr.startsWith("[")) {
-                    pointsStr = pointsStr.substring(1, pointsStr.length() - 1);
-                    for (String p : pointsStr.split(",")) {
-                        String clean = p.replace("\"", "").trim();
-                        if (!clean.isEmpty()) suspiciousPoints.add(clean);
+                if (parsed.containsKey("scamType")) scamType = parsed.get("scamType").toString();
+                if (parsed.containsKey("riskLevel")) riskLevel = parsed.get("riskLevel").toString();
+                if (parsed.containsKey("riskProbability")) {
+                    try {
+                        riskProbability = Double.parseDouble(parsed.get("riskProbability").toString());
+                    } catch (NumberFormatException ignored) {}
+                }
+                if (parsed.containsKey("advice")) advice = parsed.get("advice").toString();
+                if (parsed.containsKey("suspiciousPoints") && parsed.get("suspiciousPoints") instanceof List<?> rawPoints) {
+                    for (Object p : rawPoints) {
+                        if (p != null) suspiciousPoints.add(p.toString());
                     }
                 }
-
-                String stepsStr = extractJsonField(jsonPart, "reasoningSteps", "[]");
-                if (stepsStr.startsWith("[")) {
-                    stepsStr = stepsStr.substring(1, stepsStr.length() - 1);
-                    for (String s : stepsStr.split(",")) {
-                        String clean = s.replace("\"", "").trim();
-                        if (!clean.isEmpty()) steps.add(clean);
-                    }
-                }
-            }
-
-            String[] lines = llmOutput.split("\n");
-            for (String line : lines) {
-                String trimmed = line.trim();
-                if (trimmed.matches(".*[Step步骤]\\s*\\d+.*") || trimmed.startsWith("-") || trimmed.startsWith("•")) {
-                    if (!steps.contains(trimmed)) {
-                        steps.add(trimmed);
+                if (parsed.containsKey("reasoningSteps") && parsed.get("reasoningSteps") instanceof List<?> rawSteps) {
+                    for (Object s : rawSteps) {
+                        if (s != null) steps.add(s.toString());
                     }
                 }
             }
         } catch (Exception e) {
-            log.warn("CoT结果解析失败: {}", e.getMessage());
+            log.debug("CoT JSON解析失败，回退到行解析: {}", e.getMessage());
+            String[] lines = llmOutput.split("\n");
+            for (String line : lines) {
+                String trimmed = line.trim();
+                if (trimmed.matches(".*[Step步骤]\\s*\\d+.*") || trimmed.startsWith("-") || trimmed.startsWith("•")) {
+                    if (!steps.contains(trimmed)) steps.add(trimmed);
+                }
+            }
         }
 
         if (steps.isEmpty()) {
@@ -136,40 +141,6 @@ public class CoTService {
                 .suspiciousPoints(suspiciousPoints)
                 .advice(advice)
                 .build();
-    }
-
-    private String extractJsonField(String json, String field, String defaultVal) {
-        String searchKey = "\"" + field + "\"";
-        int keyIdx = json.indexOf(searchKey);
-        if (keyIdx < 0) return defaultVal;
-        int colonIdx = json.indexOf(":", keyIdx + searchKey.length());
-        if (colonIdx < 0) return defaultVal;
-        int start = colonIdx + 1;
-        while (start < json.length() && Character.isWhitespace(json.charAt(start))) start++;
-        if (start >= json.length()) return defaultVal;
-
-        if (json.charAt(start) == '"') {
-            int end = start + 1;
-            while (end < json.length() && json.charAt(end) != '"') {
-                if (json.charAt(end) == '\\') end++;
-                end++;
-            }
-            return end < json.length() ? json.substring(start + 1, end) : defaultVal;
-        } else if (json.charAt(start) == '[') {
-            int end = start + 1;
-            int depth = 1;
-            while (end < json.length() && depth > 0) {
-                if (json.charAt(end) == '[') depth++;
-                if (json.charAt(end) == ']') depth--;
-                end++;
-            }
-            return json.substring(start, Math.min(end, json.length()));
-        } else {
-            int end = start;
-            while (end < json.length() && (Character.isDigit(json.charAt(end))
-                    || json.charAt(end) == '.')) end++;
-            return json.substring(start, end);
-        }
     }
 
     private String callLLM(String prompt) {

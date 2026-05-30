@@ -44,16 +44,13 @@ public class DetectionController {
         if (file == null || file.isEmpty()) {
             return Result.error("音频文件不能为空");
         }
-        String filePath = null;
         try {
-            filePath = saveToTemp(file);
-            AudioDetectionResult result = detectionService.detectAudio(filePath);
+            // 直接上传 MultipartFile 到检测服务，避免跨容器文件路径问题
+            AudioDetectionResult result = detectionService.detectAudioWithMultipart(file);
             return Result.success(result);
-        } catch (IOException e) {
-            log.error("音频文件保存失败", e);
-            return Result.error("文件处理失败");
-        } finally {
-            deleteQuietly(filePath);
+        } catch (Exception e) {
+            log.error("音频检测失败: {}", e.getMessage(), e);
+            return Result.error("音频检测失败：" + e.getMessage());
         }
     }
 
@@ -123,13 +120,13 @@ public class DetectionController {
         if (task == null) {
             return Result.error("任务不存在");
         }
-        return Result.success(Map.of(
-                "taskId", task.getTaskId(),
-                "status", task.getStatus(),
-                "progress", task.getProgress(),
-                "result", task.getResult(),
-                "error", task.getError()
-        ));
+        Map<String, Object> resultMap = new java.util.LinkedHashMap<>();
+        resultMap.put("taskId", task.getTaskId());
+        resultMap.put("status", task.getStatus());
+        resultMap.put("progress", task.getProgress());
+        resultMap.put("result", task.getResult());
+        resultMap.put("error", task.getError());
+        return Result.success(resultMap);
     }
 
     @GetMapping(value = "/task/{taskId}/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)

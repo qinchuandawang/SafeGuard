@@ -1,16 +1,19 @@
 package com.sdu.safeguard.rag;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import com.sdu.safeguard.config.RAGConfig;
 import com.sdu.safeguard.dto.RagQueryResult;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -23,6 +26,14 @@ public class RAGService {
     private final EmbeddingService embeddingService;
     private final QdrantService qdrantService;
     private final RAGConfig ragConfig;
+    private final RuleFilter ruleFilter;
+    private final QueryRewriter queryRewriter;
+
+    /** 知识文件内容哈希，用于自动检测文件变更 */
+    private volatile String knowledgeContentHash = "";
+
+    @Qualifier("ragResultCache")
+    private final Cache<String, List<RagQueryResult>> ragResultCache;
 
     private static final Map<String, Double> FRAUD_KEYWORDS = new LinkedHashMap<>();
 
@@ -64,9 +75,8 @@ public class RAGService {
 
     public void loadKnowledgeDocuments() {
         try {
-            // 检查集合是否已有数据，避免每次重启重复插入
             if (qdrantService.getCollectionSize() > 0) {
-                log.info("知识文档已存在，跳过加载（共 {} 条）", qdrantService.getCollectionSize());
+                log.info("知识文档已存在，跳过加载（共 {} 条）。如需重新加载请调用 /api/rag/reload", qdrantService.getCollectionSize());
                 return;
             }
 
@@ -75,6 +85,13 @@ public class RAGService {
                 log.warn("反诈知识文档为空或未找到");
                 return;
             }
+
+            String newHash = md5Hex(document);
+            if (!knowledgeContentHash.isEmpty() && knowledgeContentHash.equals(newHash)) {
+                log.info("知识文档无变化 (hash={})，跳过加载", newHash);
+                return;
+            }
+            knowledgeContentHash = newHash;
 
             Map<String, String> sections = splitByMajorSection(document);
 
@@ -111,69 +128,255 @@ public class RAGService {
             }
 
             qdrantService.batchInsert(allChunkIds, allVectors, allMetadatas);
-            log.info("知识文档加载完成: {} 条切块已存入Qdrant", allChunkIds.size());
+            log.info("知识文档加载完成: hash={}, {} 条切块已存入Qdrant", newHash, allChunkIds.size());
 
         } catch (Exception e) {
             log.error("加载知识文档失败", e);
         }
     }
 
+    private String md5Hex(String content) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] digest = md.digest(content.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : digest) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            return String.valueOf(content.hashCode());
+        }
+    }
+
+    /**
+     * 完整的 RAG 查询流程:
+     * 1. 规则过滤 (RuleFilter) — 匹配已知欺诈模式
+     * 2. 查询改写 (QueryRewriter) — 扩展短查询
+     * 3. 混合切块查询
+     * 4. 向量检索
+     * 5. 关键词打分
+     * 6. Cross-encoder rerank
+     * 7. 多因子重排序
+     * 8. Embedding 去重
+     * 9. Top-5 返回
+     */
     public List<RagQueryResult> query(String queryText) {
         if (queryText == null || queryText.isBlank()) {
             return List.of();
         }
 
+        String cacheKey = "rag:" + queryText.toLowerCase().trim();
+        List<RagQueryResult> cached = ragResultCache.getIfPresent(cacheKey);
+        if (cached != null) {
+            log.debug("RAG 缓存命中: query=\"{}\"", queryText);
+            return cached;
+        }
+
         long startTime = System.currentTimeMillis();
 
-        List<String> queryChunks = hybridChunker.chunkQuery(queryText);
-        log.debug("查询切块: {} 块", queryChunks.size());
+        // 1. 规则过滤
+        RuleFilter.RuleResult ruleResult = ruleFilter.match(queryText);
+
+        // 2. 查询改写
+        QueryRewriter.RewriteResult rewriteResult = queryRewriter.rewrite(queryText);
+        String searchQuery = rewriteResult.getRewritten();
+        log.debug("查询改写: \"{}\" → \"{}\"", queryText, searchQuery);
+
+        // 3. 检测嵌入服务可用性
+        boolean embeddingAvailable = embeddingService.isAvailable();
+        if (!embeddingAvailable) {
+            log.warn("嵌入服务不可用，仅执行关键词检索");
+        }
+
+        List<String> queryChunks = hybridChunker.chunkQuery(searchQuery);
+        log.debug("查询切块: {} 块, embeddingAvailable={}", queryChunks.size(), embeddingAvailable);
 
         List<RagQueryResult> allResults = new ArrayList<>();
 
         for (String chunk : queryChunks) {
-            List<Float> queryVector = embeddingService.getEmbedding(chunk);
+            Set<String> matchedKeywords = matchKeywords(queryText);
 
-            Set<String> matchedKeywords = matchKeywords(chunk);
+            // 如果规则过滤命中了具体类别，构建 payload filter 缩小搜索范围
+            Map<String, String> payloadFilter = null;
+            if (ruleResult.isMatched() && !ruleResult.getCategories().isEmpty()) {
+                // 取第一个匹配类别作为 filter
+                String cat = ruleResult.getCategories().get(0);
+                if (cat.equals("SCAM_TYPE") || cat.equals("IMPERSONATION")) {
+                    payloadFilter = new HashMap<>();
+                    // 取匹配的关键词作为 tag 过滤
+                    if (!ruleResult.getMatchedKeywords().isEmpty()) {
+                        String firstTag = ruleResult.getMatchedKeywords().get(0);
+                        payloadFilter.put("tags", firstTag);
+                    }
+                }
+            }
 
-            List<QdrantService.ScoredResult> vectorResults = qdrantService.search(queryVector,
-                    ragConfig.getHnswTopK());
+            List<QdrantService.ScoredResult> vectorResults;
+            if (embeddingAvailable) {
+                List<Float> queryVector = embeddingService.getEmbedding(chunk);
+                vectorResults = qdrantService.search(queryVector, ragConfig.getHnswTopK(), payloadFilter);
+            } else {
+                List<Float> neighborVector = embeddingService.getEmbedding(chunk);
+                vectorResults = qdrantService.search(neighborVector, ragConfig.getHnswTopK(), payloadFilter);
+            }
 
             for (QdrantService.ScoredResult vr : vectorResults) {
                 @SuppressWarnings("unchecked")
                 Map<String, Object> meta = vr.metadata;
                 String content = (String) meta.getOrDefault("content", "");
-
                 double keywordScore = computeKeywordScore(content, matchedKeywords);
-
-                double reRankScore = vr.score * 0.6 + keywordScore * 0.4;
 
                 allResults.add(RagQueryResult.builder()
                         .chunkId(vr.chunkId)
                         .content(content)
                         .category((String) meta.getOrDefault("category", ""))
                         .source((String) meta.getOrDefault("source", ""))
-                        .score(reRankScore)
-                        .vectorScore(vr.score)
+                        .score(embeddingAvailable ? vr.score : keywordScore)
+                        .vectorScore(embeddingAvailable ? vr.score : 0.0)
                         .keywordScore(keywordScore)
-                        .reRankScore(reRankScore)
+                        .reRankScore(vr.score)
                         .tags(convertTags(meta.get("tags")))
                         .metadata(meta)
                         .build());
             }
         }
 
-        List<RagQueryResult> deduplicated = semanticDeduplicate(allResults);
+        // 4. Cross-encoder rerank（仅在嵌入和 rerank 均可用时）
+        if (embeddingAvailable) {
+            allResults = applyRerank(searchQuery, allResults);
+        }
 
+        // 5. 多因子重排序
+        for (RagQueryResult r : allResults) {
+            boolean hasRerank = r.getReRankScore() >= 0;
+            double combinedScore;
+            if (embeddingAvailable && hasRerank) {
+                combinedScore = r.getReRankScore() * 0.5 + r.getVectorScore() * 0.3 + r.getKeywordScore() * 0.2;
+            } else if (embeddingAvailable) {
+                combinedScore = r.getVectorScore() * 0.6 + r.getKeywordScore() * 0.4;
+            } else {
+                combinedScore = r.getKeywordScore();
+            }
+            r.setScore(combinedScore);
+        }
+
+        // 6. Embedding 去重
+        List<RagQueryResult> deduplicated = embeddingDeduplicate(allResults);
+
+        // 7. 排序取 Top-K
         List<RagQueryResult> finalResults = deduplicated.stream()
                 .sorted((a, b) -> Double.compare(b.getScore(), a.getScore()))
                 .limit(ragConfig.getFinalTopK())
                 .collect(Collectors.toList());
 
-        long cost = System.currentTimeMillis() - startTime;
-        log.info("RAG检索完成: candidates={}, final={}, cost={}ms",
-                allResults.size(), finalResults.size(), cost);
+        // 8. 注入规则过滤结果
+        if (ruleResult.isMatched()) {
+            for (RagQueryResult r : finalResults) {
+                Map<String, Object> enrichedMeta = new HashMap<>(
+                        r.getMetadata() != null ? r.getMetadata() : new HashMap<>());
+                enrichedMeta.put("ruleFilter", Map.of(
+                        "matched", true,
+                        "riskScore", ruleResult.getRiskScore(),
+                        "matchedKeywords", ruleResult.getMatchedKeywords(),
+                        "categories", ruleResult.getCategories()
+                ));
+                r.setMetadata(enrichedMeta);
+            }
+        }
 
+        long cost = System.currentTimeMillis() - startTime;
+        log.info("RAG检索完成: candidates={}, final={}, embedding={}, rules={}, cost={}ms",
+                allResults.size(), finalResults.size(),
+                embeddingAvailable ? "可用" : "不可用", ruleResult.isMatched(), cost);
+
+        ragResultCache.put(cacheKey, finalResults);
         return finalResults;
+    }
+
+    /**
+     * Cross-encoder rerank：从 candidate 中取前 rerankTopK 条，
+     * 调用 rerank API，将 rerank score 写回。
+     */
+    private List<RagQueryResult> applyRerank(String query, List<RagQueryResult> candidates) {
+        if (candidates == null || candidates.isEmpty()) return candidates;
+
+        int rerankK = Math.min(ragConfig.getRerankTopK(), candidates.size());
+
+        List<RagQueryResult> topCandidates = candidates.stream()
+                .sorted((a, b) -> Double.compare(b.getScore(), a.getScore()))
+                .limit(rerankK)
+                .collect(Collectors.toList());
+
+        List<String> documents = topCandidates.stream()
+                .map(RagQueryResult::getContent)
+                .collect(Collectors.toList());
+
+        List<Double> rerankScores = embeddingService.rerank(query, documents);
+
+        boolean rerankAvailable = false;
+        for (int i = 0; i < topCandidates.size(); i++) {
+            if (i < rerankScores.size() && rerankScores.get(i) >= 0) {
+                topCandidates.get(i).setReRankScore(rerankScores.get(i));
+                if (rerankScores.get(i) >= 0) rerankAvailable = true;
+            }
+        }
+
+        if (!rerankAvailable) {
+            log.debug("Rerank 不可用，保持原有评分");
+        }
+
+        // 未参与 rerank 的候选维持原分
+        return candidates;
+    }
+
+    /**
+     * 基于 embedding 余弦相似度的去重，使用一次性批量获取优化 API 调用。
+     */
+    private List<RagQueryResult> embeddingDeduplicate(List<RagQueryResult> results) {
+        if (results == null || results.size() <= 1) return results;
+        if (!embeddingService.isAvailable()) {
+            // 嵌入不可用时不做去重（退化为简单位置去重）
+            return results;
+        }
+
+        double threshold = ragConfig.getDedupThreshold();
+        List<RagQueryResult> deduped = new ArrayList<>();
+        List<List<Float>> dedupedVectors = new ArrayList<>();
+        // 本地缓存避免重复 getEmbedding 调用
+        Map<String, List<Float>> localCache = new HashMap<>();
+
+        for (RagQueryResult result : results) {
+            if (result.getContent() == null) continue;
+
+            List<Float> vec = localCache.computeIfAbsent(result.getContent(),
+                    k -> embeddingService.getEmbedding(k));
+            boolean isDuplicate = false;
+
+            for (int i = 0; i < dedupedVectors.size(); i++) {
+                double sim = embeddingService.cosineSimilarity(vec, dedupedVectors.get(i));
+                if (sim > threshold) {
+                    isDuplicate = true;
+                    boolean currentRerankOk = deduped.get(i).getReRankScore() >= 0;
+                    boolean newRerankOk = result.getReRankScore() >= 0;
+                    boolean better = (newRerankOk && !currentRerankOk) ||
+                            (newRerankOk && currentRerankOk && result.getReRankScore() > deduped.get(i).getReRankScore()) ||
+                            (!newRerankOk && !currentRerankOk && result.getScore() > deduped.get(i).getScore());
+                    if (better) {
+                        deduped.set(i, result);
+                        dedupedVectors.set(i, vec);
+                    }
+                    break;
+                }
+            }
+
+            if (!isDuplicate) {
+                deduped.add(result);
+                dedupedVectors.add(vec);
+            }
+        }
+
+        return deduped;
     }
 
     public Set<String> matchKeywords(String text) {
@@ -200,46 +403,9 @@ public class RAGService {
         return Math.min(score / queryKeywords.size(), 1.0);
     }
 
-    private List<RagQueryResult> semanticDeduplicate(List<RagQueryResult> results) {
-        if (results == null || results.size() <= 1) return results;
-
-        List<RagQueryResult> deduped = new ArrayList<>();
-        for (RagQueryResult result : results) {
-            boolean isDuplicate = false;
-            int existingIdx = -1;
-            for (int i = 0; i < deduped.size(); i++) {
-                RagQueryResult existing = deduped.get(i);
-                if (computeTextSimilarity(result.getContent(), existing.getContent()) > 0.85) {
-                    if (result.getScore() > existing.getScore()) {
-                        existingIdx = i;
-                    }
-                    isDuplicate = true;
-                    break;
-                }
-            }
-            if (existingIdx >= 0) {
-                deduped.set(existingIdx, result);
-            } else if (!isDuplicate) {
-                deduped.add(result);
-            }
-        }
-        return deduped;
-    }
-
-    private double computeTextSimilarity(String s1, String s2) {
-        if (s1 == null || s2 == null) return 0.0;
-        if (s1.equals(s2)) return 1.0;
-        Set<String> set1 = new HashSet<>();
-        for (char c : s1.toCharArray()) set1.add(String.valueOf(c));
-        Set<String> set2 = new HashSet<>();
-        for (char c : s2.toCharArray()) set2.add(String.valueOf(c));
-        Set<String> intersection = new HashSet<>(set1);
-        intersection.retainAll(set2);
-        Set<String> union = new HashSet<>(set1);
-        union.addAll(set2);
-        return union.isEmpty() ? 0.0 : (double) intersection.size() / union.size();
-    }
-
+    /**
+     * 格式化 RAG 结果并附上规则过滤结果，用于注入 LLM Prompt。
+     */
     public String formatRagContext(List<RagQueryResult> results) {
         if (results == null || results.isEmpty()) {
             return "";
@@ -252,8 +418,24 @@ public class RAGService {
             sb.append("分类: ").append(r.getCategory()).append("\n");
             sb.append("内容: ").append(r.getContent()).append("\n");
             sb.append("相关度: ").append(String.format("%.2f", r.getScore())).append("\n");
+
+            // 如有规则过滤结果，附加显示
+            if (r.getMetadata() != null && r.getMetadata().get("ruleFilter") instanceof Map<?, ?> rf) {
+                sb.append("规则匹配: 是 (风险评分: ").append(rf.get("riskScore")).append(")\n");
+            }
         }
         return sb.toString();
+    }
+
+    // ========== 以下方法保持不变 ==========
+
+    public String formatRagContextWithRules(List<RagQueryResult> results, RuleFilter.RuleResult ruleResult) {
+        String context = formatRagContext(results);
+        String ruleContext = ruleFilter.formatForPrompt(ruleResult);
+        if (!ruleContext.isEmpty()) {
+            return ruleContext + "\n\n" + context;
+        }
+        return context;
     }
 
     private String loadDocumentFromResources(String path) {
@@ -335,6 +517,9 @@ public class RAGService {
 
     public void reloadKnowledge() {
         qdrantService.dropCollection();
+        ruleFilter.reload();
+        knowledgeContentHash = "";
+        ragResultCache.invalidateAll();
         loadKnowledgeDocuments();
     }
 

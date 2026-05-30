@@ -53,26 +53,18 @@ public class QdrantService {
             if (healthResp.getStatusCode().is2xxSuccessful()) {
                 useRealQdrant = true;
                 log.info("Qdrant 连接成功: {}:{}", ragConfig.getQdrantHost(), ragConfig.getQdrantPort());
-                ensureCollection();
+                ensureCollection(ragConfig.getCollectionName(), ragConfig.getEmbeddingDimension());
             } else {
-                log.warn("Qdrant 不可用, 使用回退模式");
-                useRealQdrant = false;
+                handleQdrantUnavailable("健康检查返回非 200");
             }
         } catch (Exception e) {
-            log.warn("Qdrant 连接失败 ({}:{}), 使用回退模式: {}",
-                    ragConfig.getQdrantHost(), ragConfig.getQdrantPort(), e.getMessage());
-            useRealQdrant = false;
+            handleQdrantUnavailable(e.getMessage());
         }
     }
 
-    @PreDestroy
-    public void cleanup() {
-        // Qdrant 客户端无需显式关闭（REST API 无连接池）
-    }
-
-    @SuppressWarnings("unchecked")
-    private void ensureCollection() {
-        String collectionName = ragConfig.getCollectionName();
+    /** 为指定集合创建/确保存在 */
+    public void ensureCollection(String collectionName, int dimension) {
+        if (!useRealQdrant) return;
         try {
             ResponseEntity<Map<String, Object>> resp = restTemplate.exchange(
                     baseUrl + "/collections/" + collectionName,
@@ -88,7 +80,7 @@ public class QdrantService {
         }
 
         Map<String, Object> vectorsConfig = new LinkedHashMap<>();
-        vectorsConfig.put("size", ragConfig.getEmbeddingDimension());
+        vectorsConfig.put("size", dimension);
         vectorsConfig.put("distance", "Cosine");
 
         Map<String, Object> request = new LinkedHashMap<>();
@@ -96,62 +88,83 @@ public class QdrantService {
 
         try {
             restTemplate.put(baseUrl + "/collections/" + collectionName, request);
-            log.info("集合创建完成: {}, dim={}, distance=Cosine",
-                    collectionName, ragConfig.getEmbeddingDimension());
+            log.info("集合创建完成: {}, dim={}, distance=Cosine", collectionName, dimension);
         } catch (Exception e) {
             log.error("创建 Qdrant 集合失败: {}", e.getMessage());
             useRealQdrant = false;
         }
     }
 
-    public void insert(String chunkId, List<Float> vector, Map<String, Object> metadata) {
-        if (useRealQdrant) {
-            insertToQdrant(chunkId, vector, metadata);
+    private void handleQdrantUnavailable(String reason) {
+        if (ragConfig.isAllowInMemoryFallback()) {
+            log.warn("Qdrant 不可用 ({}), 使用内存回退模式", reason);
+            useRealQdrant = false;
         } else {
-            insertToFallback(chunkId, vector, metadata);
+            throw new IllegalStateException("Qdrant 连接失败: " + reason);
         }
     }
 
-    private void insertToFallback(String chunkId, List<Float> vector, Map<String, Object> metadata) {
-        fallbackStore.computeIfAbsent(ragConfig.getCollectionName(), k -> new ConcurrentHashMap<>())
-                .put(chunkId, new StoredVector(vector, metadata));
+    @PreDestroy
+    public void cleanup() {}
+
+    // ============ 默认集合操作（RAG 知识库） ============
+
+    private String defaultCollection() {
+        return ragConfig.getCollectionName();
     }
 
-    @SuppressWarnings("unchecked")
-    private void insertToQdrant(String chunkId, List<Float> vector, Map<String, Object> metadata) {
-        Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("chunk_id", chunkId);
-        payload.put(CONTENT_FIELD, str(metadata.get("content")));
-        payload.put(CATEGORY_FIELD, str(metadata.get("category")));
-        payload.put(SOURCE_FIELD, str(metadata.get("source")));
-        payload.put(TAGS_FIELD, str(metadata.get("tags")));
-
-        Map<String, Object> point = new LinkedHashMap<>();
-        point.put("id", chunkId);
-        point.put("vector", vector);
-        point.put("payload", payload);
-
-        Map<String, Object> request = new LinkedHashMap<>();
-        request.put("points", List.of(point));
-
-        restTemplate.put(baseUrl + "/collections/" + ragConfig.getCollectionName() + "/points", request);
+    public void insert(String chunkId, List<Float> vector, Map<String, Object> metadata) {
+        insertTo(chunkId, vector, metadata, defaultCollection());
     }
 
-    @SuppressWarnings("unchecked")
     public void batchInsert(List<String> chunkIds, List<List<Float>> vectors,
                             List<Map<String, Object>> metadatas) {
-        if (chunkIds == null || vectors == null) return;
+        batchInsertTo(chunkIds, vectors, metadatas, defaultCollection());
+    }
 
+    public List<ScoredResult> search(List<Float> queryVector, int topK) {
+        return searchFrom(queryVector, topK, null, defaultCollection());
+    }
+
+    public List<ScoredResult> search(List<Float> queryVector, int topK, Map<String, String> payloadFilter) {
+        return searchFrom(queryVector, topK, payloadFilter, defaultCollection());
+    }
+
+    public int getCollectionSize() {
+        return getCollectionSize(defaultCollection());
+    }
+
+    public List<Map<String, Object>> getAllMetadata() {
+        return getAllMetadata(defaultCollection());
+    }
+
+    public void dropCollection() {
+        dropCollection(defaultCollection());
+        ensureCollection(defaultCollection(), ragConfig.getEmbeddingDimension());
+    }
+
+    // ============ 指定集合操作（支持 LTM user_memories） ============
+
+    public void insertTo(String chunkId, List<Float> vector, Map<String, Object> metadata, String collectionName) {
+        if (useRealQdrant) {
+            insertToQdrant(chunkId, vector, metadata, collectionName);
+        } else {
+            insertToFallback(chunkId, vector, metadata, collectionName);
+        }
+    }
+
+    public void batchInsertTo(List<String> chunkIds, List<List<Float>> vectors,
+                               List<Map<String, Object>> metadatas, String collectionName) {
+        if (chunkIds == null || vectors == null) return;
         if (!useRealQdrant) {
             for (int i = 0; i < chunkIds.size(); i++) {
                 List<Float> v = i < vectors.size() ? vectors.get(i) : null;
                 Map<String, Object> m = i < metadatas.size() ? metadatas.get(i) : new HashMap<>();
-                if (v != null) insertToFallback(chunkIds.get(i), v, m);
+                if (v != null) insertToFallback(chunkIds.get(i), v, m, collectionName);
             }
             return;
         }
 
-        // 每次批量最多 100 条
         int batchSize = 100;
         for (int batchStart = 0; batchStart < chunkIds.size(); batchStart += batchSize) {
             int end = Math.min(batchStart + batchSize, chunkIds.size());
@@ -159,7 +172,7 @@ public class QdrantService {
             for (int i = batchStart; i < end; i++) {
                 Map<String, Object> m = metadatas.get(i);
                 Map<String, Object> payload = new LinkedHashMap<>();
-                payload.put("chunk_id", chunkIds.get(i));
+                payload.put("chunkId", chunkIds.get(i));
                 payload.put(CONTENT_FIELD, str(m.get("content")));
                 payload.put(CATEGORY_FIELD, str(m.get("category")));
                 payload.put(SOURCE_FIELD, str(m.get("source")));
@@ -176,19 +189,23 @@ public class QdrantService {
             request.put("points", points);
 
             try {
-                restTemplate.put(baseUrl + "/collections/" + ragConfig.getCollectionName() + "/points", request);
-                log.debug("Qdrant 批量插入: {} 条", points.size());
+                restTemplate.put(baseUrl + "/collections/" + collectionName + "/points", request);
+                log.debug("Qdrant 批量插入: {} 条到 {}", points.size(), collectionName);
             } catch (Exception e) {
                 log.warn("Qdrant 批量插入失败: {}", e.getMessage());
             }
         }
-        log.info("Qdrant 批量插入完成: {} 条", chunkIds.size());
+    }
+
+    public List<ScoredResult> searchFrom(List<Float> queryVector, int topK, String collectionName) {
+        return searchFrom(queryVector, topK, null, collectionName);
     }
 
     @SuppressWarnings("unchecked")
-    public List<ScoredResult> search(List<Float> queryVector, int topK) {
+    public List<ScoredResult> searchFrom(List<Float> queryVector, int topK,
+                                          Map<String, String> payloadFilter, String collectionName) {
         if (!useRealQdrant) {
-            return searchFallback(queryVector, topK);
+            return searchFallback(queryVector, topK, payloadFilter, collectionName);
         }
 
         Map<String, Object> request = new LinkedHashMap<>();
@@ -197,9 +214,20 @@ public class QdrantService {
         request.put("with_payload", true);
         request.put("with_vector", false);
 
+        if (payloadFilter != null && !payloadFilter.isEmpty()) {
+            List<Map<String, Object>> mustConditions = new ArrayList<>();
+            for (Map.Entry<String, String> entry : payloadFilter.entrySet()) {
+                Map<String, Object> condition = new LinkedHashMap<>();
+                condition.put("key", entry.getKey());
+                condition.put("match", Map.of("value", entry.getValue()));
+                mustConditions.add(condition);
+            }
+            request.put("filter", Map.of("must", mustConditions));
+        }
+
         try {
             ResponseEntity<Map<String, Object>> resp = restTemplate.exchange(
-                    baseUrl + "/collections/" + ragConfig.getCollectionName() + "/points/search",
+                    baseUrl + "/collections/" + collectionName + "/points/search",
                     HttpMethod.POST, new HttpEntity<>(request),
                     new ParameterizedTypeReference<>() {});
             if (resp.getBody() == null) return List.of();
@@ -212,27 +240,108 @@ public class QdrantService {
                 String id = String.valueOf(r.get("id"));
                 double score = ((Number) r.getOrDefault("score", 0.0)).doubleValue();
                 Map<String, Object> payload = (Map<String, Object>) r.getOrDefault("payload", new HashMap<>());
-
-                Map<String, Object> meta = new HashMap<>();
-                meta.put("chunk_id", payload.getOrDefault("chunk_id", id));
-                meta.put(CONTENT_FIELD, str(payload.get(CONTENT_FIELD)));
-                meta.put(CATEGORY_FIELD, str(payload.get(CATEGORY_FIELD)));
-                meta.put(SOURCE_FIELD, str(payload.get(SOURCE_FIELD)));
-                meta.put(TAGS_FIELD, str(payload.get(TAGS_FIELD)));
-                return new ScoredResult(id, score, meta);
+                return new ScoredResult(id, score, payload);
             }).collect(Collectors.toList());
         } catch (Exception e) {
-            log.warn("Qdrant 搜索失败: {}", e.getMessage());
+            log.warn("Qdrant 搜索失败 ({}): {}", collectionName, e.getMessage());
             return List.of();
         }
     }
 
-    private List<ScoredResult> searchFallback(List<Float> queryVector, int topK) {
-        Map<String, StoredVector> collectionStore = fallbackStore.get(ragConfig.getCollectionName());
+    public int getCollectionSize(String collectionName) {
+        if (useRealQdrant) {
+            try {
+                ResponseEntity<Map<String, Object>> resp = restTemplate.exchange(
+                        baseUrl + "/collections/" + collectionName + "/points/count",
+                        HttpMethod.POST, new HttpEntity<>(Collections.emptyMap()),
+                        new ParameterizedTypeReference<>() {});
+                if (resp.getBody() != null) {
+                    Map<String, Object> result = (Map<String, Object>) resp.getBody().get("result");
+                    if (result != null) {
+                        return ((Number) result.getOrDefault("count", 0)).intValue();
+                    }
+                }
+            } catch (Exception e) {
+                log.debug("获取集合大小失败: {}", e.getMessage());
+            }
+            return 0;
+        }
+        Map<String, StoredVector> cs = fallbackStore.get(collectionName);
+        return cs != null ? cs.size() : 0;
+    }
+
+    public List<Map<String, Object>> getAllMetadata(String collectionName) {
+        if (useRealQdrant) {
+            return getAllMetadataFromQdrant(collectionName);
+        }
+        Map<String, StoredVector> cs = fallbackStore.get(collectionName);
+        if (cs == null) return List.of();
+        return cs.values().stream().map(sv -> sv.metadata).collect(Collectors.toList());
+    }
+
+    public void dropCollection(String collectionName) {
+        if (useRealQdrant) {
+            try {
+                restTemplate.delete(baseUrl + "/collections/" + collectionName);
+                log.info("删除集合: {}", collectionName);
+            } catch (Exception e) {
+                log.warn("删除集合失败: {}", e.getMessage());
+            }
+        } else {
+            fallbackStore.remove(collectionName);
+            fallbackStore.put(collectionName, new ConcurrentHashMap<>());
+        }
+    }
+
+    public boolean isUsingRealQdrant() { return useRealQdrant; }
+
+    // ============ 内部方法 ============
+
+    private void insertToFallback(String chunkId, List<Float> vector,
+                                   Map<String, Object> metadata, String collectionName) {
+        fallbackStore.computeIfAbsent(collectionName, k -> new ConcurrentHashMap<>())
+                .put(chunkId, new StoredVector(vector, metadata));
+    }
+
+    @SuppressWarnings("unchecked")
+    private void insertToQdrant(String chunkId, List<Float> vector,
+                                 Map<String, Object> metadata, String collectionName) {
+        Map<String, Object> point = new LinkedHashMap<>();
+        point.put("id", chunkId);
+        point.put("vector", vector);
+        if (metadata != null && !metadata.isEmpty()) {
+            point.put("payload", metadata);
+        }
+
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("points", List.of(point));
+
+        try {
+            restTemplate.put(baseUrl + "/collections/" + collectionName + "/points", request);
+        } catch (Exception e) {
+            log.warn("Qdrant 插入失败: {}", e.getMessage());
+        }
+    }
+
+    private void ensureCollection() {
+        ensureCollection(defaultCollection(), ragConfig.getEmbeddingDimension());
+    }
+
+    private List<ScoredResult> searchFallback(List<Float> queryVector, int topK,
+                                               Map<String, String> payloadFilter, String collectionName) {
+        Map<String, StoredVector> collectionStore = fallbackStore.get(collectionName);
         if (collectionStore == null || collectionStore.isEmpty()) return List.of();
 
         int searchK = Math.min(topK * 3, collectionStore.size());
         return collectionStore.entrySet().parallelStream()
+                .filter(entry -> {
+                    if (payloadFilter == null || payloadFilter.isEmpty()) return true;
+                    for (Map.Entry<String, String> f : payloadFilter.entrySet()) {
+                        Object val = entry.getValue().metadata.get(f.getKey());
+                        if (val == null || !val.toString().equals(f.getValue())) return false;
+                    }
+                    return true;
+                })
                 .map(entry -> {
                     double similarity = cosineSimilarity(queryVector, entry.getValue().vector);
                     return new ScoredResult(entry.getKey(), similarity, entry.getValue().metadata);
@@ -255,45 +364,8 @@ public class QdrantService {
         return denom == 0 ? 0.0 : dot / denom;
     }
 
-    public boolean isCollectionReady() {
-        return getCollectionSize() > 0;
-    }
-
     @SuppressWarnings("unchecked")
-    public int getCollectionSize() {
-        if (useRealQdrant) {
-            try {
-                ResponseEntity<Map<String, Object>> resp = restTemplate.exchange(
-                        baseUrl + "/collections/" + ragConfig.getCollectionName() + "/points/count",
-                        HttpMethod.POST, new HttpEntity<>(Collections.emptyMap()),
-                        new ParameterizedTypeReference<>() {});
-                if (resp.getBody() != null) {
-                    Map<String, Object> result = (Map<String, Object>) resp.getBody().get("result");
-                    if (result != null) {
-                        return ((Number) result.getOrDefault("count", 0)).intValue();
-                    }
-                }
-            } catch (Exception e) {
-                log.debug("获取集合大小失败: {}", e.getMessage());
-            }
-            return 0;
-        }
-        Map<String, StoredVector> cs = fallbackStore.get(ragConfig.getCollectionName());
-        return cs != null ? cs.size() : 0;
-    }
-
-    @SuppressWarnings("unchecked")
-    public List<Map<String, Object>> getAllMetadata() {
-        if (useRealQdrant) {
-            return getAllMetadataFromQdrant();
-        }
-        Map<String, StoredVector> cs = fallbackStore.get(ragConfig.getCollectionName());
-        if (cs == null) return List.of();
-        return cs.values().stream().map(sv -> sv.metadata).collect(Collectors.toList());
-    }
-
-    @SuppressWarnings("unchecked")
-    private List<Map<String, Object>> getAllMetadataFromQdrant() {
+    private List<Map<String, Object>> getAllMetadataFromQdrant(String collectionName) {
         Map<String, Object> request = new LinkedHashMap<>();
         request.put("limit", 10000);
         request.put("with_payload", true);
@@ -301,7 +373,7 @@ public class QdrantService {
 
         try {
             ResponseEntity<Map<String, Object>> resp = restTemplate.exchange(
-                    baseUrl + "/collections/" + ragConfig.getCollectionName() + "/points/scroll",
+                    baseUrl + "/collections/" + collectionName + "/points/scroll",
                     HttpMethod.POST, new HttpEntity<>(request),
                     new ParameterizedTypeReference<>() {});
             if (resp.getBody() == null) return List.of();
@@ -316,35 +388,12 @@ public class QdrantService {
             List<Map<String, Object>> points = (List<Map<String, Object>>) pointsObj;
             return points.stream().map(p -> {
                 Map<String, Object> payload = (Map<String, Object>) p.getOrDefault("payload", new HashMap<>());
-                Map<String, Object> meta = new HashMap<>();
-                meta.put(CONTENT_FIELD, str(payload.get(CONTENT_FIELD)));
-                meta.put(CATEGORY_FIELD, str(payload.get(CATEGORY_FIELD)));
-                meta.put(SOURCE_FIELD, str(payload.get(SOURCE_FIELD)));
-                meta.put(TAGS_FIELD, str(payload.get(TAGS_FIELD)));
-                return meta;
+                return new HashMap<>(payload);
             }).collect(Collectors.toList());
         } catch (Exception e) {
             log.warn("Qdrant 获取全部数据失败: {}", e.getMessage());
             return List.of();
         }
-    }
-
-    public void dropCollection() {
-        if (useRealQdrant) {
-            try {
-                restTemplate.delete(baseUrl + "/collections/" + ragConfig.getCollectionName());
-            } catch (Exception e) {
-                log.warn("删除 Qdrant 集合失败: {}", e.getMessage());
-            }
-            ensureCollection();
-        } else {
-            fallbackStore.remove(ragConfig.getCollectionName());
-            fallbackStore.put(ragConfig.getCollectionName(), new ConcurrentHashMap<>());
-        }
-    }
-
-    public boolean isUsingRealQdrant() {
-        return useRealQdrant;
     }
 
     private String str(Object obj) {
@@ -363,7 +412,6 @@ public class QdrantService {
         }
     }
 
-    /** Qdrant 不可用时内存回退的向量存储结构 */
     private static class StoredVector {
         final List<Float> vector;
         final Map<String, Object> metadata;

@@ -768,6 +768,27 @@ class SafeGuardApplicationTests {
             });
         }
 
+        @Test void agentControllerEndpointsDefined() {
+            assertDoesNotThrow(() -> {
+                AgentController.class.getMethod("analyze", com.sdu.safeguard.dto.OrchestratorRequest.class);
+                AgentController.class.getMethod("analyzeText", java.util.Map.class);
+                AgentController.class.getMethod("simulate", java.util.Map.class);
+            });
+        }
+
+        @Test void llmControllerEndpointsDefined() {
+            assertDoesNotThrow(() -> {
+                LLMController.class.getMethod("analyzeStream", java.util.Map.class);
+            });
+        }
+
+        @Test void ragControllerEndpointsDefined() {
+            assertDoesNotThrow(() -> {
+                RAGController.class.getMethod("queryRAG", String.class);
+                RAGController.class.getMethod("getRAGStats");
+            });
+        }
+
         @Test void detectionControllerEndpointsDefined() {
             assertDoesNotThrow(() -> {
                 DetectionController.class.getMethod("detectAudio", org.springframework.web.multipart.MultipartFile.class);
@@ -800,19 +821,67 @@ class SafeGuardApplicationTests {
             });
         }
 
-        @Test void adminControllerEndpointsDefined() {
+        @Test void adminApiControllerEndpointsDefined() {
             assertDoesNotThrow(() -> {
-                AdminController.class.getMethod("dashboard", org.springframework.ui.Model.class);
-                AdminController.class.getMethod("users", org.springframework.ui.Model.class);
-                AdminController.class.getMethod("knowledge", org.springframework.ui.Model.class);
-                AdminController.class.getMethod("records", org.springframework.ui.Model.class);
-                AdminController.class.getMethod("models", org.springframework.ui.Model.class);
+                AdminApiController.class.getMethod("getUsers");
+                AdminApiController.class.getMethod("getOverviewStats");
+                AdminApiController.class.getMethod("getModels");
+            });
+        }
+
+        @Test void healthControllerEndpointDefined() {
+            assertDoesNotThrow(() -> {
+                HealthController.class.getMethod("health");
             });
         }
     }
 
     // =============================================
-    // 17. 音频训练模块数据测试
+    // 17. 输入校验测试
+    // =============================================
+    @Nested
+    @DisplayName("17. 输入校验测试")
+    class InputValidationTests {
+        @Test void validateAnalysisTextNull() {
+            assertNotNull(InputValidator.validateAnalysisText(null));
+            assertNotNull(InputValidator.validateAnalysisText(""));
+            assertNotNull(InputValidator.validateAnalysisText("   "));
+        }
+
+        @Test void validateAnalysisTextMaxLength() {
+            String tooLong = "a".repeat(5001);
+            assertNotNull(InputValidator.validateAnalysisText(tooLong));
+
+            String valid = "a".repeat(5000);
+            assertNull(InputValidator.validateAnalysisText(valid));
+        }
+
+        @Test void validateAnalysisTextControlChars() {
+            assertNotNull(InputValidator.validateAnalysisText("hello world"));
+            assertNotNull(InputValidator.validateAnalysisText("helloworld"));
+            assertNull(InputValidator.validateAnalysisText("hello\nworld"));
+            assertNull(InputValidator.validateAnalysisText("hello\tworld"));
+        }
+
+        @Test void validateKeyword() {
+            assertNotNull(InputValidator.validateKeyword(null));
+            assertNotNull(InputValidator.validateKeyword(""));
+            assertNull(InputValidator.validateKeyword("安全账户"));
+            String tooLong = "a".repeat(201);
+            assertNotNull(InputValidator.validateKeyword(tooLong));
+        }
+
+        @Test void validateMessage() {
+            assertNotNull(InputValidator.validateMessage(null));
+            assertNotNull(InputValidator.validateMessage(""));
+            assertNull(InputValidator.validateMessage("你好，我想了解反诈知识"));
+            String tooLong = "a".repeat(2001);
+            assertNotNull(InputValidator.validateMessage(tooLong));
+        }
+    }
+
+    // =============================================
+    // 18. 音频训练模块数据测试
     // =============================================
     @Nested
     @DisplayName("17. 音频模型数据测试")

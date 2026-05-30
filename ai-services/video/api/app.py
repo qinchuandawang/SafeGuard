@@ -30,11 +30,24 @@ CORS(app)
 
 # 配置
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-MODEL_PATH = 'checkpoints/best_model.pth'
+MODEL_PATH = 'pretrained/best_model.pth'
 IMAGE_SIZE = (299, 299)
 
-# 加载模型（半精度推理，显存减半）
+# PyTorch 线程数限制 -- CPU 环境下默认会占用所有物理核心，限制后显著降低内存
+os.environ.setdefault("OMP_NUM_THREADS", "2")
+os.environ.setdefault("MKL_NUM_THREADS", "2")
+torch.set_num_threads(int(os.environ.get("OMP_NUM_THREADS", "2")))
+torch.set_grad_enabled(False)
+
+# 模型引用，惰性加载
+_model_instance = None
+
 def load_model(model_path):
+    """惰性加载模型，仅在首次请求时加载"""
+    global _model_instance
+    if _model_instance is not None:
+        return _model_instance
+    print(f"[首次加载] 模型: {model_path}, 设备: {DEVICE}")
     model = xception(num_classes=2)
     if os.path.exists(model_path):
         checkpoint = torch.load(model_path, map_location=DEVICE, weights_only=False)
@@ -44,11 +57,16 @@ def load_model(model_path):
         print(f"警告：模型文件不存在 {model_path}")
     model.to(DEVICE)
     model.eval()
-    # 半精度推理 —— 显存占用约减半，速度基本不变
-    model.half()
+    if DEVICE.type == "cuda":
+        model.half()
+    _model_instance = model
     return model
 
-model = load_model(MODEL_PATH)
+
+def get_model():
+    """获取模型实例（首次调用时惰性加载）"""
+    return load_model(MODEL_PATH)
+
 
 # 数据变换
 transform = transforms.Compose([
@@ -68,10 +86,11 @@ def detect_faces_in_image(image_path):
 
 def predict_image(image):
     """预测单张图片（半精度推理）"""
-    image_tensor = transform(image).unsqueeze(0).to(DEVICE).half()
+    dtype = torch.float16 if DEVICE.type == "cuda" else torch.float32
+    image_tensor = transform(image).unsqueeze(0).to(DEVICE, dtype=dtype)
 
     with torch.no_grad():
-        outputs = model(image_tensor)
+        outputs = get_model()(image_tensor)
         probs = F.softmax(outputs, dim=1)
         fake_prob = probs[0][1].item()
     
@@ -189,18 +208,32 @@ def detect_image():
         return jsonify({'success': False, 'error': '文件名为空'}), 400
     
     # 保存临时文件
-    temp_path = tempfile.mktemp(suffix='.jpg')
+    # 使用 NamedTemporaryFile 避免 mktemp 的竞态风险；Windows 下需先关闭句柄再保存
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp:
+        temp_path = tmp.name
     file.save(temp_path)
     
     try:
         # 检测人脸
         faces, locations = detect_faces_in_image(temp_path)
-        
+
         if len(faces) == 0:
-            return jsonify({
-                'success': False,
-                'error': '未检测到人脸'
-            }), 400
+            # 无人脸时降级为全图检测，而不是直接返回错误
+            # 使得视频管道即使无可见人脸也能继续运行
+            full_image = Image.open(temp_path).convert('RGB')
+            full_pred = predict_image(full_image)
+            result = {
+                'is_fake': full_pred['is_fake'],
+                'fake_probability': full_pred['fake_probability'],
+                'real_probability': full_pred['real_probability'],
+                'confidence': abs(full_pred['fake_probability'] - 0.5) * 2,
+                'fake_type': 'full_image',
+                'faces_detected': 0,
+                'faces': [],
+                'fallback': True,
+                'fallback_reason': '未检测到独立人脸，使用全图检测'
+            }
+            return jsonify({'success': True, 'data': result})
         
         # 预测每个人脸
         face_results = []
@@ -212,11 +245,14 @@ def detect_image():
         
         # 综合结果
         avg_fake_prob = float(np.mean([f['fake_probability'] for f in face_results]))
-        
+        avg_confidence = abs(avg_fake_prob - 0.5) * 2  # 离 0.5 越远置信度越高
+
         result = {
             'is_fake': avg_fake_prob > 0.5,
             'fake_probability': float(avg_fake_prob),
             'real_probability': float(1 - avg_fake_prob),
+            'confidence': float(avg_confidence),
+            'fake_type': 'face_swapped' if avg_fake_prob > 0.5 else 'none',
             'faces_detected': len(face_results),
             'faces': face_results
         }
@@ -270,7 +306,9 @@ def detect_video():
         return jsonify({'success': False, 'error': '文件名为空'}), 400
     
     # 保存临时文件
-    temp_path = tempfile.mktemp(suffix='.mp4')
+    # 使用 NamedTemporaryFile 避免 mktemp 的竞态风险；Windows 下需先关闭句柄再保存
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as tmp:
+        temp_path = tmp.name
     file.save(temp_path)
     
     try:

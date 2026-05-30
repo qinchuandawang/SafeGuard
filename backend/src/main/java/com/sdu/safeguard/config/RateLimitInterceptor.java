@@ -76,9 +76,9 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     }
 
     private boolean isPublicPath(String path) {
-        return path.startsWith("/admin") || path.startsWith("/api/auth")
-                || path.equals("/api/audio/status") || path.equals("/api/upload")
-                || path.equals("/api/knowledge/search") || path.equals("/error");
+        return path.startsWith("/admin/") || path.startsWith("/api/auth")
+                || path.startsWith("/api/health") || path.startsWith("/actuator")
+                || path.equals("/error");
     }
 
     private String getClientIp(HttpServletRequest request) {

@@ -12,18 +12,18 @@ spring:
     password: ""
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
-      initialization-fail-timeout: 5000
+      maximum-pool-size: 20
+      minimum-idle: 5
+      idle-timeout: 300000
+      connection-timeout: 10000
+      max-lifetime: 600000
+      pool-name: SafeGuardHikariCP
   sql:
     init:
       mode: always
       schema-locations: classpath:sql/schema.sql
       data-locations: classpath:sql/init-data.sql
       continue-on-error: true
-  thymeleaf:
-    prefix: classpath:/templates/admin/
-    suffix: .html
-    mode: HTML
-    cache: false
 
 mybatis-plus:
   type-aliases-package: com.sdu.safeguard.entity
@@ -40,7 +40,7 @@ mybatis-plus:
 # JWT 配置
 jwt:
   secret: SafeGuard-JWT-Secret-Key-2026-Must-Change-In-Production
-  expiration-hours: 72
+  expiration-hours: 24
 
 # 管理员默认凭证（小型团队项目明文保存）
 # 微信小程序配置
@@ -52,16 +52,16 @@ wechat:
 # 音频检测服务地址
 audio:
   service:
-    url: http://localhost:5001/audio/detect
+    url: http://localhost:5000/audio/detect
   detection:
-    api-url: http://localhost:5001/audio/detect
-    health-url: http://localhost:5001/health
+    api-url: http://localhost:5000/audio/detect
+    health-url: http://localhost:5000/health
 
 # 视频检测服务地址
 video:
   service:
-    url: http://localhost:5002/video
-    image-url: http://localhost:5002/video
+    url: http://localhost:5002/api/detect/video
+    image-url: http://localhost:5002/api/detect/image
   preprocess:
     enabled: true
     sample-interval-seconds: 1.0
@@ -69,11 +69,11 @@ video:
     face-padding-ratio: 0.12
     multipart-field: file
 
-# 大模型配置（SophNet / ShowAPI）
+# 大模型配置（SophNet）
 llm:
-  api-key: ${LLM_API_KEY:3tZkDmHLlPMWCJagVqp_L39-9R-qcnF9swCCZbgcR0B5ZWNpXnnpVOlcJTiEjfObzFnhUivCDUUy0icAmMUQTw}
-  api-url: https://route.showapi.com/openai/v1/chat/completions
-  model: sophnet/deepseek/deepseek-v4-flash
+  api-key: 3tZkDmHLlPMWCJagVqp_L39-9R-qcnF9swCCZbgcR0B5ZWNpXnnpVOlcJTiEjfObzFnhUivCDUUy0icAmMUQTw
+  api-url: https://api.sophnet.com/v1/chat/completions
+  model: DeepSeek-V4-Flash
   temperature: 0.7
   max-tokens: 2048
   enable-thinking: false
@@ -98,8 +98,12 @@ rag:
   semantic-chunk-max-size: 512
   semantic-similarity-threshold: 0.75
   hnsw-top-k: 20
+  rerank-top-k: 10
   final-top-k: 5
   keyword-boost-factor: 1.2
+  dedup-threshold: 0.92
+  allow-in-memory-fallback: true
+  rules-path: config/rules.json
 
 # 记忆系统配置
 memory:
@@ -109,3 +113,5 @@ memory:
   long-term-importance-threshold: 0.6
   storage-path: ./data/memory
   memory-retrieval-top-k: 10
+  memory-collection: user_memories
+  memory-embedding-dim: 1024

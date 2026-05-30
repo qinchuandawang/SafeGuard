@@ -6,6 +6,10 @@ import lombok.Data;
  * Jackson 3.x 无 @JsonAlias/@JsonIgnoreProperties 注解，
  * 字段名直接对齐 API 返回格式。全局 ObjectMapper 已配置
  * FAIL_ON_UNKNOWN_PROPERTIES=false。
+ * <p>
+ * Flask /api/detect/image 返回实际包装在 data 字段内：
+ * {"success":true,"data":{"fake_probability":0.95,"fake_type":"face_swap","confidence":0.92}}
+ * 后端通过解析 Map 手动提取后映射到此 POJO。
  */
 @Data
 public class VideoImageInferenceResponse {

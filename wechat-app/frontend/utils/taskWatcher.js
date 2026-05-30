@@ -40,18 +40,24 @@ class TaskWatcher {
   /** SSE 模式：GET /api/detection/task/{taskId}/stream */
   _startSSE(taskId, { onProgress, onDone, onError }) {
     try {
+      const authModule = require('../utils/auth');
       const url = `${this.baseUrl}/api/detection/task/${taskId}/stream`;
       const requestTask = wx.request({
         url,
         method: 'GET',
         enableChunked: true,
+        header: {
+          ...authModule.getAuthHeader(),
+        },
         success: () => {},
         fail: () => {},
       });
 
       let buffer = '';
+      let hasReceived = false;
       requestTask.onChunkReceived((res) => {
         if (this._destroyed) return;
+        hasReceived = true;
 
         try {
           const rawBytes = res.data;
@@ -85,6 +91,16 @@ class TaskWatcher {
       });
 
       this._sseTask = requestTask;
+
+      // 5 秒后检查是否收到数据，没收到说明 SSE 连接失败，回退轮询
+      setTimeout(() => {
+        if (!hasReceived && !this._destroyed) {
+          console.warn('[TaskWatcher] SSE 无数据响应，回退到轮询模式');
+          this.destroy();
+          this._startPolling(taskId, { onProgress, onDone, onError });
+        }
+      }, 5000);
+
       return true;
     } catch (err) {
       console.warn('[TaskWatcher] SSE 启动失败，回退轮询:', err);

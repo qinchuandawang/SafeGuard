@@ -32,10 +32,10 @@ const CONFIG = {
 
 // 环境兼容检测（P2 fix: E10）
 try {
-  if (typeof wx !== 'undefined' && wx.canIUse('getSystemInfoSync')) {
-    const sysInfo = wx.getSystemInfoSync();
+  if (typeof wx !== 'undefined' && wx.canIUse('getDeviceInfo')) {
+    const deviceInfo = wx.getDeviceInfo();
     // 真机环境下使用 localhost 会无法连接，给出提示
-    if (sysInfo.platform !== 'devtools' && CONFIG.API_BASE_URL.indexOf('localhost') !== -1) {
+    if (deviceInfo.platform !== 'devtools' && CONFIG.API_BASE_URL.indexOf('localhost') !== -1) {
       console.warn(
         '[SafeGuard Config] ⚠️ 检测到真机环境但 API_BASE_URL 仍为 localhost，' +
         '请修改 config.js 中的 API_BASE_URL 为电脑局域网 IP 地址。'

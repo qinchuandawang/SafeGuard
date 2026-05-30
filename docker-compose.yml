@@ -8,10 +8,10 @@
 # ============================================
 #
 # 环境变量文件：创建 .env 文件，填入对应 API Key
-#   DEEPSEEK_API_KEY=your_key     # AI 对话功能必需
-#   SILICONFLOW_API_KEY=your_key  # RAG 向量检索必需
-#   WECHAT_APPID=your_appid       # 微信小程序登录必需
-#   WECHAT_SECRET=your_secret     # 微信小程序登录必需
+#   LLM_API_KEY=your_key         # AI 对话功能必需（SophNet DeepSeek-V4-Flash）
+#   SILICONFLOW_API_KEY=your_key # RAG 向量检索必需
+#   WECHAT_APPID=your_appid      # 微信小程序登录必需
+#   WECHAT_SECRET=your_secret    # 微信小程序登录必需
 
 services:
   # ==========================================
@@ -79,6 +79,7 @@ services:
       DB_USERNAME: root
       DB_PASSWORD: ${DB_PASSWORD:-root123}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
       SILICONFLOW_API_KEY: ${SILICONFLOW_API_KEY:-}
       WECHAT_APPID: ${WECHAT_APPID:-}
       WECHAT_SECRET: ${WECHAT_SECRET:-}
@@ -101,12 +102,15 @@ services:
       dockerfile: Dockerfile
     container_name: safeguard-audio
     restart: unless-stopped
-    mem_limit: 1g
+    mem_limit: 512m
     ports:
       - "5000:5000"
     volumes:
       - ./ai-services/audio/pretrained:/app/pretrained
       - audio_data:/app/data
+    environment:
+      - OMP_NUM_THREADS=2
+      - MKL_NUM_THREADS=2
 
   # 视频检测服务 (Flask + XceptionNet)
   video-detection:
@@ -116,7 +120,7 @@ services:
       dockerfile: Dockerfile
     container_name: safeguard-video
     restart: unless-stopped
-    mem_limit: 1g
+    mem_limit: 512m
     ports:
       - "5002:5002"
     volumes:

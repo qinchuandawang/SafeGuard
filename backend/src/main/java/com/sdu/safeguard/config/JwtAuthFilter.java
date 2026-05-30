@@ -20,34 +20,12 @@ public class JwtAuthFilter {
 
     private final JwtUtil jwtUtil;
 
+    /** 无需认证的公开路径。应仅包含登录、健康检查、错误页 */
     private static final Set<String> PUBLIC_PATHS = Set.of(
             "/api/auth/login",
             "/api/auth/admin/login",
-            "/api/upload",
-            "/api/detection/audio",
-            "/api/detection/video",
-            "/api/detection/text",
-            "/api/detection/multi",
-            "/api/llm/chat",
-            "/api/knowledge/search",
-            "/api/knowledge",
-            "/api/rag/query",
-            "/api/rag/cot",
-            "/api/rag/react",
-            "/api/agent/orchestrate",
-            "/api/simulate",
-            "/api/audio/status",
-            "/api/audio/detect",
-            "/admin/login",
-            "/admin/dashboard",
-            "/admin/users",
-            "/admin/knowledge",
-            "/admin/records",
-            "/admin/models",
-            "/admin/css",
-            "/admin/js",
-            "/admin/api",
-            "/api/admin",
+            "/api/health",
+            "/actuator/health",
             "/error"
     );
 
@@ -59,7 +37,12 @@ public class JwtAuthFilter {
             HttpServletResponse response = (HttpServletResponse) servletResponse;
             String path = request.getRequestURI();
 
-            if (isPublicPath(path) || "OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+                chain.doFilter(request, response);
+                return;
+            }
+
+            if (isPublicPath(path)) {
                 chain.doFilter(request, response);
                 return;
             }
@@ -73,16 +56,11 @@ public class JwtAuthFilter {
                 }
             }
 
-            if (path.startsWith("/admin") && !path.equals("/admin/login")) {
-                response.sendRedirect("/admin/login");
-                return;
-            }
-
             response.setStatus(401);
             response.setContentType("application/json;charset=UTF-8");
             response.getWriter().write("{\"code\":401,\"message\":\"未登录或token已过期\",\"data\":null}");
         });
-        registration.addUrlPatterns("/api/*", "/admin/*");
+        registration.addUrlPatterns("/api/*");
         registration.setOrder(1);
         return registration;
     }

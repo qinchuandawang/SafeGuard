@@ -30,6 +30,9 @@ public class User {
     @TableField("avatar_url")
     private String avatarUrl;
 
+    @TableField("password_hash")
+    private String passwordHash;
+
     @TableField("role")
     private String role;
 

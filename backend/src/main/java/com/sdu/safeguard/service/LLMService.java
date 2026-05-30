@@ -7,15 +7,12 @@ import com.sdu.safeguard.dto.ScamScenario;
 import com.sdu.safeguard.dto.VideoDetectionResult;
 import com.sdu.safeguard.entity.KnowledgeItem;
 import com.sdu.safeguard.util.PromptLoader;
+import com.github.benmanes.caffeine.cache.Cache;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
@@ -24,6 +21,7 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.ResponseExtractor;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -50,6 +48,9 @@ public class LLMService {
     private final PromptLoader promptLoader;
     private final KnowledgeService knowledgeService;
     private final ApplicationContext applicationContext;
+    private final ObjectMapper objectMapper;
+    @Qualifier("knowledgeContextCache")
+    private final Cache<String, String> knowledgeContextCache;
 
     public String analyzeText(String text) {
         return callLLM(buildAnalyzePrompt(text));
@@ -100,8 +101,14 @@ public class LLMService {
         if (keyword == null || keyword.isBlank()) {
             return "";
         }
+        String cacheKey = keyword.toLowerCase().trim();
+        String cached = knowledgeContextCache.getIfPresent(cacheKey);
+        if (cached != null) {
+            return cached;
+        }
         List<KnowledgeItem> items = knowledgeService.search(keyword);
         if (items.isEmpty()) {
+            knowledgeContextCache.put(cacheKey, "");
             return "";
         }
         List<KnowledgeItem> topItems = items.size() > RAG_MAX_ITEMS
@@ -114,7 +121,9 @@ public class LLMService {
             sb.append("问题").append(i + 1).append("：").append(item.getQuestion()).append("\n");
             sb.append("答案").append(i + 1).append("：").append(item.getAnswer()).append("\n");
         }
-        return sb.toString();
+        String result = sb.toString();
+        knowledgeContextCache.put(cacheKey, result);
+        return result;
     }
 
     private String callLLM(String prompt) {
@@ -176,130 +185,79 @@ public class LLMService {
         return emitter;
     }
 
-    @Async("detectionTaskExecutor")
+    @Async("streamExecutor")
     public void executeStreamCall(String prompt, SseEmitter emitter) {
         try {
-                HttpHeaders headers = new HttpHeaders();
-                headers.setContentType(MediaType.APPLICATION_JSON);
-                headers.setBearerAuth(llmConfig.getApiKey());
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(llmConfig.getApiKey());
 
-                byte[] bodyBytes = toJsonBytes(buildStreamRequestBody(prompt));
+            byte[] bodyBytes = objectMapper.writeValueAsBytes(buildStreamRequestBody(prompt));
 
-                restTemplate.execute(llmConfig.getApiUrl(), HttpMethod.POST,
-                        req -> {
-                            req.getHeaders().setContentType(MediaType.APPLICATION_JSON);
-                            req.getHeaders().setBearerAuth(llmConfig.getApiKey());
-                            req.getBody().write(bodyBytes);
-                        },
-                        (ResponseExtractor<Void>) response -> {
-                            try (BufferedReader reader = new BufferedReader(
-                                    new InputStreamReader(response.getBody(), StandardCharsets.UTF_8))) {
-                                String line;
-                                StringBuilder fullContent = new StringBuilder();
-                                while ((line = reader.readLine()) != null) {
-                                    if (line.isEmpty()) continue;
-                                    if (line.startsWith("data: ")) {
-                                        String data = line.substring(6).trim();
-                                        if ("[DONE]".equals(data)) break;
-                                        String chunkContent = extractDeltaContent(data);
-                                        if (!chunkContent.isEmpty()) {
-                                            fullContent.append(chunkContent);
-                                            emitter.send(SseEmitter.event()
-                                                    .name("message")
-                                                    .data(chunkContent));
-                                        }
+            restTemplate.execute(llmConfig.getApiUrl(), HttpMethod.POST,
+                    req -> {
+                        req.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+                        req.getHeaders().setBearerAuth(llmConfig.getApiKey());
+                        req.getBody().write(bodyBytes);
+                    },
+                    (ResponseExtractor<Void>) response -> {
+                        try (BufferedReader reader = new BufferedReader(
+                                new InputStreamReader(response.getBody(), StandardCharsets.UTF_8))) {
+                            String line;
+                            StringBuilder fullContent = new StringBuilder();
+                            while ((line = reader.readLine()) != null) {
+                                if (line.isEmpty()) continue;
+                                if (line.startsWith("data: ")) {
+                                    String data = line.substring(6).trim();
+                                    if ("[DONE]".equals(data)) break;
+                                    String chunkContent = extractDeltaContent(data);
+                                    if (!chunkContent.isEmpty()) {
+                                        fullContent.append(chunkContent);
+                                        emitter.send(SseEmitter.event()
+                                                .name("message")
+                                                .data(chunkContent));
                                     }
                                 }
-                                emitter.send(SseEmitter.event().name("done")
-                                        .data(fullContent.toString()));
-                                emitter.complete();
-                            } catch (IOException e) {
-                                log.error("SSE 流读取异常", e);
-                                try {
-                                    emitter.send(SseEmitter.event().name("error")
-                                            .data("AI服务响应中断"));
-                                } catch (IOException ignored) {
-                                }
-                                emitter.completeWithError(e);
                             }
-                            return null;
-                        });
-            } catch (Exception e) {
-                log.error("LLM 流式调用失败", e);
-                try {
-                    emitter.send(SseEmitter.event().name("error")
-                            .data(FALLBACK_GENERAL));
-                    emitter.complete();
-                } catch (IOException ignored) {
-                }
-            }
+                            emitter.send(SseEmitter.event().name("done")
+                                    .data(fullContent.toString()));
+                            emitter.complete();
+                        } catch (IOException e) {
+                            log.error("SSE 流读取异常", e);
+                            sendErrorAndComplete(emitter, null);
+                        }
+                        return null;
+                    });
+        } catch (Exception e) {
+            log.error("LLM 流式调用失败", e);
+            sendErrorAndComplete(emitter, FALLBACK_GENERAL);
+        }
     }
 
-    private byte[] toJsonBytes(Map<String, Object> map) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("{");
-        boolean first = true;
-        for (Map.Entry<String, Object> e : map.entrySet()) {
-            if (!first) sb.append(",");
-            first = false;
-            sb.append("\"").append(e.getKey()).append("\":");
-            appendValue(sb, e.getValue());
+    private void sendErrorAndComplete(SseEmitter emitter, String fallbackMessage) {
+        try {
+            if (fallbackMessage != null) {
+                emitter.send(SseEmitter.event().name("error").data(fallbackMessage));
+            }
+            emitter.complete();
+        } catch (IOException ignored) {
         }
-        sb.append("}");
-        return sb.toString().getBytes(StandardCharsets.UTF_8);
     }
 
     @SuppressWarnings("unchecked")
-    private void appendValue(StringBuilder sb, Object val) {
-        if (val == null) {
-            sb.append("null");
-        } else if (val instanceof String) {
-            String escaped = ((String) val)
-                    .replace("\\", "\\\\")
-                    .replace("\"", "\\\"")
-                    .replace("\n", "\\n")
-                    .replace("\r", "\\r")
-                    .replace("\t", "\\t")
-                    .replace("\b", "\\b")
-                    .replace("\f", "\\f");
-            sb.append("\"").append(escaped).append("\"");
-        } else if (val instanceof Number || val instanceof Boolean) {
-            sb.append(val);
-        } else if (val instanceof List) {
-            sb.append("[");
-            List<?> list = (List<?>) val;
-            for (int i = 0; i < list.size(); i++) {
-                if (i > 0) sb.append(",");
-                appendValue(sb, list.get(i));
-            }
-            sb.append("]");
-        } else if (val instanceof Map) {
-            sb.append("{");
-            Map<String, Object> m = (Map<String, Object>) val;
-            boolean first = true;
-            for (Map.Entry<String, Object> e : m.entrySet()) {
-                if (!first) sb.append(",");
-                first = false;
-                sb.append("\"").append(e.getKey()).append("\":");
-                appendValue(sb, e.getValue());
-            }
-            sb.append("}");
-        }
-    }
-
     private String extractDeltaContent(String json) {
-        int deltaIdx = json.indexOf("\"delta\"");
-        if (deltaIdx < 0) return "";
-        int contentIdx = json.indexOf("\"content\"", deltaIdx);
-        if (contentIdx < 0) return "";
-        int colonIdx = json.indexOf(":", contentIdx);
-        if (colonIdx < 0) return "";
-        int startQuote = json.indexOf("\"", colonIdx);
-        if (startQuote < 0) return "";
-        int endQuote = json.indexOf("\"", startQuote + 1);
-        if (endQuote < 0) return "";
-        String raw = json.substring(startQuote + 1, endQuote);
-        return raw.replace("\\n", "\n").replace("\\\"", "\"").replace("\\\\", "\\");
+        try {
+            Map<String, Object> root = objectMapper.readValue(json, Map.class);
+            List<Map<String, Object>> choices = (List<Map<String, Object>>) root.get("choices");
+            if (choices == null || choices.isEmpty()) return "";
+            Map<String, Object> delta = (Map<String, Object>) choices.get(0).get("delta");
+            if (delta == null) return "";
+            Object content = delta.get("content");
+            return content != null ? content.toString() : "";
+        } catch (Exception e) {
+            log.debug("SSE delta 解析失败: {}", e.getMessage());
+            return "";
+        }
     }
 
     public SseEmitter streamScamSimulation(String userMessage, List<Message> history, ScamScenario scenario) {

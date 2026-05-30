@@ -89,6 +89,7 @@ CREATE TABLE `user` (
     `nickname` VARCHAR(100) DEFAULT NULL,
     `avatar_url` VARCHAR(500) DEFAULT NULL,
     `role` VARCHAR(20) NOT NULL DEFAULT 'user',
+    `password_hash` VARCHAR(255) DEFAULT NULL,
     `last_login_at` TIMESTAMP DEFAULT NULL,
     `deleted` INT DEFAULT 0,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -126,5 +127,5 @@ INSERT INTO `audio_model` (`name`, `model_version`, `model_type`, `training_data
 ('Wav2Vec2 语音伪造检测模型', 'v1.0.0', 'wav2vec2', 'ASVspoof2019 LA', 50, 0.985, 0.012, 1, '基于Wav2Vec2的语音伪造检测模型'),
 ('LA模型 EER', '2021', 'lcnn', 'ASVspoof2019 LA', 100, 0.991, 0.009, 0, 'ASVspoof2019 LA赛道官方基线模型');
 
-INSERT INTO `user` (`openid`, `nickname`, `role`, `last_login_at`) VALUES
-('admin_default', '管理员', 'admin', CURRENT_TIMESTAMP);
+INSERT INTO `user` (`openid`, `nickname`, `role`, `password_hash`, `last_login_at`) VALUES
+('admin_default', '管理员', 'admin', '$2b$10$8t70ROuVfMOGoA1/wC0qIeeFxqhO.3b2UXXNLzu42wgmrZJpVDnfW', CURRENT_TIMESTAMP);

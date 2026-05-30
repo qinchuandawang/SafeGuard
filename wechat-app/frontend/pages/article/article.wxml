@@ -23,7 +23,7 @@
     <!-- 文章元信息 -->
     <view class="article-meta" wx:if="{{article}}">
       <view class="article-tags">
-        <text class="tag tag-primary" wx:for="{{article.tags}}" wx:for-item="tag">{{tag}}</text>
+        <text class="tag tag-primary" wx:for="{{article.tags}}" wx:for-item="tag" wx:key="*this">{{tag}}</text>
       </view>
       <text class="article-date">{{article.date}}</text>
     </view>

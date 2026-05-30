@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.io.IOException;
 import java.util.Map;
 
 @Slf4j
@@ -27,6 +28,15 @@ public class LLMController {
     public SseEmitter scamChatStream(@RequestBody ChatRequest request) {
         if (request == null || request.getMessage() == null || request.getMessage().trim().isEmpty()) {
             SseEmitter emitter = new SseEmitter(0L);
+            emitter.complete();
+            return emitter;
+        }
+        String validationError = InputValidator.validateMessage(request.getMessage());
+        if (validationError != null) {
+            SseEmitter emitter = new SseEmitter(0L);
+            try {
+                emitter.send(SseEmitter.event().name("error").data(validationError));
+            } catch (IOException ignored) {}
             emitter.complete();
             return emitter;
         }
@@ -48,6 +58,15 @@ public class LLMController {
         String text = request.get("text");
         if (text == null || text.trim().isEmpty()) {
             SseEmitter emitter = new SseEmitter(0L);
+            emitter.complete();
+            return emitter;
+        }
+        String validationError = InputValidator.validateAnalysisText(text);
+        if (validationError != null) {
+            SseEmitter emitter = new SseEmitter(0L);
+            try {
+                emitter.send(SseEmitter.event().name("error").data(validationError));
+            } catch (IOException ignored) {}
             emitter.complete();
             return emitter;
         }

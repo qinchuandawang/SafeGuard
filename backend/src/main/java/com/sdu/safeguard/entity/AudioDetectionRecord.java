@@ -43,7 +43,8 @@ public class AudioDetectionRecord {
 
     /** 检测结果: bonafide (真实) / spoof (伪造) */
     @TableField("detection_result")
-    private String detectionResult;
+    @Builder.Default
+    private String detectionResult = "pending";
 
     /** 伪造概率 */
     @TableField("spoof_probability")

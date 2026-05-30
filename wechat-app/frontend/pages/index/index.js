@@ -186,7 +186,8 @@ Page({
         const lineWidth = 14;
 
         const { stats, threatColor } = this.data;
-        const isDark = wx.getSystemInfoSync().theme === 'dark';
+        const appInfo = wx.getAppBaseInfo();
+        const isDark = appInfo.theme === 'dark';
         const raw = stats.safeRate;
         const rate = raw === '--' ? 0 : parseInt(raw) / 100;
 

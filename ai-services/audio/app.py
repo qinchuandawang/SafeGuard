@@ -14,7 +14,7 @@ _mod = importlib.import_module('app')
 app = _mod.app
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", "5001"))
+    port = int(os.environ.get("PORT", "5000"))
     print("=" * 50)
     print("  SafeGuard 音频检测服务")
     print(f"  端口: {port}")

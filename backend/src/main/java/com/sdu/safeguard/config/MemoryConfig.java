@@ -17,10 +17,12 @@ public class MemoryConfig {
     private double longTermImportanceThreshold = 0.6;
     private String storagePath = "./data/memory";
     private int memoryRetrievalTopK = 10;
+    private String memoryCollection = "user_memories";
+    private int memoryEmbeddingDim = 1024;
 
     @PostConstruct
     public void validate() {
-        log.info("Memory配置加载完成: shortTerm={}, longTermMax={}, ttl={}h",
-                shortTermMaxSize, longTermMaxSize, longTermTtlHours);
+        log.info("Memory配置: STM={}, LTM={}, 记忆集合={}, dim={}",
+                shortTermMaxSize, longTermMaxSize, memoryCollection, memoryEmbeddingDim);
     }
 }

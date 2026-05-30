@@ -32,15 +32,17 @@ public class KnowledgeController {
     private final LLMService llmService;
 
     @GetMapping("/knowledge/search")
-    public Result<List<KnowledgeItem>> search(@RequestParam("keyword") String keyword) {
-        String validationError = InputValidator.validateKeyword(keyword);
+    public Result<List<KnowledgeItem>> search(@RequestParam(value = "keyword", required = false) String keyword,
+                                               @RequestParam(value = "q", required = false) String q) {
+        String kw = keyword != null ? keyword : q;
+        if (kw == null || kw.trim().isEmpty()) {
+            return Result.error("搜索关键词不能为空");
+        }
+        String validationError = InputValidator.validateKeyword(kw);
         if (validationError != null) {
             return Result.error(validationError);
         }
-        if (keyword == null || keyword.trim().isEmpty()) {
-            return Result.error("关键词不能为空");
-        }
-        List<KnowledgeItem> result = knowledgeService.search(keyword.trim());
+        List<KnowledgeItem> result = knowledgeService.search(kw.trim());
         return Result.success(result);
     }
 
@@ -53,6 +55,31 @@ public class KnowledgeController {
     @GetMapping("/knowledge")
     public Result<List<KnowledgeItem>> getAll() {
         return Result.success(knowledgeService.getAll());
+    }
+
+    /** 小程序知识库文章列表格式 */
+    @GetMapping("/knowledge/articles")
+    public Result<List<Map<String, Object>>> getArticles() {
+        List<KnowledgeItem> items = knowledgeService.getAll();
+        List<Map<String, Object>> articles = new ArrayList<>();
+        // 封面图轮播
+        String[] covers = {"1.jpg","2.jpg","3.jpg","4.jpg","5.jpg","6.jpg","7.jpg","8.jpg"};
+        for (int i = 0; i < items.size(); i++) {
+            KnowledgeItem item = items.get(i);
+            if (item.getEnabled() != null && !item.getEnabled()) continue;
+            Map<String, Object> article = new LinkedHashMap<>();
+            article.put("id", item.getId());
+            article.put("title", item.getQuestion());
+            String summary = item.getAnswer();
+            article.put("summary", summary.length() > 120 ? summary.substring(0, 120) + "…" : summary);
+            article.put("cover", "/assets/images/covers/" + covers[i % covers.length]);
+            article.put("tags", item.getTags() != null ? List.of(item.getTags().split(",")) : List.of());
+            article.put("category", item.getCategory());
+            article.put("date", java.time.LocalDate.now().toString());
+            article.put("views", (int)(Math.random() * 30000 + 5000));
+            articles.add(article);
+        }
+        return Result.success(articles);
     }
 
     @PostMapping("/knowledge")

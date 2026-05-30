@@ -10,6 +10,7 @@ import com.sdu.safeguard.util.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 @Slf4j
@@ -21,18 +22,22 @@ public class AuthController {
     private final UserService userService;
     private final JwtUtil jwtUtil;
     private final com.sdu.safeguard.mapper.UserMapper userMapper;
+    private final BCryptPasswordEncoder passwordEncoder;
 
     @PostMapping("/admin/login")
     public Result<LoginResponse> adminLogin(@RequestBody AdminLoginRequest request) {
         if (request.getUsername() == null || request.getPassword() == null) {
             return Result.error("用户名和密码不能为空");
         }
-        if (!"admin".equals(request.getUsername()) || !"admin123".equals(request.getPassword())) {
-            return Result.error("用户名或密码错误");
-        }
-        com.sdu.safeguard.entity.User admin = userMapper.findAnyAdmin();
+        User admin = userMapper.findAnyAdmin();
         if (admin == null) {
             return Result.error("管理员账号不存在");
+        }
+        if (admin.getPasswordHash() == null || admin.getPasswordHash().isBlank()) {
+            return Result.error("管理员密码未初始化，请联系系统管理员");
+        }
+        if (!passwordEncoder.matches(request.getPassword(), admin.getPasswordHash())) {
+            return Result.error("用户名或密码错误");
         }
         String token = jwtUtil.generateToken(admin.getId(), admin.getOpenid(), admin.getRole());
         return Result.success(LoginResponse.builder()

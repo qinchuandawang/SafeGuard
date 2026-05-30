@@ -21,13 +21,13 @@ public class HybridChunker {
 
     public List<ChunkResult> hybridChunk(String document, String source, String category, List<String> tags) {
         List<ChunkResult> fixedChunks = fixedWindowChunk(document, source, category, tags);
-        List<ChunkResult> semanticChunks = semanticChunk(document, source, category, tags);
+        List<ChunkResult> sectionChunks = sectionBasedChunk(document, source, category, tags);
 
         Map<String, ChunkResult> merged = new LinkedHashMap<>();
         for (ChunkResult chunk : fixedChunks) {
             merged.put(chunk.getChunkId(), chunk);
         }
-        for (ChunkResult chunk : semanticChunks) {
+        for (ChunkResult chunk : sectionChunks) {
             String key = chunk.getChunkId();
             if (!merged.containsKey(key)) {
                 merged.put(key, chunk);
@@ -35,8 +35,8 @@ public class HybridChunker {
         }
 
         List<ChunkResult> result = new ArrayList<>(merged.values());
-        log.debug("混合切块完成: fixed={}, semantic={}, merged={}",
-                fixedChunks.size(), semanticChunks.size(), result.size());
+        log.debug("混合切块完成: fixed={}, section={}, merged={}",
+                fixedChunks.size(), sectionChunks.size(), result.size());
         return result;
     }
 
@@ -82,7 +82,10 @@ public class HybridChunker {
         return chunks;
     }
 
-    public List<ChunkResult> semanticChunk(String document, String source, String category, List<String> tags) {
+    /**
+     * 按章节标题（##、###、【）切分的段落级分块，非语义聚类。
+     */
+    public List<ChunkResult> sectionBasedChunk(String document, String source, String category, List<String> tags) {
         List<ChunkResult> chunks = new ArrayList<>();
         if (document == null || document.isBlank()) return chunks;
 
@@ -97,14 +100,14 @@ public class HybridChunker {
 
             if (para.length() <= maxSize) {
                 chunks.add(ChunkResult.builder()
-                        .chunkId("semantic_" + source + "_" + globalIndex)
+                        .chunkId("section_" + source + "_" + globalIndex)
                         .content(para.trim())
                         .category(category)
                         .source(source)
                         .tags(tags)
                         .startPos(0)
                         .endPos(para.length())
-                        .chunkType("SEMANTIC")
+                        .chunkType("SECTION")
                         .build());
                 globalIndex++;
             } else {
@@ -121,14 +124,14 @@ public class HybridChunker {
                     String content = para.substring(pos, end).trim();
                     if (!content.isBlank()) {
                         chunks.add(ChunkResult.builder()
-                                .chunkId("semantic_" + source + "_" + globalIndex)
+                                .chunkId("section_" + source + "_" + globalIndex)
                                 .content(content)
                                 .category(category)
                                 .source(source)
                                 .tags(tags)
                                 .startPos(pos)
                                 .endPos(end)
-                                .chunkType("SEMANTIC")
+                                .chunkType("SECTION")
                                 .build());
                         globalIndex++;
                     }
@@ -165,7 +168,10 @@ public class HybridChunker {
         int end = Math.min(startPos + maxLookahead, text.length());
         for (int i = startPos; i < end; i++) {
             char c = text.charAt(i);
-            if (c == '。' || c == '！' || c == '？' || c == '\n') {
+            if (c == '。' || c == '！' || c == '？' || c == '\n' || c == '；') {
+                return i + 1;
+            }
+            if ((c == '：' || c == ':') && i > startPos + 10) {
                 return i + 1;
             }
         }

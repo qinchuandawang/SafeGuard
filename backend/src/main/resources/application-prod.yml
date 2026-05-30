@@ -16,19 +16,6 @@ spring:
       data-locations: classpath:sql/init-data.sql
       continue-on-error: true
 
-# 微信小程序配置（从环境变量读取）
-wechat:
-  appid: ${WECHAT_APPID:}
-  secret: ${WECHAT_SECRET:}
-
-# 大模型配置（从环境变量读取）
-llm:
-  api-key: ${DEEPSEEK_API_KEY:}
-
-# SiliconFlow API 配置
-siliconflow:
-  api-key: ${SILICONFLOW_API_KEY:}
-
 # 音频检测服务（容器内使用容器名）
 audio:
   service:
@@ -40,15 +27,26 @@ audio:
 # 视频检测服务（容器内使用容器名）
 video:
   service:
-    url: http://safeguard-video:5002/video
-    image-url: http://safeguard-video:5002/video
+    url: http://safeguard-video:5002/api/detect/video
+    image-url: http://safeguard-video:5002/api/detect/image
 
 # RAG 配置（Qdrant 容器名）
 rag:
   qdrant-host: ${QDRANT_HOST:qdrant}
   qdrant-port: ${QDRANT_PORT:6333}
+  allow-in-memory-fallback: false
 
 # 日志级别（生产环境关闭 SQL 日志）
 mybatis-plus:
   configuration:
     log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+
+# Actuator health endpoint
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never

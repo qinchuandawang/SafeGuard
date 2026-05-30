@@ -100,6 +100,19 @@ public class AdminApiController {
         return Result.success(result);
     }
 
+    @GetMapping("/models")
+    public Result<Map<String, Object>> getModels() {
+        Map<String, Object> result = new LinkedHashMap<>();
+        try {
+            result.put("models", audioTrainingService.getAllModels());
+            result.put("activeModel", audioTrainingService.getActiveModel().orElse(null));
+        } catch (Exception e) {
+            log.error("获取模型列表失败", e);
+            return Result.error("获取模型数据失败");
+        }
+        return Result.success(result);
+    }
+
     @GetMapping("/stats/video")
     public Result<Map<String, Object>> getVideoStats() {
         Map<String, Object> stats = new LinkedHashMap<>();

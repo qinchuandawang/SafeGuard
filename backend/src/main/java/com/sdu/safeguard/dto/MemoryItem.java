@@ -21,5 +21,4 @@ public class MemoryItem {
     private double importance;
     private List<String> tags;
     private String summary;
-    private List<Float> embedding;
 }

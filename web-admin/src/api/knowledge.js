@@ -16,19 +16,5 @@ export function deleteKnowledge(id) {
   return request.delete(`/knowledge/${id}`)
 }
 
-export function uploadKnowledgePdf(file, onProgress) {
-  const formData = new FormData()
-  formData.append('file', file)
-  return request.post('/knowledge/upload', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-    onUploadProgress: onProgress,
-  })
-}
-
-export function getKnowledgeDocuments() {
-  return request.get('/knowledge/documents')
-}
-
-export function deleteKnowledgeDocument(id) {
-  return request.delete(`/knowledge/documents/${id}`)
-}
+// 知识库 PDF 上传功能暂未实现后端接口
+// uploadKnowledgePdf / getKnowledgeDocuments / deleteKnowledgeDocument 需要先实现后端 Controller 路由

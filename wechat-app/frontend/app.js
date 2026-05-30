@@ -73,7 +73,7 @@ App({
 
   tryAutoLogin() {
     if (!auth.isLoggedIn()) {
-      const loginTimeout = 3000;
+      const loginTimeout = 5000;
       const loginPromise = auth.login();
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('登录超时')), loginTimeout)

@@ -40,10 +40,19 @@ temp/
 # 配置文件（含敏感信息）
 .env
 
-# 大文件：训练数据集
+# 训练数据集（不包含模型）
 ai-services/audio/data/
-ai-services/video/checkpoints/
-*.pth
+
+# 训练输出产物
+ai-services/audio/outputs/**/*.bin
+ai-services/audio/outputs/**/*.safetensors
+ai-services/audio/outputs/**/*.pt
+!ai-services/audio/outputs/*/best/config.json
+!ai-services/audio/outputs/*/best/processor_config.json
+
+# 模型文件（超过 Gitee 100MB 限制，通过脚本单独下载）
+ai-services/**/pretrained/*.pth
+ai-services/**/pretrained/**/*.safetensors
 
 # JVM 崩溃日志
 hs_err_pid*.log
@@ -56,10 +65,9 @@ __pycache__/
 .Python
 env/
 venv/
+.venv/
 ENV/
 *.egg-info/
-dist/
-build/
 
 # Node
 node_modules/
@@ -75,13 +83,4 @@ yarn-error.log
 
 # 缓存
 .mcp-cache/
-
-# AI 服务 — 大文件（模型权重、数据集）
-ai-services/audio/outputs/**/*.bin
-ai-services/audio/outputs/**/*.safetensors
-ai-services/audio/outputs/**/*.pt
-ai-services/audio/pretrained/**/*.bin
-ai-services/audio/pretrained/**/*.safetensors
-# 但保留目录结构
-ai-services/audio/outputs/*/best/config.json
-ai-services/audio/outputs/*/best/processor_config.json
+.workbuddy/

@@ -1,5 +1,6 @@
 package com.sdu.safeguard.service;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import com.sdu.safeguard.dto.AudioDetectionResponse;
 import com.sdu.safeguard.entity.AudioDetectionRecord;
 import com.sdu.safeguard.entity.AudioModel;
@@ -7,7 +8,9 @@ import com.sdu.safeguard.mapper.AudioDetectionRecordMapper;
 import com.sdu.safeguard.mapper.AudioModelMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
@@ -19,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.*;
 
 @Service
@@ -36,15 +40,24 @@ public class AudioTrainingService {
     @Value("${audio.detection.health-url:http://localhost:5000/health}")
     private String healthUrl;
 
+    /** 专门的健康检查 RestTemplate — 2 秒超时，不阻塞主流程 */
+    private final RestTemplate healthCheckRestTemplate;
+    private final Cache<String, Boolean> serviceHealthCache;
+
     /**
-     * 检查音频检测服务是否可用
+     * 检查音频检测服务是否可用（带缓存，最多每 30 秒检查一次）
      */
     public boolean isServiceAvailable() {
+        Boolean cached = serviceHealthCache.getIfPresent("audio_health");
+        if (cached != null) return cached;
+
         try {
-            restTemplate.getForObject(healthUrl, Map.class);
+            healthCheckRestTemplate.getForObject(healthUrl, Map.class);
+            serviceHealthCache.put("audio_health", true);
             return true;
         } catch (RestClientException e) {
             log.warn("音频检测服务不可用: {}", e.getMessage());
+            serviceHealthCache.put("audio_health", false);
             return false;
         }
     }

@@ -35,8 +35,9 @@ class Trainer:
         self.best_acc = 0.0
         self.history = {'train_loss': [], 'train_acc': [], 'val_loss': [], 'val_acc': []}
         
-        # 新增：混合精度训练器
-        self.scaler = GradScaler('cuda')
+        # 新增：混合精度训练器（仅在 CUDA 上启用；CPU 上启用会导致不支持/报错）
+        self.use_amp = (str(device).startswith("cuda") or getattr(device, "type", None) == "cuda")
+        self.scaler = GradScaler(enabled=self.use_amp)
     
     def train_epoch(self, accumulation_steps=2):
         """训练一个 epoch - 支持梯度累积和混合精度"""
@@ -54,7 +55,7 @@ class Trainer:
             labels = labels.to(self.device)
             
             # 混合精度训练
-            with autocast('cuda'):
+            with autocast('cuda', enabled=self.use_amp):
                 outputs = self.model(inputs)
                 loss = self.criterion(outputs, labels)
                 # 梯度累积：loss 除以累积步数
@@ -62,12 +63,18 @@ class Trainer:
                 _, preds = torch.max(outputs, 1)
             
             # 混合精度反向传播
-            self.scaler.scale(loss).backward()
+            if self.use_amp:
+                self.scaler.scale(loss).backward()
+            else:
+                loss.backward()
             
             # 每 accumulation_steps 步更新一次参数
             if (i + 1) % accumulation_steps == 0:
-                self.scaler.step(self.optimizer)
-                self.scaler.update()
+                if self.use_amp:
+                    self.scaler.step(self.optimizer)
+                    self.scaler.update()
+                else:
+                    self.optimizer.step()
                 self.optimizer.zero_grad()
             
             running_loss += loss.item() * inputs.size(0) * accumulation_steps
@@ -78,8 +85,11 @@ class Trainer:
         
         # 处理最后可能剩余的梯度
         if total % accumulation_steps != 0:
-            self.scaler.step(self.optimizer)
-            self.scaler.update()
+            if self.use_amp:
+                self.scaler.step(self.optimizer)
+                self.scaler.update()
+            else:
+                self.optimizer.step()
             self.optimizer.zero_grad()
         
         epoch_loss = running_loss / total

@@ -18,4 +18,8 @@ public class AgentRequest {
     private String userId;
     private Map<String, Object> context;
     private Map<String, Object> parameters;
+    /** 文件路径（音频/视频检测使用） */
+    private String filePath;
+    /** 文件类型：audio / video */
+    private String fileType;
 }

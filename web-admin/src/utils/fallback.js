@@ -21,6 +21,14 @@ export function safeCall(apiFn, mockData, timeoutMs = SHORT_TIMEOUT) {
 /** 静默请求实例：不出错弹窗，适合懒加载/可选数据 */
 const silent = axios.create({ baseURL: '/api', timeout: SHORT_TIMEOUT })
 
+silent.interceptors.request.use((config) => {
+  const token = localStorage.getItem('admin_token')
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
+
 silent.interceptors.response.use(
   (res) => res.data?.code === 200 ? res.data.data : Promise.reject(res.data),
   () => Promise.reject(null),

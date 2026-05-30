@@ -75,7 +75,7 @@
             <text class="article-summary">{{item.summary}}</text>
             <view class="article-meta flex flex-between">
               <view class="article-tags flex" style="gap:12rpx;flex-wrap:wrap;flex:1">
-                <text class="tag tag-primary" wx:for="{{item.tags}}" wx:for-item="tag">{{tag}}</text>
+                <text class="tag tag-primary" wx:for="{{item.tags}}" wx:for-item="tag" wx:key="*this">{{tag}}</text>
               </view>
               <text class="article-date text-xs text-tertiary" style="flex-shrink:0">{{item.date}}</text>
             </view>

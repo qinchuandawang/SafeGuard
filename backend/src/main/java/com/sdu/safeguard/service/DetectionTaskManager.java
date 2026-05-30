@@ -31,7 +31,7 @@ public class DetectionTaskManager {
     private final AsyncTaskMapper asyncTaskMapper;
     private final ObjectMapper objectMapper;
 
-    private static final long SSE_TIMEOUT_MS = 600_000L;
+    private static final long SSE_TIMEOUT_MS = 300_000L;
     private static final long CLEANUP_DELAY_MS = 30_000L;
 
     public DetectionTaskManager(AsyncTaskMapper asyncTaskMapper, ObjectMapper objectMapper) {

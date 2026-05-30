@@ -20,4 +20,8 @@ public class OrchestratorRequest {
     private boolean useReAct;
     private boolean useCoT;
     private boolean useRAG;
+    /** 文件路径（多模态检测使用） */
+    private String filePath;
+    /** 文件类型：audio / video */
+    private String fileType;
 }

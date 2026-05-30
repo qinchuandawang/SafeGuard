@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=MYSQL
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=MYSQL;NON_KEYWORDS=USER
     username: sa
     password:
     driver-class-name: org.h2.Driver
@@ -26,14 +26,14 @@ jwt:
   expiration-hours: 72
 
 wechat:
-  appid: test_appid
-  secret: test_secret
+  appid: ""
+  secret: ""
   login-url: https://api.weixin.qq.com/sns/jscode2session
 
 llm:
   api-key: test_key
-  api-url: http://localhost:9999/v1/chat/completions
-  model: test-model
+  api-url: https://api.sophnet.com/v1/chat/completions
+  model: DeepSeek-V4-Flash
   temperature: 0.7
   max-tokens: 256
 
@@ -53,6 +53,7 @@ rag:
   fixed-chunk-overlap: 32
   hnsw-top-k: 5
   final-top-k: 3
+  allow-in-memory-fallback: true
 
 memory:
   short-term-max-size: 50

@@ -15,42 +15,42 @@ import org.springframework.web.multipart.MultipartException;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(HttpStatus.PAYLOAD_TOO_LARGE)
     public Result<Void> handleMaxUploadSize(MaxUploadSizeExceededException e) {
         log.warn("文件上传超过大小限制: {}", e.getMessage());
         return Result.error("文件大小超过限制，单个文件最大50MB，总请求最大100MB");
     }
 
     @ExceptionHandler(MultipartException.class)
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Result<Void> handleMultipartException(MultipartException e) {
         log.warn("文件上传异常: {}", e.getMessage());
         return Result.error("文件上传失败，请检查文件格式");
     }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Result<Void> handleMissingParam(MissingServletRequestParameterException e) {
         log.warn("缺少必填参数: {}", e.getParameterName());
         return Result.error("缺少必填参数: " + e.getParameterName());
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Result<Void> handleIllegalArgument(IllegalArgumentException e) {
         log.warn("参数校验失败: {}", e.getMessage());
         return Result.error(e.getMessage() != null ? e.getMessage() : "参数不合法");
     }
 
     @ExceptionHandler(RuntimeException.class)
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Result<Void> handleRuntimeException(RuntimeException e) {
         log.error("服务运行时异常", e);
         return Result.error("服务处理失败，请稍后重试。");
     }
 
     @ExceptionHandler(Exception.class)
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Result<Void> handleException(Exception e) {
         log.error("未预期的错误", e);
         return Result.error("系统异常，请联系管理员。");

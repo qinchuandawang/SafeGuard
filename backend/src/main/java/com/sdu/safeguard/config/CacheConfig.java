@@ -33,8 +33,8 @@ public class CacheConfig {
     @Bean("llmResponseCache")
     public Cache<String, String> llmResponseCache() {
         return Caffeine.newBuilder()
-                .expireAfterWrite(5, TimeUnit.MINUTES)
-                .maximumSize(500)
+                .expireAfterWrite(10, TimeUnit.MINUTES)
+                .maximumSize(2_000)
                 .recordStats()
                 .build();
     }
@@ -42,8 +42,34 @@ public class CacheConfig {
     @Bean("embeddingCache")
     public Cache<String, List<Float>> embeddingCache() {
         return Caffeine.newBuilder()
-                .expireAfterWrite(10, TimeUnit.MINUTES)
-                .maximumSize(2_000)
+                .expireAfterWrite(30, TimeUnit.MINUTES)
+                .maximumSize(5_000)
+                .recordStats()
+                .build();
+    }
+
+    @Bean("serviceHealthCache")
+    public Cache<String, Boolean> serviceHealthCache() {
+        return Caffeine.newBuilder()
+                .expireAfterWrite(30, TimeUnit.SECONDS)
+                .maximumSize(50)
+                .build();
+    }
+
+    @Bean("knowledgeContextCache")
+    public Cache<String, String> knowledgeContextCache() {
+        return Caffeine.newBuilder()
+                .expireAfterWrite(30, TimeUnit.MINUTES)
+                .maximumSize(1_000)
+                .recordStats()
+                .build();
+    }
+
+    @Bean("ragResultCache")
+    public Cache<String, List<com.sdu.safeguard.dto.RagQueryResult>> ragResultCache() {
+        return Caffeine.newBuilder()
+                .expireAfterWrite(5, TimeUnit.MINUTES)
+                .maximumSize(200)
                 .recordStats()
                 .build();
     }

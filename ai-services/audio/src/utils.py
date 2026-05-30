@@ -121,6 +121,10 @@ def load_model_once(model_dir: Path) -> Tuple[Wav2Vec2Processor, Wav2Vec2ForSequ
         t0 = time.time()
         print(f"[加载模型] 从 {model_dir} 加载 Wav2Vec2...")
 
+        # 限制 PyTorch 线程数以减少内存占用（CPU 环境默认会占用所有核心）
+        torch.set_num_threads(int(os.environ.get("OMP_NUM_THREADS", "2")))
+        torch.set_grad_enabled(False)
+
         PROCESSOR = Wav2Vec2Processor.from_pretrained(str(model_dir))
         MODEL = Wav2Vec2ForSequenceClassification.from_pretrained(
             str(model_dir),

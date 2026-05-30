@@ -22,9 +22,15 @@ _processes = []
 
 
 def _start(name, workdir, script, port, extra_env=None):
-    # 优先使用项目虚拟环境（D 盘），避免占 C 盘空间
-    venv_python = os.path.join(os.path.dirname(BASE), '.venv', 'Scripts', 'python.exe')
-    python_exe = venv_python if os.path.exists(venv_python) else sys.executable
+    # 优先使用项目虚拟环境，避免占 C 盘空间
+    # 兼容两种常见放置位置：
+    # 1) ai-services/.venv
+    # 2) repo_root/.venv
+    venv_candidates = [
+        os.path.join(BASE, ".venv", "Scripts", "python.exe"),
+        os.path.join(os.path.dirname(BASE), ".venv", "Scripts", "python.exe"),
+    ]
+    python_exe = next((p for p in venv_candidates if os.path.exists(p)), sys.executable)
     env = {
         **os.environ,
         'PORT': str(port),
@@ -48,12 +54,12 @@ def _cleanup():
 
 def main():
     atexit.register(_cleanup)
-    _start('audio', 'audio', 'run.py', int(os.environ.get('AUDIO_PORT', 5001)))
+    _start('audio', 'audio', 'app.py', int(os.environ.get('AUDIO_PORT', 5000)))
     _start('video', 'video', 'api/app.py', int(os.environ.get('VIDEO_PORT', 5002)))
 
     print('─' * 50)
     print('  AI Services 已启动 (Ctrl+C 停止)')
-    print(f'  音频检测 → http://localhost:{os.environ.get("AUDIO_PORT", 5001)}')
+    print(f'  音频检测 → http://localhost:{os.environ.get("AUDIO_PORT", 5000)}')
     print(f'  视频检测 → http://localhost:{os.environ.get("VIDEO_PORT", 5002)}')
     print('─' * 50)
 
