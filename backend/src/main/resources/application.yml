@@ -39,14 +39,13 @@ mybatis-plus:
 
 # JWT 配置
 jwt:
-  secret: SafeGuard-JWT-Secret-Key-2026-Must-Change-In-Production
+  secret: ${JWT_SECRET:SafeGuard-JWT-Secret-Key-2026-Must-Change-In-Production}
   expiration-hours: 24
 
-# 管理员默认凭证（小型团队项目明文保存）
 # 微信小程序配置
 wechat:
-  appid: wx859a5eef3e30a6e5
-  secret: af02d82391171bcf68284f7ebf3c2f59
+  appid: ${WECHAT_APPID:wx859a5eef3e30a6e5}
+  secret: ${WECHAT_SECRET:af02d82391171bcf68284f7ebf3c2f59}
   login-url: https://api.weixin.qq.com/sns/jscode2session
 
 # 音频检测服务地址
@@ -71,16 +70,16 @@ video:
 
 # 大模型配置（SophNet）
 llm:
-  api-key: 3tZkDmHLlPMWCJagVqp_L39-9R-qcnF9swCCZbgcR0B5ZWNpXnnpVOlcJTiEjfObzFnhUivCDUUy0icAmMUQTw
-  api-url: https://api.sophnet.com/v1/chat/completions
-  model: DeepSeek-V4-Flash
+  api-key: ${LLM_API_KEY:}
+  api-url: ${LLM_API_URL:https://api.sophnet.com/v1/chat/completions}
+  model: ${LLM_MODEL:DeepSeek-V4-Flash}
   temperature: 0.7
   max-tokens: 2048
   enable-thinking: false
 
 # SiliconFlow API 配置
 siliconflow:
-  api-key: sk-nkrrixuyvtfgfnatmqcknkjzmlkwkwzrpcsrijanarbltmir
+  api-key: ${SILICONFLOW_API_KEY:}
   embedding-url: https://api.siliconflow.cn/v1/embeddings
   rerank-url: https://api.siliconflow.cn/v1/rerank
   embedding-model: BAAI/bge-large-zh-v1.5
