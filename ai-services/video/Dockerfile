@@ -24,6 +24,7 @@ COPY api/ ./api/
 COPY models/ ./models/
 COPY utils/ ./utils/
 COPY config.yaml .
+COPY pretrained/ ./pretrained/
 
 # 创建必要目录
 RUN mkdir -p /app/data /app/checkpoints /app/tmp_uploads

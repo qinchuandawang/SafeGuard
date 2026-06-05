@@ -24,7 +24,7 @@ EXPOSE 5000
 
 ENV PYTHONPATH=/app \
     FLASK_DEBUG=0 \
-    MODEL_DIR=/app/outputs/wav2vec2-mid/best \
+    MODEL_DIR=/app/pretrained/asvspoof-finetuned \
     FALLBACK_MODEL=true
 
 CMD ["python", "src/app.py"]

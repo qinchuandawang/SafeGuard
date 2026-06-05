@@ -124,6 +124,7 @@ services:
     ports:
       - "5002:5002"
     volumes:
+      - ./ai-services/video/pretrained:/app/pretrained
       - video_data:/app/data
 
   # ==========================================

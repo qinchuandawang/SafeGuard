@@ -168,8 +168,12 @@ public class LLMService {
         Map<String, Object> requestBody = new LinkedHashMap<>();
         requestBody.put("model", llmConfig.getModel());
         requestBody.put("messages", List.of(Map.of("role", "user", "content", prompt)));
-        requestBody.put("temperature", llmConfig.getTemperature());
-        requestBody.put("max_tokens", llmConfig.getMaxTokens());
+        if (llmConfig.getTemperature() != null) {
+            requestBody.put("temperature", llmConfig.getTemperature());
+        }
+        if (llmConfig.getMaxTokens() != null) {
+            requestBody.put("max_tokens", llmConfig.getMaxTokens());
+        }
         return requestBody;
     }
 

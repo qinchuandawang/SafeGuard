@@ -193,8 +193,12 @@ Page({
             streamTask = streamResult;
             this._qaStreamTask = streamResult;
           });
-        } catch (e) { console.warn('LLM流式失败:', e.message); }
-        finally { if (streamTask) { streamTask.abort(); this._qaStreamTask = null; } }
+        } catch (e) {
+          console.warn('LLM流式失败:', e.message);
+          if (streamTask) streamTask.abort();
+        } finally {
+          this._qaStreamTask = null;
+        }
 
         if (!streamOk) {
           try {

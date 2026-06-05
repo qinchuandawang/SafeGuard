@@ -27,10 +27,10 @@ public class DetectionService {
     private final VideoImagePipelineService videoImagePipelineService;
     private final VideoProperties videoProperties;
 
-    @Value("${audio.service.url}")
+    @Value("${audio.service.url:http://localhost:5000/audio/detect}")
     private String audioServiceUrl;
 
-    @Value("${video.service.url}")
+    @Value("${video.service.url:http://localhost:5002/api/detect/video}")
     private String videoServiceUrl;
 
     public AudioDetectionResult detectAudio(String filePath) {

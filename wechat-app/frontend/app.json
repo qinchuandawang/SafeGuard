@@ -28,25 +28,25 @@
         "pagePath": "pages/index/index",
         "text": "首页",
         "iconPath": "assets/images/tabbar/index.png",
-        "selectedIconPath": "assets/images/tabbar/index.png"
+        "selectedIconPath": "assets/images/tabbar/index-active.png"
       },
       {
         "pagePath": "pages/detection/detection",
         "text": "检测",
         "iconPath": "assets/images/tabbar/detection.png",
-        "selectedIconPath": "assets/images/tabbar/detection.png"
+        "selectedIconPath": "assets/images/tabbar/detection-active.png"
       },
       {
         "pagePath": "pages/simulate/simulate",
         "text": "模拟",
         "iconPath": "assets/images/tabbar/simulate.png",
-        "selectedIconPath": "assets/images/tabbar/simulate.png"
+        "selectedIconPath": "assets/images/tabbar/simulate-active.png"
       },
       {
         "pagePath": "pages/knowledge/knowledge",
         "text": "知识库",
         "iconPath": "assets/images/tabbar/knowledge.png",
-        "selectedIconPath": "assets/images/tabbar/knowledge.png"
+        "selectedIconPath": "assets/images/tabbar/knowledge-active.png"
       }
     ]
   },

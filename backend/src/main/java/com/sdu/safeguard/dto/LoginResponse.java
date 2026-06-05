@@ -15,5 +15,5 @@ public class LoginResponse {
     private String role;
     private String nickname;
     private String avatarUrl;
-    private boolean isNewUser;
+    private Boolean isNewUser;
 }

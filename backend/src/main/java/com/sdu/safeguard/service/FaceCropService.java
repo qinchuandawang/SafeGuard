@@ -1,6 +1,5 @@
 package com.sdu.safeguard.service;
 
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.bytedeco.javacpp.Loader;
 import org.bytedeco.opencv.opencv_core.Mat;
@@ -28,28 +27,36 @@ import static org.bytedeco.opencv.global.opencv_imgproc.equalizeHist;
 @Service
 public class FaceCropService {
 
-    private CascadeClassifier faceClassifier;
+    private static final Path CASCADE_FILE_PATH;
+    private static final boolean CASCADE_AVAILABLE;
 
-    @PostConstruct
-    public void init() {
+    static {
+        Path loadedPath = null;
+        boolean available = false;
         try {
             Loader.load(org.bytedeco.opencv.global.opencv_objdetect.class);
-            Path cascadePath = extractBundledCascade();
-            if (cascadePath == null) {
-                log.warn("未找到人脸级联文件，将使用整帧送检");
-                faceClassifier = null;
-                return;
-            }
-            faceClassifier = new CascadeClassifier(cascadePath.toAbsolutePath().toString());
-            if (faceClassifier == null || faceClassifier.empty()) {
-                log.warn("级联分类器为空，人脸步骤将跳过，直接使用整帧");
-                faceClassifier = null;
+            loadedPath = extractBundledCascade();
+            if (loadedPath != null) {
+                available = true;
             }
         } catch (Throwable t) {
             log.warn("OpenCV 人脸级联加载失败，将使用整帧送检: {}", t.getMessage());
-            faceClassifier = null;
         }
+        CASCADE_FILE_PATH = loadedPath;
+        CASCADE_AVAILABLE = available;
     }
+
+    private final ThreadLocal<CascadeClassifier> faceClassifierHolder = ThreadLocal.withInitial(() -> {
+        if (!CASCADE_AVAILABLE || CASCADE_FILE_PATH == null) {
+            return null;
+        }
+        CascadeClassifier classifier = new CascadeClassifier(CASCADE_FILE_PATH.toAbsolutePath().toString());
+        if (classifier.empty()) {
+            log.warn("级联分类器为空，人脸步骤将跳过，直接使用整帧");
+            return null;
+        }
+        return classifier;
+    });
 
     private static Path extractBundledCascade() {
         try (InputStream in = FaceCropService.class.getResourceAsStream("/opencv/lbpcascade_frontalface.xml")) {
@@ -67,8 +74,8 @@ public class FaceCropService {
     }
 
     public boolean cropLargestFace(File framePng, File cropPng, double facePaddingRatio) throws IOException {
-        // 人脸检测是可选预处理步骤，失败时由上层回退为整帧送检。
-        if (faceClassifier == null) {
+        CascadeClassifier classifier = faceClassifierHolder.get();
+        if (classifier == null) {
             return false;
         }
 
@@ -82,7 +89,7 @@ public class FaceCropService {
         equalizeHist(gray, gray);
 
         RectVector faces = new RectVector();
-        faceClassifier.detectMultiScale(gray, faces);
+        classifier.detectMultiScale(gray, faces);
         if (faces.size() == 0) {
             return false;
         }

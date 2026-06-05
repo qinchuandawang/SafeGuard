@@ -43,7 +43,9 @@ Page({
       const history = app.globalData.detectionHistory;
       if (history && history.length > 0) {
         const latest = history[history.length - 1];
-        this.processDetectionResult(latest);
+        const recordData = latest.record || latest;
+        this.setData({ currentRecordId: latest.id || Date.now() });
+        this.processDetectionResult(recordData);
       } else {
         app.showWarning('暂无检测数据');
       }

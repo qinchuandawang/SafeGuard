@@ -38,10 +38,6 @@ public class KnowledgeController {
         if (kw == null || kw.trim().isEmpty()) {
             return Result.error("搜索关键词不能为空");
         }
-        String validationError = InputValidator.validateKeyword(kw);
-        if (validationError != null) {
-            return Result.error(validationError);
-        }
         List<KnowledgeItem> result = knowledgeService.search(kw.trim());
         return Result.success(result);
     }

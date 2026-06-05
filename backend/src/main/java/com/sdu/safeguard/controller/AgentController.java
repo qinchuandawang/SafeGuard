@@ -45,7 +45,7 @@ public class AgentController {
         if (text == null || text.isBlank()) {
             return Result.error("文本不能为空");
         }
-        String sessionId = (String) request.getOrDefault("sessionId", UUID.randomUUID().toString());
+        String sessionId = String.valueOf(request.getOrDefault("sessionId", UUID.randomUUID().toString()));
 
         OrchestratorRequest agentRequest = OrchestratorRequest.builder()
                 .query(text)
@@ -72,7 +72,7 @@ public class AgentController {
         if (text == null || text.isBlank()) {
             return Result.error("输入不能为空");
         }
-        String sessionId = (String) request.getOrDefault("sessionId", UUID.randomUUID().toString());
+        String sessionId = String.valueOf(request.getOrDefault("sessionId", UUID.randomUUID().toString()));
 
         OrchestratorRequest agentRequest = OrchestratorRequest.builder()
                 .query(text)

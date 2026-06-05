@@ -36,6 +36,7 @@ temp/
 *.pdf
 *.docx
 *.txt
+!requirements.txt
 
 # 配置文件（含敏感信息）
 .env

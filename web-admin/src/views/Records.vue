@@ -57,7 +57,7 @@
         class="modern-table"
         stripe
         max-height="600"
-        default-sort="{ prop: 'createdAt', order: 'descending' }"
+        :default-sort="{ prop: 'createdAt', order: 'descending' }"
       >
         <el-table-column prop="id" label="ID" width="60" sortable />
         <el-table-column prop="fileName" label="文件名" min-width="160" show-overflow-tooltip />

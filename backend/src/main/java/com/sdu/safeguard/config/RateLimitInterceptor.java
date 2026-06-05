@@ -51,7 +51,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         int capacity = DEFAULT_CAPACITY;
 
         for (Map.Entry<String, Integer> entry : PATH_LIMITS.entrySet()) {
-            if (path.contains(entry.getKey())) {
+            if (path.startsWith(entry.getKey())) {
                 capacity = entry.getValue();
                 break;
             }
@@ -76,8 +76,8 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     }
 
     private boolean isPublicPath(String path) {
-        return path.startsWith("/admin/") || path.startsWith("/api/auth")
-                || path.startsWith("/api/health") || path.startsWith("/actuator")
+        return path.startsWith("/admin/") || path.startsWith("/api/auth/")
+                || path.startsWith("/api/health") || path.startsWith("/actuator/")
                 || path.equals("/error");
     }
 

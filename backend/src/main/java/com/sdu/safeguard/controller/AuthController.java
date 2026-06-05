@@ -60,7 +60,7 @@ public class AuthController {
                     request.getAvatarUrl()
             );
             log.info("用户登录成功: userId={}, role={}, isNewUser={}",
-                    response.getUserId(), response.getRole(), response.isNewUser());
+                    response.getUserId(), response.getRole(), response.getIsNewUser());
             return Result.success(response);
         } catch (Exception e) {
             log.error("登录失败", e);
