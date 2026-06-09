@@ -187,6 +187,12 @@ public class DetectionService {
                 throw new RuntimeException("视频检测服务返回空响应");
             }
 
+            // 统一响应格式: {code: 0, message: "success", data: {...}}
+            Object codeObj = raw.get("code");
+            if (codeObj instanceof Number && ((Number) codeObj).intValue() != 0) {
+                throw new RuntimeException("视频检测失败: " + raw.getOrDefault("message", "未知错误"));
+            }
+            // 兼容旧格式: {success: true, data: {...}}
             if (Boolean.FALSE.equals(raw.get("success"))) {
                 throw new RuntimeException("视频检测失败: " + raw.getOrDefault("error", "未知错误"));
             }

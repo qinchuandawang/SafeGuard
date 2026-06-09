@@ -21,6 +21,10 @@ function shouldSuppress(config) {
 
 request.interceptors.response.use(
   (res) => {
+    // SSE/流式响应直接返回原始 response，不做业务码包装
+    if (res.config?.responseType === 'stream' || res.config?.responseType === 'text') {
+      return res
+    }
     if (res.data.code === 200) return res.data.data
     if (!shouldSuppress(res.config)) {
       ElMessage.error(res.data.message || '请求失败')

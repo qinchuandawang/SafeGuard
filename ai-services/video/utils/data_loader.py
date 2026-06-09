@@ -8,8 +8,6 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from PIL import Image
-import pandas as pd
-import numpy as np
 from pathlib import Path
 
 
@@ -94,7 +92,13 @@ class DeepFakeDataset(Dataset):
         image_path = self.image_paths[idx]
         label = self.labels[idx]
         
-        image = Image.open(image_path).convert('RGB')
+        try:
+            image = Image.open(image_path).convert('RGB')
+        except Exception as e:
+            # 损坏图片：返回占位张量，形状与 transform 输出对齐 (3, 299, 299)
+            print(f"警告: 加载图片失败 {image_path}: {e}")
+            dummy = torch.zeros((3, 299, 299))
+            return dummy, torch.tensor(label, dtype=torch.long)
         
         if self.transform:
             image = self.transform(image)

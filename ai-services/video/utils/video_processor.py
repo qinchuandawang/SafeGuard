@@ -5,8 +5,6 @@
 
 import cv2
 import os
-import numpy as np
-from pathlib import Path
 import face_recognition
 
 
@@ -30,28 +28,29 @@ class FrameExtractor:
             max_frames: 最大提取帧数
         """
         os.makedirs(output_dir, exist_ok=True)
-        
+
         cap = cv2.VideoCapture(video_path)
-        frame_count = 0
-        saved_count = 0
-        
-        while cap.isOpened():
-            ret, frame = cap.read()
-            if not ret:
-                break
-            
-            # 每隔 frame_interval 帧提取一帧
-            if frame_count % self.frame_interval == 0:
-                frame_path = os.path.join(output_dir, f"frame_{saved_count:04d}.jpg")
-                cv2.imwrite(frame_path, frame)
-                saved_count += 1
-                
-                if saved_count >= max_frames:
+        try:
+            frame_count = 0
+            saved_count = 0
+
+            while cap.isOpened():
+                ret, frame = cap.read()
+                if not ret:
                     break
-            
-            frame_count += 1
-        
-        cap.release()
+
+                # 每隔 frame_interval 帧提取一帧
+                if frame_count % self.frame_interval == 0:
+                    frame_path = os.path.join(output_dir, f"frame_{saved_count:04d}.jpg")
+                    cv2.imwrite(frame_path, frame)
+                    saved_count += 1
+
+                    if saved_count >= max_frames:
+                        break
+
+                frame_count += 1
+        finally:
+            cap.release()
         print(f"从视频 {video_path} 提取了 {saved_count} 帧")
         return saved_count
 

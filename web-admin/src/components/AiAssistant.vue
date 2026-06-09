@@ -33,8 +33,9 @@
 </template>
 
 <script setup>
-import { ref, nextTick, watch } from 'vue'
+import { ref, nextTick } from 'vue'
 import { ChatDotRound, MagicStick, Close, Promotion } from '@element-plus/icons-vue'
+import request from '../api/request'
 
 const open = ref(false)
 const input = ref('')
@@ -44,18 +45,9 @@ const messages = ref([
   { role: 'ai', text: '你好！我是 SafeGuard AI 安全助手，可以帮你：\n• 分析检测结果\n• 查询诈骗案例\n• 提供安全建议\n• 解读模型数据' },
 ])
 
-const aiResponses = [
-  '根据当前数据，近期语音克隆类攻击增加了 12%，建议加强对高频呼叫的实时检测。',
-  '在检测记录中，伪造音频的典型特征是高频段能量分布异常，建议关注频谱分析指标。',
-  '知识库中"假冒客服"类诈骗占比最高，建议更新相关防范话术。',
-  '当前活跃模型准确率 96.3%，运行状态良好。建议每周用新样本做一次校准测试。',
-  '检测到可疑模式：多段短音频（<3s）的伪造概率显著高于长音频，注意针对性防护。',
-  '建议开启实时告警阈值调整，当前高风险检测响应时间约为 1.2s，可优化至 0.8s。',
-  '常见诈骗链路：伪造语音 → 假冒身份 → 诱导转账。知识库已覆盖 85% 的已知链路。',
-  '可以使用"知识库"页面上传 PDF 文档，系统会自动提取关键信息扩充反诈知识图谱。',
-  '分析近 30 天检测趋势：伪造检测量在周末有明显峰值，建议周末加强监控力度。',
-  '系统安全评分 94 分，其中模型准确率贡献最大（+42分），建议重点关注数据更新维度。',
-]
+function scrollDown() {
+  msgRef.value?.scrollTo({ top: msgRef.value.scrollHeight, behavior: 'smooth' })
+}
 
 async function send() {
   const text = input.value.trim()
@@ -66,17 +58,82 @@ async function send() {
   await nextTick()
   scrollDown()
 
-  // 模拟 AI 思考
-  await new Promise(r => setTimeout(r, 800 + Math.random() * 600))
-  const reply = aiResponses[Math.floor(Math.random() * aiResponses.length)]
-  messages.value.push({ role: 'ai', text: reply })
-  thinking.value = false
-  await nextTick()
-  scrollDown()
-}
+  // 占位气泡，接收流式增量
+  const aiIndex = messages.value.length
+  messages.value.push({ role: 'ai', text: '' })
 
-function scrollDown() {
-  msgRef.value?.scrollTo({ top: msgRef.value.scrollHeight, behavior: 'smooth' })
+  let buffer = ''
+  let cancelled = false
+  const resp = await request({
+    url: '/llm/analyze/stream',
+    method: 'post',
+    data: { text },
+    responseType: 'stream',
+    headers: {
+      Accept: 'text/event-stream',
+      __suppressError: true,
+    },
+    onDownloadProgress: () => {},
+  }).catch(err => {
+    cancelled = true
+    messages.value[aiIndex].text = 'AI 服务暂时不可用，请稍后重试。'
+    thinking.value = false
+    return null
+  })
+  if (cancelled || !resp) {
+    return
+  }
+
+  // SSE 解析：按行读取，以 "data: " 开头的事件
+  const reader = resp.data?.body?.getReader
+    ? resp.data.body.getReader()
+    : resp.data?.getReader
+      ? resp.data.getReader()
+      : null
+
+  if (!reader) {
+    messages.value[aiIndex].text = '当前浏览器不支持流式响应'
+    thinking.value = false
+    return
+  }
+
+  const decoder = new TextDecoder('utf-8')
+  try {
+    while (true) {
+      const { value, done } = await reader.read()
+      if (done) break
+      const chunk = decoder.decode(value, { stream: true })
+      buffer += chunk
+      // SSE 事件以双换行分隔
+      const events = buffer.split('\n\n')
+      buffer = events.pop() || ''
+      for (const evt of events) {
+        const line = evt.trim()
+        if (!line.startsWith('data:')) continue
+        const payload = line.slice(5).trim()
+        if (!payload || payload === '[DONE]') continue
+        if (payload.startsWith('{') && payload.includes('"error"')) {
+          // 后端流式错误事件：{error: "..."}
+          try {
+            const obj = JSON.parse(payload)
+            if (obj.error) messages.value[aiIndex].text = obj.error
+          } catch { /* 忽略 */ }
+          continue
+        }
+        // 普通增量：直接追加到气泡
+        messages.value[aiIndex].text += payload
+        scrollDown()
+      }
+    }
+  } catch (e) {
+    if (messages.value[aiIndex].text === '') {
+      messages.value[aiIndex].text = 'AI 服务暂时不可用，请稍后重试。'
+    }
+  } finally {
+    thinking.value = false
+    await nextTick()
+    scrollDown()
+  }
 }
 </script>
 

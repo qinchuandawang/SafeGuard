@@ -46,4 +46,10 @@ public interface AudioDetectionRecordMapper extends BaseMapper<AudioDetectionRec
     List<AudioDetectionRecord> findByCreatedAtBetween(
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end);
+
+    /**
+     * 最近 N 条音频检测记录。全表查询的兜底版本，避免生产环境 OOM。
+     */
+    @Select("SELECT * FROM audio_detection_record WHERE deleted = 0 ORDER BY created_at DESC LIMIT #{limit}")
+    List<AudioDetectionRecord> findRecent(@Param("limit") int limit);
 }

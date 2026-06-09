@@ -7,6 +7,7 @@ import Knowledge from '../views/Knowledge.vue'
 import Records from '../views/Records.vue'
 import Models from '../views/Models.vue'
 import Profile from '../views/Profile.vue'
+import NotFound from '../views/NotFound.vue'
 
 const routes = [
   { path: '/login', component: Login },
@@ -23,6 +24,7 @@ const routes = [
       { path: 'profile', component: Profile },
     ],
   },
+  { path: '/:pathMatch(.*)*', name: 'NotFound', component: NotFound },
 ]
 
 const router = createRouter({

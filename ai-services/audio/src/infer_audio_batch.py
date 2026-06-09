@@ -26,7 +26,6 @@ from pathlib import Path
 
 import numpy as np
 import torch
-from transformers import Wav2Vec2ForSequenceClassification, Wav2Vec2Processor
 
 from utils import load_audio, get_device, load_model_once
 

@@ -19,9 +19,6 @@ public interface AsyncTaskMapper extends BaseMapper<AsyncTask> {
     @Select("SELECT * FROM async_task WHERE status = 'processing' AND created_at < #{before} AND deleted = 0")
     List<AsyncTask> findStuckTasks(@Param("before") LocalDateTime before);
 
-    @Select("SELECT * FROM async_task WHERE user_id = #{userId} AND deleted = 0 ORDER BY created_at DESC")
-    List<AsyncTask> findByUserId(@Param("userId") Long userId);
-
     @Update("UPDATE async_task SET status = 'failed', error_message = '服务重启，任务中断', completed_at = NOW() WHERE task_id = #{taskId}")
     void markInterrupted(@Param("taskId") String taskId);
 }

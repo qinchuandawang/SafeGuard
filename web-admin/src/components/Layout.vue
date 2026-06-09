@@ -23,7 +23,7 @@
               </div>
             </transition>
           </div>
-          <el-button :icon="isCollapsed ? 'Expand' : 'Fold'" text class="collapse-btn" @click="isCollapsed = !isCollapsed" />
+          <el-button :icon="isCollapsed ? Expand : Fold" text class="collapse-btn" @click="isCollapsed = !isCollapsed" />
         </div>
 
         <el-menu
@@ -57,7 +57,7 @@
 
         <div class="sidebar-footer" v-if="!isCollapsed">
           <div class="sidebar-user">
-            <el-avatar :size="32" class="user-avatar">{{ adminName.charAt(0) }}</el-avatar>
+            <el-avatar :size="32" class="user-avatar">{{ (adminName || '管')[0] }}</el-avatar>
             <div class="user-info">
               <span class="user-name">{{ adminName }}</span>
               <span class="user-role">管理员</span>
@@ -81,11 +81,11 @@
               <el-button :icon="Refresh" circle text @click="refreshCurrent" />
             </el-tooltip>
             <el-tooltip :content="theme === 'dark' ? '浅色模式' : '深色模式'" placement="bottom">
-              <el-button :icon="theme === 'dark' ? 'Sunny' : 'Moon'" circle text @click="toggleTheme" />
+              <el-button :icon="theme === 'dark' ? Sunny : Moon" circle text @click="toggleTheme" />
             </el-tooltip>
             <el-dropdown trigger="click" @command="handleCommand">
               <div class="header-user">
-                <el-avatar :size="36" class="user-avatar">{{ adminName.charAt(0) }}</el-avatar>
+                <el-avatar :size="36" class="user-avatar">{{ (adminName || '管')[0] }}</el-avatar>
                 <span class="header-username">{{ adminName }}</span>
                 <el-icon><ArrowDown /></el-icon>
               </div>
@@ -116,7 +116,7 @@
 <script setup>
 import { computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Refresh, ArrowDown, SwitchButton } from '@element-plus/icons-vue'
+import { Refresh, ArrowDown, SwitchButton, Expand, Fold, Sunny, Moon } from '@element-plus/icons-vue'
 import AiAssistant from './AiAssistant.vue'
 import { getUserInfo } from '../api/auth'
 

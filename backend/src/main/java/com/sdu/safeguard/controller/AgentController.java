@@ -104,12 +104,13 @@ public class AgentController {
             @RequestParam(value = "text", required = false) String text) {
 
         if (file.isEmpty()) {
-            return Result.error("文件不能为空");
+            return Result.badRequest("文件不能为空");
         }
         if (!"audio".equalsIgnoreCase(type) && !"video".equalsIgnoreCase(type)) {
-            return Result.error("type 必须为 audio 或 video");
+            return Result.badRequest("type 必须为 audio 或 video");
         }
 
+        File destFile = null;
         try {
             File tempDir = new File(TEMP_DIR);
             if (!tempDir.exists() && !tempDir.mkdirs()) {
@@ -122,7 +123,7 @@ public class AgentController {
                 extension = originalName.substring(originalName.lastIndexOf('.'));
             }
             String fileId = UUID.randomUUID().toString();
-            File destFile = new File(tempDir, fileId + extension);
+            destFile = new File(tempDir, fileId + extension);
             file.transferTo(destFile);
             String filePath = destFile.getAbsolutePath();
             log.info("多模态检测文件已保存: {} (type={})", filePath, type);
@@ -150,6 +151,13 @@ public class AgentController {
         } catch (IOException e) {
             log.error("文件处理失败", e);
             return Result.error("文件处理失败: " + e.getMessage());
+        } finally {
+            // 任何分支（成功、异常、orchestrator 抛错）都要清理临时文件，避免磁盘泄漏
+            if (destFile != null && destFile.exists()) {
+                if (!destFile.delete()) {
+                    log.debug("多模态检测临时文件删除失败（可能被占用）: {}", destFile.getAbsolutePath());
+                }
+            }
         }
     }
 }

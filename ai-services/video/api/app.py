@@ -18,8 +18,6 @@ import cv2
 import tempfile
 import os
 from pathlib import Path
-import json
-from datetime import datetime
 
 from models.xception import xception
 from utils.video_processor import FrameExtractor, FaceDetector
@@ -39,6 +37,21 @@ os.environ.setdefault("MKL_NUM_THREADS", "2")
 torch.set_num_threads(int(os.environ.get("OMP_NUM_THREADS", "2")))
 torch.set_grad_enabled(False)
 
+
+# ============ 统一响应格式 ============
+
+def success_response(data, message="success"):
+    """统一成功响应：与音频服务格式一致"""
+    return jsonify({"code": 0, "message": message, "data": data})
+
+
+def error_response(message, http_status=400, code=1):
+    """统一错误响应"""
+    return jsonify({"code": code, "message": message, "data": None}), http_status
+
+
+# ====================================
+
 # 模型引用，惰性加载
 _model_instance = None
 
@@ -48,13 +61,16 @@ def load_model(model_path):
     if _model_instance is not None:
         return _model_instance
     print(f"[首次加载] 模型: {model_path}, 设备: {DEVICE}")
+
+    if not os.path.exists(model_path):
+        raise FileNotFoundError(
+            f"模型文件不存在: {model_path}。请先下载预训练模型并放置到 {MODEL_PATH}。"
+        )
+
     model = xception(num_classes=2)
-    if os.path.exists(model_path):
-        checkpoint = torch.load(model_path, map_location=DEVICE, weights_only=False)
-        model.load_state_dict(checkpoint['model_state_dict'])
-        print(f"模型加载成功：{model_path}")
-    else:
-        print(f"警告：模型文件不存在 {model_path}")
+    checkpoint = torch.load(model_path, map_location=DEVICE, weights_only=False)
+    model.load_state_dict(checkpoint['model_state_dict'])
+    print(f"模型加载成功：{model_path}")
     model.to(DEVICE)
     model.eval()
     if DEVICE.type == "cuda":
@@ -101,71 +117,75 @@ def predict_image(image):
     }
 
 
-def predict_video(video_path, max_frames=30):
+def predict_video(video_path, max_frames=None):
     """预测视频"""
+    if max_frames is None:
+        # 与后端 application.yml video.preprocess.max-frames=24 保持一致
+        max_frames = int(os.environ.get("MAX_FRAMES", "24"))
     frame_extractor = FrameExtractor(frame_interval=1)
     
     # 创建临时目录存储帧
     temp_dir = tempfile.mkdtemp()
-    frames_dir = os.path.join(temp_dir, 'frames')
-    faces_dir = os.path.join(temp_dir, 'faces')
-    os.makedirs(frames_dir, exist_ok=True)
-    os.makedirs(faces_dir, exist_ok=True)
-    
-    # 提取帧
-    frame_extractor.extract_frames(video_path, frames_dir, max_frames=max_frames)
-    
-    # 检测人脸并预测
-    frame_results = []
-    face_detector = FaceDetector(detection_method='hog')
-    
-    for frame_file in sorted(Path(frames_dir).glob("*.jpg")):
-        faces, locations = face_detector.detect_faces(str(frame_file), IMAGE_SIZE)
+    try:
+        frames_dir = os.path.join(temp_dir, 'frames')
+        faces_dir = os.path.join(temp_dir, 'faces')
+        os.makedirs(frames_dir, exist_ok=True)
+        os.makedirs(faces_dir, exist_ok=True)
         
-        frame_result = {
-            'frame_name': frame_file.name,
-            'faces': []
+        # 提取帧
+        frame_extractor.extract_frames(video_path, frames_dir, max_frames=max_frames)
+        
+        # 检测人脸并预测
+        frame_results = []
+        face_detector = FaceDetector(detection_method='hog')
+        
+        for frame_file in sorted(Path(frames_dir).glob("*.jpg")):
+            faces, locations = face_detector.detect_faces(str(frame_file), IMAGE_SIZE)
+            
+            frame_result = {
+                'frame_name': frame_file.name,
+                'faces': []
+            }
+            
+            for i, face in enumerate(faces):
+                face_pil = Image.fromarray(cv2.cvtColor(face, cv2.COLOR_BGR2RGB))
+                prediction = predict_image(face_pil)
+                prediction['face_location'] = locations[i]
+                frame_result['faces'].append(prediction)
+            
+            frame_results.append(frame_result)
+        
+        # 计算视频整体结果
+        all_fake_probs = []
+        for frame in frame_results:
+            for face in frame['faces']:
+                all_fake_probs.append(face['fake_probability'])
+        
+        if len(all_fake_probs) > 0:
+            avg_fake_prob = float(np.mean(all_fake_probs))
+            max_fake_prob = float(np.max(all_fake_probs))
+        else:
+            avg_fake_prob = 0.0
+            max_fake_prob = 0.0
+        
+        return {
+            'frame_results': frame_results,
+            'total_frames': len(frame_results),
+            'total_faces': len(all_fake_probs),
+            'average_fake_probability': float(avg_fake_prob),
+            'max_fake_probability': float(max_fake_prob),
+            'is_fake': avg_fake_prob > 0.5
         }
-        
-        for i, face in enumerate(faces):
-            face_pil = Image.fromarray(cv2.cvtColor(face, cv2.COLOR_BGR2RGB))
-            prediction = predict_image(face_pil)
-            prediction['face_location'] = locations[i]
-            frame_result['faces'].append(prediction)
-        
-        frame_results.append(frame_result)
-    
-    # 计算视频整体结果
-    all_fake_probs = []
-    for frame in frame_results:
-        for face in frame['faces']:
-            all_fake_probs.append(face['fake_probability'])
-    
-    if len(all_fake_probs) > 0:
-        avg_fake_prob = float(np.mean(all_fake_probs))
-        max_fake_prob = float(np.max(all_fake_probs))
-    else:
-        avg_fake_prob = 0.0
-        max_fake_prob = 0.0
-    
-    # 清理临时文件
-    import shutil
-    shutil.rmtree(temp_dir)
-    
-    return {
-        'frame_results': frame_results,
-        'total_frames': len(frame_results),
-        'total_faces': len(all_fake_probs),
-        'average_fake_probability': float(avg_fake_prob),
-        'max_fake_probability': float(max_fake_prob),
-        'is_fake': avg_fake_prob > 0.5
-    }
+    finally:
+        # 确保临时目录始终被清理
+        import shutil
+        shutil.rmtree(temp_dir, ignore_errors=True)
 
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
     """健康检查"""
-    return jsonify({
+    return success_response({
         'status': 'healthy',
         'device': str(DEVICE),
         'model_loaded': True
@@ -201,11 +221,11 @@ def detect_image():
         }
     """
     if 'file' not in request.files:
-        return jsonify({'success': False, 'error': '未找到文件'}), 400
-    
+        return error_response('未找到文件')
+
     file = request.files['file']
     if file.filename == '':
-        return jsonify({'success': False, 'error': '文件名为空'}), 400
+        return error_response('文件名为空')
     
     # 保存临时文件
     # 使用 NamedTemporaryFile 避免 mktemp 的竞态风险；Windows 下需先关闭句柄再保存
@@ -233,8 +253,8 @@ def detect_image():
                 'fallback': True,
                 'fallback_reason': '未检测到独立人脸，使用全图检测'
             }
-            return jsonify({'success': True, 'data': result})
-        
+            return success_response(result)
+
         # 预测每个人脸
         face_results = []
         for i, face in enumerate(faces):
@@ -257,8 +277,8 @@ def detect_image():
             'faces': face_results
         }
         
-        return jsonify({'success': True, 'data': result})
-    
+        return success_response(result)
+
     finally:
         # 清理临时文件
         if os.path.exists(temp_path):
@@ -299,11 +319,11 @@ def detect_video():
         }
     """
     if 'file' not in request.files:
-        return jsonify({'success': False, 'error': '未找到文件'}), 400
-    
+        return error_response('未找到文件')
+
     file = request.files['file']
     if file.filename == '':
-        return jsonify({'success': False, 'error': '文件名为空'}), 400
+        return error_response('文件名为空')
     
     # 保存临时文件
     # 使用 NamedTemporaryFile 避免 mktemp 的竞态风险；Windows 下需先关闭句柄再保存
@@ -314,9 +334,9 @@ def detect_video():
     try:
         # 检测视频
         result = predict_video(temp_path)
-        
-        return jsonify({'success': True, 'data': result})
-    
+
+        return success_response(result)
+
     finally:
         # 清理临时文件
         if os.path.exists(temp_path):
@@ -337,26 +357,23 @@ def detect_text():
     data = request.get_json()
     
     if not data or 'text' not in data:
-        return jsonify({'success': False, 'error': '缺少 text 字段'}), 400
-    
+        return error_response('缺少 text 字段')
+
     # 这里预留接口，实际由大模型处理
-    return jsonify({
-        'success': True,
-        'data': {
-            'message': '文本检测由大模型处理，请调用大模型接口',
-            'text': data['text']
-        }
+    return success_response({
+        'message': '文本检测由大模型处理，请调用大模型接口',
+        'text': data['text']
     })
 
 
 @app.errorhandler(404)
 def not_found(error):
-    return jsonify({'success': False, 'error': '接口不存在'}), 404
+    return error_response('接口不存在', 404)
 
 
 @app.errorhandler(500)
 def internal_error(error):
-    return jsonify({'success': False, 'error': '服务器内部错误'}), 500
+    return error_response('服务器内部错误', 500, 500)
 
 
 if __name__ == '__main__':

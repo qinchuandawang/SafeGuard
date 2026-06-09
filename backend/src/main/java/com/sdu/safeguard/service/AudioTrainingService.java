@@ -187,10 +187,10 @@ public class AudioTrainingService {
     }
 
     /**
-     * 获取所有检测记录
+     * 获取所有检测记录（最近 1000 条，全表查询 LIMIT 兜底）
      */
     public List<AudioDetectionRecord> getAllRecords() {
-        return audioRecordMapper.selectList(null);
+        return audioRecordMapper.findRecent(1000);
     }
 
     /**
@@ -234,9 +234,9 @@ public class AudioTrainingService {
     }
 
     /**
-     * 获取所有模型
+     * 获取所有模型（最近 1000 条，全表查询 LIMIT 兜底）
      */
     public List<AudioModel> getAllModels() {
-        return audioModelMapper.selectList(null);
+        return audioModelMapper.findRecent(1000);
     }
 }

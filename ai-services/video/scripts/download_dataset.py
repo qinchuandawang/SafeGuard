@@ -3,8 +3,6 @@ WildDeepfake 数据集下载和预处理脚本
 """
 
 import os
-import shutil
-from pathlib import Path
 import argparse
 import tarfile
 

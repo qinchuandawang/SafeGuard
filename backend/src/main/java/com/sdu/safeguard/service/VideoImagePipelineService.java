@@ -152,7 +152,8 @@ public class VideoImagePipelineService {
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
         HttpEntity<MultiValueMap<String, Object>> entity = new HttpEntity<>(body, headers);
 
-        // Flask 返回 {"success":true,"data":{"fake_probability":0.95,...}}
+        // Flask 返回统一格式: {"code":0,"message":"success","data":{"fake_probability":0.95,...}}
+        // 兼容旧格式: {"success":true,"data":{"fake_probability":0.95,...}}
         // 先解析为 Map 再手动提取 data 字段
         ResponseEntity<Map> resp = restTemplate.exchange(
                 resolveImageUrl(),

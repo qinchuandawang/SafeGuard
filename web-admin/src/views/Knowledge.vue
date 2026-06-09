@@ -97,7 +97,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { Search } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { silentGet, silentPut } from '../utils/fallback'
+import { getKnowledgeList, updateKnowledge } from '../api/knowledge'
 import ChartCard from '../components/ChartCard.vue'
 import * as echarts from 'echarts'
 
@@ -208,7 +208,8 @@ async function savePriority(row) {
   editingPriority.value = null
   if (!id) return
   try {
-    await silentPut(`/knowledge/${id}`, { priority: row.priority, question: row.question, answer: row.answer, category: row.category, tags: row.tags, enabled: row.enabled })
+    await updateKnowledge(id, { priority: row.priority })
+    ElMessage.success('优先级已更新')
   } catch (e) {
     ElMessage.error('更新失败')
   }
@@ -217,7 +218,7 @@ async function savePriority(row) {
 async function toggleEnabled(row, val) {
   const newVal = val ? 1 : 0
   try {
-    await silentPut(`/knowledge/${row.id}`, { ...row, enabled: newVal })
+    await updateKnowledge(row.id, { ...row, enabled: newVal })
     row.enabled = newVal
     ElMessage.success(val ? '已启用' : '已禁用')
   } catch (e) {
@@ -228,7 +229,7 @@ async function toggleEnabled(row, val) {
 
 onMounted(async () => {
   loading.value = true
-  const itemsData = await silentGet('/knowledge')
+  const itemsData = await getKnowledgeList()
   items.value = itemsData || []
   loading.value = false
 })

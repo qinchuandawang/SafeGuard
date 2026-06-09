@@ -57,6 +57,13 @@ public class RateLimitInterceptor implements HandlerInterceptor {
             }
         }
 
+        // 登录端点单独收紧：5 次/分钟/IP，防止暴力破解。
+        // 之前整个 /api/auth/ 前缀都被白名单，登录可被无限制穷举。
+        if (path.equals("/api/auth/admin/login") || path.equals("/api/auth/admin/register")
+                || path.equals("/api/auth/login")) {
+            capacity = 5;
+        }
+
         String bucketKey = clientIp + ":" + path;
         final int cap = capacity;
         Bucket bucket = buckets.get(bucketKey, k ->
@@ -76,8 +83,15 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     }
 
     private boolean isPublicPath(String path) {
-        return path.startsWith("/admin/") || path.startsWith("/api/auth/")
-                || path.startsWith("/api/health") || path.startsWith("/actuator/")
+        // 注意：/api/auth/admin/login 与 /api/auth/login 仍然会被 RateLimitInterceptor 拦截限流
+        // （见 preHandle 中的特殊分支），此处只把"非登录类认证端点"放进白名单
+        if (path.startsWith("/admin/")) return true;
+        if (path.equals("/api/auth/userinfo") || path.equals("/api/auth/admin/profile")
+                || path.equals("/api/auth/admin/login-history")
+                || path.equals("/api/auth/admin/avatar") || path.equals("/api/auth/admin/password")) {
+            return true;
+        }
+        return path.startsWith("/api/health") || path.startsWith("/actuator/")
                 || path.equals("/error");
     }
 

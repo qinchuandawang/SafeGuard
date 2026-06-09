@@ -31,4 +31,10 @@ public interface AudioModelMapper extends BaseMapper<AudioModel> {
      */
     @Select("SELECT * FROM audio_model WHERE is_active = true AND deleted = 0 ORDER BY created_at DESC")
     List<AudioModel> findAllActive();
+
+    /**
+     * 最近 N 条模型（按 id 倒序）。全表查询的兜底版本。
+     */
+    @Select("SELECT * FROM audio_model WHERE deleted = 0 ORDER BY id DESC LIMIT #{limit}")
+    List<AudioModel> findRecent(@Param("limit") int limit);
 }

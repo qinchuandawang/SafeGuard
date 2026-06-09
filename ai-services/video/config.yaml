@@ -39,7 +39,7 @@ API:
   host: 0.0.0.0
   port: 5002
   debug: true
-  max_video_frames: 30
+  max_video_frames: 24
 
 # 设备配置
 DEVICE:

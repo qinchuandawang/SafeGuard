@@ -94,13 +94,13 @@ import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { User, Lock } from '@element-plus/icons-vue'
-import request from '../api/request'
+import { adminLogin, adminRegister } from '../api/auth'
 
 const router = useRouter()
 const mode = ref('login')
 const loading = ref(false)
 const regLoading = ref(false)
-const form = reactive({ username: 'admin', password: 'admin123' })
+const form = reactive({ username: '', password: '' })
 const regForm = reactive({ username: '', nickname: '', password: '', confirm: '' })
 
 const features = [
@@ -113,7 +113,7 @@ async function handleLogin() {
   if (!form.username || !form.password) { ElMessage.warning('请输入用户名和密码'); return }
   loading.value = true
   try {
-    const data = await request.post('/auth/admin/login', { username: form.username, password: form.password })
+    const data = await adminLogin(form.username, form.password)
     localStorage.setItem('admin_token', data.token)
     localStorage.setItem('admin_name', data.nickname || form.username)
     ElMessage.success('登录成功')
@@ -128,11 +128,7 @@ async function handleRegister() {
   if (regForm.password !== regForm.confirm) { ElMessage.warning('两次密码不一致'); return }
   regLoading.value = true
   try {
-    await request.post('/auth/admin/register', {
-      username: regForm.username,
-      nickname: regForm.nickname,
-      password: regForm.password,
-    })
+    await adminRegister(regForm.username, regForm.nickname, regForm.password)
     ElMessage.success('注册成功，请登录')
     mode.value = 'login'
     form.username = regForm.username

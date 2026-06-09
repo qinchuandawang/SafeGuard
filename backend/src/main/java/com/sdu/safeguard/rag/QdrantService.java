@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -179,7 +180,10 @@ public class QdrantService {
                 payload.put(TAGS_FIELD, str(m.get("tags")));
 
                 Map<String, Object> point = new LinkedHashMap<>();
-                point.put("id", chunkIds.get(i));
+                // Qdrant 1.7+ 严格要求 point ID 为 unsigned integer 或 UUID
+                // 业务 chunkId 形如 "fixed_anti_fraud_knowledge.txt_0" 含 '.' 和 '_'，非合法 ID
+                // 用 UUID v5 派生（同样输入永远同样输出，原 chunkId 保留在 payload 中）
+                point.put("id", toQdrantId(chunkIds.get(i)));
                 point.put("vector", vectors.get(i));
                 point.put("payload", payload);
                 points.add(point);
@@ -297,6 +301,19 @@ public class QdrantService {
 
     // ============ 内部方法 ============
 
+    /**
+     * 将业务 chunkId 转换为 Qdrant 兼容的 UUID。
+     * Qdrant 1.7+ 只接受 unsigned integer 或 UUID，业务 chunkId 形如
+     * "fixed_anti_fraud_knowledge.txt_0"，含 '.' 和 '_'，非合法 ID。
+     * 使用 UUID v3（基于名称的 MD5）派生：同样输入永远得到同样输出，
+     * 便于跨重启去重；原 chunkId 仍保留在 payload 中，业务可读。
+     */
+    static String toQdrantId(String chunkId) {
+        if (chunkId == null) return null;
+        return UUID.nameUUIDFromBytes(chunkId.getBytes(StandardCharsets.UTF_8)).toString();
+    }
+
+
     private void insertToFallback(String chunkId, List<Float> vector,
                                    Map<String, Object> metadata, String collectionName) {
         fallbackStore.computeIfAbsent(collectionName, k -> new ConcurrentHashMap<>())
@@ -307,7 +324,8 @@ public class QdrantService {
     private void insertToQdrant(String chunkId, List<Float> vector,
                                  Map<String, Object> metadata, String collectionName) {
         Map<String, Object> point = new LinkedHashMap<>();
-        point.put("id", chunkId);
+        // Qdrant 1.7+ 严格要求 point ID 为 unsigned integer 或 UUID
+        point.put("id", toQdrantId(chunkId));
         point.put("vector", vector);
         if (metadata != null && !metadata.isEmpty()) {
             point.put("payload", metadata);

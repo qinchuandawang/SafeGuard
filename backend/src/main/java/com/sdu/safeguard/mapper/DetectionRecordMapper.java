@@ -76,6 +76,12 @@ public interface DetectionRecordMapper extends BaseMapper<DetectionRecord> {
     List<Map<String, Object>> countByDateAndType(@Param("since") LocalDateTime since);
 
     /**
+     * 按日期和结果统计每日检测量（最近N天），结果分类：safe/suspicious/dangerous/failed
+     */
+    @Select("SELECT DATE(created_at) AS date, COALESCE(result, 'unknown') AS result, COUNT(*) AS count FROM detection_record WHERE created_at >= #{since} AND deleted = 0 GROUP BY DATE(created_at), result ORDER BY date ASC")
+    List<Map<String, Object>> countByDateAndResult(@Param("since") LocalDateTime since);
+
+    /**
      * 按检测类型统计平均风险分数
      */
     @Select("SELECT detection_type, AVG(risk_score) AS avg_risk, COUNT(*) AS count FROM detection_record WHERE risk_score IS NOT NULL AND deleted = 0 GROUP BY detection_type")

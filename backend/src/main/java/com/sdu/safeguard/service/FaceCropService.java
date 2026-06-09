@@ -74,49 +74,54 @@ public class FaceCropService {
     }
 
     public boolean cropLargestFace(File framePng, File cropPng, double facePaddingRatio) throws IOException {
-        CascadeClassifier classifier = faceClassifierHolder.get();
-        if (classifier == null) {
-            return false;
-        }
-
-        Mat bgr = imread(framePng.getAbsolutePath(), IMREAD_COLOR);
-        if (bgr == null || bgr.empty()) {
-            return false;
-        }
-
-        Mat gray = new Mat();
-        cvtColor(bgr, gray, COLOR_BGR2GRAY);
-        equalizeHist(gray, gray);
-
-        RectVector faces = new RectVector();
-        classifier.detectMultiScale(gray, faces);
-        if (faces.size() == 0) {
-            return false;
-        }
-
-        Rect best = faces.get(0);
-        int area = best.width() * best.height();
-        for (long i = 1; i < faces.size(); i++) {
-            Rect r = faces.get(i);
-            int a = r.width() * r.height();
-            if (a > area) {
-                best = r;
-                area = a;
+        try {
+            CascadeClassifier classifier = faceClassifierHolder.get();
+            if (classifier == null) {
+                return false;
             }
-        }
 
-        int padX = (int) (best.width() * facePaddingRatio);
-        int padY = (int) (best.height() * facePaddingRatio);
-        int x1 = Math.max(0, best.x() - padX);
-        int y1 = Math.max(0, best.y() - padY);
-        int x2 = Math.min(bgr.cols(), best.x() + best.width() + padX);
-        int y2 = Math.min(bgr.rows(), best.y() + best.height() + padY);
-        if (x2 <= x1 || y2 <= y1) {
-            return false;
-        }
+            Mat bgr = imread(framePng.getAbsolutePath(), IMREAD_COLOR);
+            if (bgr == null || bgr.empty()) {
+                return false;
+            }
 
-        Rect roi = new Rect(x1, y1, x2 - x1, y2 - y1);
-        Mat cropped = new Mat(bgr, roi);
-        return imwrite(cropPng.getAbsolutePath(), cropped);
+            Mat gray = new Mat();
+            cvtColor(bgr, gray, COLOR_BGR2GRAY);
+            equalizeHist(gray, gray);
+
+            RectVector faces = new RectVector();
+            classifier.detectMultiScale(gray, faces);
+            if (faces.size() == 0) {
+                return false;
+            }
+
+            Rect best = faces.get(0);
+            int area = best.width() * best.height();
+            for (long i = 1; i < faces.size(); i++) {
+                Rect r = faces.get(i);
+                int a = r.width() * r.height();
+                if (a > area) {
+                    best = r;
+                    area = a;
+                }
+            }
+
+            int padX = (int) (best.width() * facePaddingRatio);
+            int padY = (int) (best.height() * facePaddingRatio);
+            int x1 = Math.max(0, best.x() - padX);
+            int y1 = Math.max(0, best.y() - padY);
+            int x2 = Math.min(bgr.cols(), best.x() + best.width() + padX);
+            int y2 = Math.min(bgr.rows(), best.y() + best.height() + padY);
+            if (x2 <= x1 || y2 <= y1) {
+                return false;
+            }
+
+            Rect roi = new Rect(x1, y1, x2 - x1, y2 - y1);
+            Mat cropped = new Mat(bgr, roi);
+            boolean result = imwrite(cropPng.getAbsolutePath(), cropped);
+            return result;
+        } finally {
+            faceClassifierHolder.remove();
+        }
     }
 }

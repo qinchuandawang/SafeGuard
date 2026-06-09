@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>SafeGuard 管理后台 - 用户管理</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/admin/css/admin.css">
+</head>
+<body>
+    <div class="layout">
+        <nav class="sidebar">
+            <div class="sidebar-header"><h2>SafeGuard</h2><span class="version">v2.0</span></div>
+            <ul class="nav-list">
+                <li><a href="/admin/dashboard">概览</a></li>
+                <li><a href="/admin/users" class="active">用户管理</a></li>
+                <li><a href="/admin/knowledge">知识库</a></li>
+                <li><a href="/admin/records">检测记录</a></li>
+                <li><a href="/admin/models">模型管理</a></li>
+            </ul>
+        </nav>
+        <main class="main-content">
+            <header class="topbar"><h1>用户管理</h1><div class="topbar-right"><a href="/admin/login" class="logout-btn">退出</a></div></header>
+            <div class="content">
+                <div class="card">
+                    <h3>用户列表</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr><th>ID</th><th>OpenID</th><th>昵称</th><th>角色</th><th>最后登录</th><th>创建时间</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="user : ${users}">
+                                <td th:text="${user.id}"></td>
+                                <td th:text="${user.openid}" class="text-mono"></td>
+                                <td th:text="${user.nickname}"></td>
+                                <td><span class="badge" th:classappend="${user.role == 'admin'} ? 'badge-admin' : 'badge-user'" th:text="${user.role}"></span></td>
+                                <td th:text="${user.lastLoginAt}"></td>
+                                <td th:text="${user.createdAt}"></td>
+                            </tr>
+                            <tr th:if="${users.isEmpty()}">
+                                <td colspan="6" class="text-center text-muted">暂无用户数据</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

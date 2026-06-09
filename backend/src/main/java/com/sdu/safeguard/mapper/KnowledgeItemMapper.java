@@ -31,4 +31,10 @@ public interface KnowledgeItemMapper extends BaseMapper<KnowledgeItem> {
      */
     @Select("SELECT * FROM knowledge_item WHERE enabled = true AND deleted = 0 ORDER BY priority DESC, id ASC")
     List<KnowledgeItem> findEnabled();
+
+    /**
+     * 最近 N 条知识项（按 id 倒序）。全表查询的兜底版本。
+     */
+    @Select("SELECT * FROM knowledge_item WHERE deleted = 0 ORDER BY id DESC LIMIT #{limit}")
+    List<KnowledgeItem> findRecent(@Param("limit") int limit);
 }

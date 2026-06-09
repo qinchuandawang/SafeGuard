@@ -42,14 +42,16 @@ public class DetectionRecordController {
             @RequestParam(required = false) Long userId,
             @RequestParam(required = false) Integer limit) {
         try {
+            int safeLimit = (limit == null || limit <= 0) ? 200 : Math.min(limit, 1000);
             List<DetectionRecord> records;
             if (userId != null) {
                 records = detectionRecordMapper.findByUserIdOrderByCreatedAtDesc(userId);
+                if (records.size() > safeLimit) {
+                    records = records.subList(0, safeLimit);
+                }
             } else {
-                records = detectionRecordMapper.selectList(null);
-            }
-            if (limit != null && limit > 0 && records.size() > limit) {
-                records = records.subList(0, limit);
+                // 全表查询加 LIMIT 兜底，避免生产环境 OOM/雪崩
+                records = detectionRecordMapper.findRecentRecords(safeLimit);
             }
             return Result.success(records);
         } catch (Exception e) {

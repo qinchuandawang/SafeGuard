@@ -8,12 +8,16 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
-from torch.amp import autocast, GradScaler  # 新增：混合精度
-import time
+# 兼容 PyTorch 2.0.x ~ 2.5.x
+# 2.0.x 中 autocast/GradScaler 在 torch.cuda.amp 下
+# 2.1+ 开始独立暴露在 torch.amp 下
+try:
+    from torch.amp import autocast, GradScaler
+except ImportError:
+    from torch.cuda.amp import autocast, GradScaler
 from tqdm import tqdm
 import argparse
 import json
-from pathlib import Path
 
 from models.xception import xception
 from utils.data_loader import get_dataloaders

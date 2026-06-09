@@ -111,7 +111,7 @@
 import { ref, onMounted, onUnmounted, nextTick, markRaw } from 'vue'
 import { User, WarningFilled, Reading, Microphone } from '@element-plus/icons-vue'
 import { getOverviewStats } from '../api/auth'
-import { generateTrendData } from '../utils/fallback'
+import { getTrendStats, getDistributionStats } from '../api/records'
 import * as echarts from 'echarts'
 
 const hoveredCard = ref(null)
@@ -224,31 +224,33 @@ function initTrendChart() {
 
   const is7d = trendRange.value === '7d'
   const days = is7d ? 7 : 30
-  const dates = []
-  const detected = []
-  const safe = []
 
-  const now = new Date()
-  for (let i = days - 1; i >= 0; i--) {
-    const d = new Date(now)
-    d.setDate(d.getDate() - i)
-    dates.push(`${d.getMonth() + 1}/${d.getDate()}`)
-    detected.push(Math.floor(Math.random() * 30 + 10))
-    safe.push(Math.floor(Math.random() * 80 + 30))
-  }
-
+  // 先用占位结构渲染（空数据），随后异步填充
   trendChart.setOption({
     tooltip: { trigger: 'axis' },
     legend: { data: ['可疑检测', '安全检测'], textStyle: { color: '#94a3b8' }, bottom: 0 },
     grid: { top: 20, right: 20, bottom: 40, left: 50 },
-    xAxis: { type: 'category', data: dates, axisLabel: { color: '#94a3b8', fontSize: 11 }, axisLine: { lineStyle: { color: 'rgba(0,0,0,0.06)' } } },
+    xAxis: { type: 'category', data: [], axisLabel: { color: '#94a3b8', fontSize: 11 }, axisLine: { lineStyle: { color: 'rgba(0,0,0,0.06)' } } },
     yAxis: { type: 'value', splitLine: { lineStyle: { color: 'rgba(0,0,0,0.04)', type: 'dashed' } }, axisLabel: { color: '#94a3b8', fontSize: 11 } },
     series: [
-      { name: '可疑检测', type: 'bar', data: detected, itemStyle: { borderRadius: [4, 4, 0, 0], color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: '#ef4444' }, { offset: 1, color: 'rgba(239,68,68,0.15)' }]) }, barWidth: '30%' },
-      { name: '安全检测', type: 'bar', data: safe, itemStyle: { borderRadius: [4, 4, 0, 0], color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: '#22c55e' }, { offset: 1, color: 'rgba(34,197,94,0.15)' }]) }, barWidth: '30%' },
+      { name: '可疑检测', type: 'bar', data: [], itemStyle: { borderRadius: [4, 4, 0, 0], color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: '#ef4444' }, { offset: 1, color: 'rgba(239,68,68,0.15)' }]) }, barWidth: '30%' },
+      { name: '安全检测', type: 'bar', data: [], itemStyle: { borderRadius: [4, 4, 0, 0], color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: '#22c55e' }, { offset: 1, color: 'rgba(34,197,94,0.15)' }]) }, barWidth: '30%' },
     ],
   })
   trendChart.resize()
+
+  getTrendStats(days).then(data => {
+    const dates = data?.dates || []
+    const suspicious = data?.suspicious || []
+    const safe = data?.safe || []
+    trendChart.setOption({
+      xAxis: { data: dates },
+      series: [
+        { name: '可疑检测', data: suspicious },
+        { name: '安全检测', data: safe },
+      ],
+    })
+  }).catch(() => { /* 静默失败，图表保持空状态 */ })
 }
 
 function initPieChart() {
@@ -264,16 +266,38 @@ function initPieChart() {
       avoidLabelOverlap: true,
       itemStyle: { borderRadius: 6, borderColor: 'transparent', borderWidth: 3 },
       label: { show: true, color: '#94a3b8', fontSize: 12 },
-      data: [
-        { value: 35, name: '语音克隆', itemStyle: { color: '#0ea5e9' } },
-        { value: 25, name: '深度伪造', itemStyle: { color: '#06b6d4' } },
-        { value: 20, name: '变声攻击', itemStyle: { color: '#14b8a6' } },
-        { value: 10, name: '重放攻击', itemStyle: { color: '#22d3ee' } },
-        { value: 10, name: '其他', itemStyle: { color: '#7dd3fc' } },
-      ],
+      data: [],
     }],
   })
   pieChart.resize()
+
+  getDistributionStats().then(data => {
+    // data.byResult 形如 [{result:'safe',count:10,percentage:50.0}, ...]
+    const rows = data?.byResult || []
+    const colorMap = {
+      safe: '#22c55e',
+      suspicious: '#f59e0b',
+      dangerous: '#ef4444',
+      failed: '#94a3b8',
+      unknown: '#06b6d4',
+    }
+    const nameMap = {
+      safe: '安全',
+      suspicious: '可疑',
+      dangerous: '危险',
+      failed: '失败',
+      unknown: '未知',
+    }
+    const pieData = rows.map(r => ({
+      name: nameMap[r.result] || r.result,
+      value: r.count || 0,
+      itemStyle: { color: colorMap[r.result] || '#0ea5e9' },
+    }))
+    if (pieData.length === 0) {
+      pieData.push({ name: '暂无数据', value: 0, itemStyle: { color: '#cbd5e1' } })
+    }
+    pieChart.setOption({ series: [{ data: pieData }] })
+  }).catch(() => { /* 静默失败 */ })
 }
 </script>
 

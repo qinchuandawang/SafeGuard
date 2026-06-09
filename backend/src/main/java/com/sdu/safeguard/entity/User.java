@@ -30,6 +30,18 @@ public class User {
     @TableField("avatar_url")
     private String avatarUrl;
 
+    @TableField("email")
+    private String email;
+
+    @TableField("phone")
+    private String phone;
+
+    @TableField("department")
+    private String department;
+
+    @TableField("bio")
+    private String bio;
+
     @TableField("password_hash")
     private String passwordHash;
 

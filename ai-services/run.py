@@ -69,7 +69,9 @@ def main():
         sys.exit(0)
 
     signal.signal(signal.SIGINT, _stop)
-    signal.signal(signal.SIGTERM, _stop)
+    # Windows 不支持 SIGTERM，仅在非 Windows 平台注册
+    if hasattr(signal, 'SIGTERM'):
+        signal.signal(signal.SIGTERM, _stop)
 
     try:
         for p in _processes:

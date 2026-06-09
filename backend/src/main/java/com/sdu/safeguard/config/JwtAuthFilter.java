@@ -20,10 +20,11 @@ public class JwtAuthFilter {
 
     private final JwtUtil jwtUtil;
 
-    /** 无需认证的公开路径。应仅包含登录、健康检查、错误页 */
+    /** 无需认证的公开路径。应仅包含登录、注册、健康检查、错误页 */
     private static final Set<String> PUBLIC_PATHS = Set.of(
             "/api/auth/login",
             "/api/auth/admin/login",
+            "/api/auth/admin/register",
             "/api/health",
             "/actuator/health",
             "/error"

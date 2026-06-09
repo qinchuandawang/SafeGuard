@@ -199,7 +199,15 @@ class Xception(nn.Module):
     def _load_pretrained_weights(self):
         """加载预训练权重（可选）"""
         print("加载预训练权重...")
-        # 这里可以加载 ImageNet 预训练权重
+        # TODO: 从 PyTorch Hub 或本地文件加载 ImageNet 预训练权重
+        # 例如：
+        # state_dict = torch.hub.load_state_dict_from_url(
+        #     'https://download.pytorch.org/models/xception-XXXX.pth',
+        #     map_location='cpu'
+        # )
+        # self.load_state_dict(state_dict, strict=False)
+        # print("预训练权重加载完成")
+        pass
 
 
 def xception(num_classes=2, pretrained=False):

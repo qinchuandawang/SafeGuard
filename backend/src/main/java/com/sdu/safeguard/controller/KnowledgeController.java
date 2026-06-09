@@ -35,8 +35,10 @@ public class KnowledgeController {
     public Result<List<KnowledgeItem>> search(@RequestParam(value = "keyword", required = false) String keyword,
                                                @RequestParam(value = "q", required = false) String q) {
         String kw = keyword != null ? keyword : q;
-        if (kw == null || kw.trim().isEmpty()) {
-            return Result.error("搜索关键词不能为空");
+        // 限长校验：防 DoS（避免大 keyword 直接打到 LIKE 全模糊匹配 + 内存中字符串拼接）
+        String validationError = InputValidator.validateKeyword(kw);
+        if (validationError != null) {
+            return Result.badRequest(validationError);
         }
         List<KnowledgeItem> result = knowledgeService.search(kw.trim());
         return Result.success(result);
@@ -72,7 +74,9 @@ public class KnowledgeController {
             article.put("tags", item.getTags() != null ? List.of(item.getTags().split(",")) : List.of());
             article.put("category", item.getCategory());
             article.put("date", java.time.LocalDate.now().toString());
-            article.put("views", (int)(Math.random() * 30000 + 5000));
+            // 浏览量：基于 id 的稳定值（5000-34999 范围），后续接入真实统计时再替换
+            long baseViews = 5000L + (item.getId() != null ? (item.getId() * 1373L) % 30000L : 0L);
+            article.put("views", (int) baseViews);
             articles.add(article);
         }
         return Result.success(articles);

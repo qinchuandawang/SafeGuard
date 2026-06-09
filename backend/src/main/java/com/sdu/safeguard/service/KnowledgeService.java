@@ -27,7 +27,8 @@ public class KnowledgeService {
     }
 
     public List<KnowledgeItem> getAll() {
-        return mapper.selectList(null);
+        // 全表查询 LIMIT 兜底（最近 1000 条）
+        return mapper.findRecent(1000);
     }
 
     @Transactional
@@ -53,6 +54,12 @@ public class KnowledgeService {
         }
         if (updated.getTags() != null) {
             existing.setTags(updated.getTags());
+        }
+        if (updated.getPriority() != null) {
+            existing.setPriority(updated.getPriority());
+        }
+        if (updated.getEnabled() != null) {
+            existing.setEnabled(updated.getEnabled());
         }
         mapper.updateById(existing);
         return existing;

@@ -32,11 +32,49 @@ public class AdminApiController {
     @GetMapping("/users")
     public Result<List<User>> getUsers() {
         try {
-            return Result.success(userMapper.selectList(null));
+            // 全表查询加 LIMIT 兜底
+            return Result.success(userMapper.findRecentUsers(1000));
         } catch (Exception e) {
             log.error("获取用户列表失败", e);
             return Result.error("获取失败");
         }
+    }
+
+    /**
+     * 用户近 N 天每日新增数（默认 7 天）。前端 Dashboard / 用户页面活跃趋势图使用。
+     */
+    @GetMapping("/users/daily-stats")
+    public Result<java.util.Map<String, Object>> getUserDailyStats(@RequestParam(defaultValue = "7") int days) {
+        java.util.Map<String, Object> result = new java.util.LinkedHashMap<>();
+        try {
+            java.time.LocalDateTime since = java.time.LocalDateTime.now().minusDays(days);
+            java.util.List<java.util.Map<String, Object>> rows = userMapper.countByDateGroup(since);
+
+            java.util.Map<String, Integer> grouped = new java.util.LinkedHashMap<>();
+            for (java.util.Map<String, Object> row : rows) {
+                String date = row.get("date") == null ? "" : row.get("date").toString();
+                int count = ((Number) row.get("count")).intValue();
+                grouped.put(date, count);
+            }
+
+            java.util.List<String> dates = new java.util.ArrayList<>();
+            java.util.List<Integer> counts = new java.util.ArrayList<>();
+            java.time.LocalDate today = java.time.LocalDate.now();
+            for (int i = days - 1; i >= 0; i--) {
+                java.time.LocalDate d = today.minusDays(i);
+                String key = d.toString();
+                dates.add(key.substring(5)); // MM-dd
+                counts.add(grouped.getOrDefault(key, 0));
+            }
+
+            result.put("dates", dates);
+            result.put("counts", counts);
+            result.put("days", days);
+        } catch (Exception e) {
+            log.error("获取用户日活统计失败", e);
+            return Result.error("获取用户日活数据失败");
+        }
+        return Result.success(result);
     }
 
     @GetMapping("/stats/overview")

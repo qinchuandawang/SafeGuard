@@ -27,7 +27,7 @@
         <ChartCard :option="roleChartOption" :height="220" />
       </div>
       <div class="glass-card viz-card">
-        <h4>近7天活跃</h4>
+        <h4>近7天新增</h4>
         <ChartCard :option="activityChartOption" :height="220" />
       </div>
     </div>
@@ -37,7 +37,7 @@
         <h3>用户列表</h3>
         <el-input
           v-model="search"
-          placeholder="搜索用户..."
+          placeholder="搜索昵称..."
           :prefix-icon="Search"
           size="small"
           class="search-input"
@@ -46,7 +46,11 @@
       </div>
       <el-table :data="filteredUsers" v-loading="loading" class="modern-table" stripe>
         <el-table-column prop="id" label="ID" width="70" />
-        <el-table-column prop="openid" label="OpenID" min-width="200" show-overflow-tooltip />
+        <el-table-column label="OpenID" min-width="200" show-overflow-tooltip>
+          <template #default="{ row }">
+            <span class="openid-cell">{{ maskOpenid(row.openid) }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="nickname" label="昵称" min-width="150">
           <template #default="{ row }">
             <div class="user-cell">
@@ -77,16 +81,21 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { Search } from '@element-plus/icons-vue'
-import { getUsers } from '../api/records'
+import { getUsers, getUserDailyStats } from '../api/records'
 import ChartCard from '../components/ChartCard.vue'
 import * as echarts from 'echarts'
 
 const users = ref([])
 const loading = ref(false)
 const search = ref('')
+const dailyDates = ref([])
+const dailyCounts = ref([])
 
 const adminCount = computed(() => users.value.filter(u => u.role === 'admin').length)
 const recentCount = computed(() => {
+  if (dailyCounts.value.length > 0) {
+    return dailyCounts.value.reduce((sum, n) => sum + n, 0)
+  }
   const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
   return users.value.filter(u => u.createdAt && new Date(u.createdAt) >= weekAgo).length
 })
@@ -101,32 +110,45 @@ const roleChartOption = computed(() => ({
     ],
   }],
 }))
-const activityChartOption = computed(() => {
-  const days = ['周一','周二','周三','周四','周五','周六','周日']
-  const total = Math.max(users.value.length, 50)
-  const data = days.map(() => Math.max(1, Math.round(total * (0.08 + Math.random() * 0.12))))
-  return {
-    tooltip: { trigger: 'axis' },
-    grid: { top: 10, right: 10, bottom: 24, left: 36 },
-    xAxis: { type: 'category', data: days, axisLabel: { color: '#94a3b8', fontSize: 10 } },
-    yAxis: { type: 'value', splitLine: { lineStyle: { color: 'rgba(0,0,0,0.04)' } }, axisLabel: { color: '#94a3b8', fontSize: 10 } },
-    series: [{ type: 'bar', data, barWidth: '40%', itemStyle: { borderRadius: [4, 4, 0, 0], color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: '#0ea5e9' }, { offset: 1, color: 'rgba(14,165,233,0.15)' }]) } }],
-  }
-})
+const activityChartOption = computed(() => ({
+  tooltip: { trigger: 'axis' },
+  grid: { top: 10, right: 10, bottom: 24, left: 36 },
+  xAxis: { type: 'category', data: dailyDates.value, axisLabel: { color: '#94a3b8', fontSize: 10 } },
+  yAxis: { type: 'value', splitLine: { lineStyle: { color: 'rgba(0,0,0,0.04)' } }, axisLabel: { color: '#94a3b8', fontSize: 10 } },
+  series: [{
+    type: 'bar',
+    data: dailyCounts.value,
+    barWidth: '40%',
+    itemStyle: {
+      borderRadius: [4, 4, 0, 0],
+      color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: '#0ea5e9' }, { offset: 1, color: 'rgba(14,165,233,0.15)' }]),
+    },
+  }],
+}))
+
+function maskOpenid(openid) {
+  if (!openid) return '-'
+  if (openid.length <= 8) return openid
+  return openid.slice(0, 4) + '…' + openid.slice(-4)
+}
 
 const filteredUsers = computed(() => {
   if (!search.value) return users.value
   const q = search.value.toLowerCase()
   return users.value.filter(u =>
-    (u.nickname && u.nickname.toLowerCase().includes(q)) ||
-    (u.openid && u.openid.toLowerCase().includes(q))
+    (u.nickname && u.nickname.toLowerCase().includes(q))
   )
 })
 
 onMounted(async () => {
   loading.value = true
   try {
-    users.value = (await getUsers()) || []
+    const [userList, daily] = await Promise.allSettled([getUsers(), getUserDailyStats(7)])
+    if (userList.status === 'fulfilled') users.value = userList.value || []
+    if (daily.status === 'fulfilled') {
+      dailyDates.value = daily.value?.dates || []
+      dailyCounts.value = daily.value?.counts || []
+    }
   } catch (e) { console.error(e) }
   finally { loading.value = false }
 })
@@ -157,6 +179,7 @@ onMounted(async () => {
 .user-cell { display: flex; align-items: center; gap: 10px; }
 .cell-avatar { background: linear-gradient(135deg, #0ea5e9, #06b6d4); color: #fff; font-weight: 600; flex-shrink: 0; }
 .role-tag { border-radius: 6px; font-weight: 500; }
+.openid-cell { font-family: 'SF Mono', Consolas, monospace; font-size: 12px; color: var(--text-secondary, #64748b); letter-spacing: 0.5px; }
 
 /* ===== 可视化 ===== */
 .viz-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; animation: pageIn 0.4s ease; }

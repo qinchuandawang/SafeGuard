@@ -5,7 +5,11 @@
       <div class="profile-top">
         <div class="avatar-section">
           <div class="avatar-wrap" @click="editing && triggerAvatarUpload()">
-            <el-avatar :size="88" class="profile-avatar">{{ profile.nickname?.charAt(0) || '?' }}</el-avatar>
+            <el-avatar :size="88" class="profile-avatar" :src="profile.avatarUrl || ''">
+              <template #default>
+                {{ profile.nickname?.charAt(0) || '?' }}
+              </template>
+            </el-avatar>
             <div v-if="editing" class="avatar-overlay">
               <el-icon :size="24"><Camera /></el-icon>
               <span>更换头像</span>
@@ -198,11 +202,24 @@ async function handleAvatarChange(e) {
   const file = e.target.files?.[0]
   if (!file) return
   if (!file.type.startsWith('image/')) { ElMessage.warning('请选择图片文件'); return }
-  const fd = new FormData()
-  fd.append('file', file)
-  const ok = await silentPost('/auth/admin/avatar', fd)
-  if (ok) ElMessage.success('头像已更新')
-  else ElMessage.success('头像已更新（本地模式）')
+  if (file.size > 500 * 1024) { ElMessage.warning('头像不能超过 500KB'); e.target.value = ''; return }
+  // 读取为 base64 dataURL，与后端 /auth/admin/avatar 协议保持一致
+  const reader = new FileReader()
+  const dataUrl = await new Promise((resolve, reject) => {
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = () => reject(new Error('读取图片失败'))
+    reader.readAsDataURL(file)
+  }).catch(() => null)
+  if (!dataUrl) { ElMessage.error('读取图片失败'); e.target.value = ''; return }
+  const ok = await silentPost('/auth/admin/avatar', { file: dataUrl })
+  if (ok) {
+    profile.avatarUrl = dataUrl
+    ElMessage.success('头像已更新')
+  } else {
+    // 本地降级：仍然展示
+    profile.avatarUrl = dataUrl
+    ElMessage.success('头像已更新（本地模式）')
+  }
   e.target.value = ''
 }
 
@@ -217,6 +234,7 @@ async function loadProfile() {
       phone: data.phone || '',
       department: data.department || '',
       bio: data.bio || '',
+      avatarUrl: data.avatarUrl || '',
       createdAt: data.createdAt || '-',
     })
   } catch (e) {

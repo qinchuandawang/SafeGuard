@@ -72,7 +72,7 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -U pip
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 
-# 2.3 启动（音频 :5000 + 视频 :5002）
+# 2.3 启动（音频 :5000 + 视频 :5002；可通过环境变量覆盖）
 .\.venv\Scripts\python.exe run.py
 ```
 
@@ -87,7 +87,7 @@ cd web-admin
 npm install
 npm run dev
 # 访问 http://localhost:5173
-# 账号: admin / 密码: admin123
+# 首次使用需在登录页点击"注册管理员"创建一个管理员账号
 ```
 
 ### 第 4 步：微信小程序
@@ -102,8 +102,8 @@ npm run dev
 | 服务 | 端口 | 说明 |
 |------|------|------|
 | Spring Boot 后端 | 8080 | API 服务 |
-| 音频检测 (Python) | 5000 | 音频伪造检测 |
-| 视频检测 (Python) | 5002 | 视频换脸检测 |
+| 音频检测 (Python) | 5000 | 音频伪造检测（`AUDIO_PORT` 覆盖） |
+| 视频检测 (Python) | 5002 | 视频换脸检测（`VIDEO_PORT` 覆盖） |
 | 管理后台 (Vite) | 5173 | Web 管理界面 |
 | MySQL | 3306 | 数据库 |
 | Qdrant（可选） | 6333 | 向量数据库 |
@@ -124,6 +124,8 @@ CREATE DATABASE safeguard CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
 > Qdrant 不可用时，系统会自动使用内存回退模式，不影响演示。
+>
+> **RAG 知识库完整使用条件**：① Docker 启动 Qdrant 容器（自动）；② 配置 `SILICONFLOW_API_KEY` 环境变量（用于生成 embedding 向量）。缺一则知识问答降级为关键词匹配。详见"常见问题"。
 
 ## 依赖服务说明
 
@@ -168,12 +170,28 @@ A: 上次关闭时进程未完全退出，手动杀掉：
 netstat -ano | findstr :8080
 taskkill /F /PID 查到的PID
 ```
+> 早期版本曾自动 `taskkill /F /PID` 占用 8080 的进程，但该行为会误杀用户机器上其他服务（调试中的另一组 Spring Boot、API 工具等），已移除。如遇端口冲突请按上述方式手动处理。
 
 **Q: 音频模型需要训练吗？**
 A: 不需要。`pretrained/asvspoof-finetuned/` 已包含微调好的模型，直接可用。训练由组员单独负责。
 
 **Q: 视频模型需要训练吗？**
 A: 不需要。`pretrained/best_model.pth` 已包含训练好的模型（85% 准确率），直接可用。
+
+**Q: 启动时出现 `Qdrant 批量插入失败: 400 ... value fixed_xxx is not a valid point ID`？**
+A: 这是 `QdrantService` 已知 bug。Qdrant 1.7+ 严格要求 point ID 为 unsigned integer 或 UUID，而项目生成的 chunkId 形如 `"fixed_anti_fraud_knowledge.txt_0"` 含 `.` 字符。已在 1 个文件中修复：把 `point.put("id", chunkIds.get(i))` 改为 `point.put("id", toQdrantId(chunkIds.get(i)))`（用 `UUID.nameUUIDFromBytes()` 派生）。**注意**：即使修复了 Qdrant ID，如果 `SILICONFLOW_API_KEY` 仍未配置，向量本身是垃圾，语义检索仍然搜不准。需先配置 SiliconFlow Key 才能体验完整 RAG。
+
+**Q: 管理后台默认账号密码是什么？**
+A: 系统**没有默认管理员账号**。首次部署后，请打开登录页点击"注册管理员"创建第一个管理员账号（用户名、昵称、密码 ≥ 6 位）。
+
+**Q: 管理后台 AI 安全助手如何使用？**
+A: 右下角浮动按钮 → 输入问题 → 自动调用后端大模型流式接口（SSE）。需要 `application.yml` 中配置 `llm.api-key`（DeepSeek/SophNet），未配置时会返回降级提示。
+
+**Q: Dashboard 趋势图/饼图是真实数据吗？**
+A: 是。后端从 `detection_record` 表按日期+结果分组聚合，缺失日期补 0。`web-admin/src/views/Dashboard.vue` 调 `/admin/api/stats/trend?days=7|30` 与 `/admin/api/stats/distribution`。
+
+**Q: 用户列表的 OpenID 为何只显示前 4 后 4？**
+A: 为保护用户隐私，列表中 OpenID 默认脱敏显示（`xxxx…xxxx`），鼠标悬停 tooltip 可查看完整值。
 
 ## 技术栈
 

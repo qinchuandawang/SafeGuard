@@ -57,7 +57,7 @@ public class DetectionController {
     @PostMapping("/video")
     public Result<?> detectVideo(@RequestParam("file") MultipartFile file) {
         if (file == null || file.isEmpty()) {
-            return Result.error("视频文件不能为空");
+            return Result.badRequest("视频文件不能为空");
         }
         String filePath;
         try {
@@ -66,7 +66,15 @@ public class DetectionController {
             log.error("视频文件保存失败", e);
             return Result.error("文件处理失败");
         }
-        DetectionTask task = taskManager.createTask("video");
+        DetectionTask task;
+        try {
+            task = taskManager.createTask("video");
+        } catch (RuntimeException e) {
+            // DB 故障等：createTask 抛异常时 filePath 已保存，lambda 还没启动，必须在外层清理
+            log.error("创建视频检测任务失败，清理临时文件", e);
+            deleteQuietly(filePath);
+            return Result.error("任务创建失败：" + e.getMessage());
+        }
         taskManager.runAsync(task.getTaskId(), taskId -> {
             try {
                 VideoDetectionResult result = detectionService.detectVideo(filePath,
