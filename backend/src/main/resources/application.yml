@@ -9,7 +9,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/safeguard?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8&connectionCollation=utf8mb4_unicode_ci&createDatabaseIfNotExist=true
     username: root
-    password: ""
+    password: ${DB_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 20
@@ -20,7 +20,8 @@ spring:
       pool-name: SafeGuardHikariCP
   sql:
     init:
-      mode: always
+      # 开发环境用 always 自动建表；生产环境请改为 never 并使用 application-prod.yml 覆盖
+      mode: never
       schema-locations: classpath:sql/schema.sql
       data-locations: classpath:sql/init-data.sql
       continue-on-error: true
@@ -39,13 +40,13 @@ mybatis-plus:
 
 # JWT 配置
 jwt:
-  secret: ${JWT_SECRET:SafeGuard-JWT-Secret-Key-2026-Must-Change-In-Production}
+  secret: ${JWT_SECRET:dev-jwt-secret-change-in-production}
   expiration-hours: 24
 
 # 微信小程序配置
 wechat:
-  appid: ${WECHAT_APPID:wx859a5eef3e30a6e5}
-  secret: ${WECHAT_SECRET:af02d82391171bcf68284f7ebf3c2f59}
+  appid: ${WECHAT_APPID:your-wechat-appid}
+  secret: ${WECHAT_SECRET:your-wechat-secret}
   login-url: https://api.weixin.qq.com/sns/jscode2session
 
 # 音频检测服务地址
