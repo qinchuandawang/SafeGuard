@@ -11,7 +11,7 @@
 
 ```
 ai-services/
-├── audio/              # 音频检测模块 (port 5001)
+├── audio/              # 音频检测模块 (port 5000)
 │   ├── src/
 │   │   ├── app.py          # Flask 服务入口
 │   │   ├── utils.py        # 音频处理工具
@@ -64,7 +64,7 @@ python run.py
 ```
 
 启动后：
-- 音频检测：http://localhost:5001
+- 音频检测：http://localhost:5000
 - 视频检测：http://localhost:5002
 
 ## 激活虚拟环境（可选）
@@ -87,7 +87,7 @@ python run.py
 
 ```bash
 # 音频
-cd audio && python run.py               # 默认 5001
+cd audio && python run.py               # 默认 5000
 
 # 视频
 cd video && python api/app.py           # 默认 5002
@@ -105,7 +105,7 @@ D:\Git\SafeGuard\ai-services\.venv\Scripts\python.exe
 
 ## API 接口
 
-### 音频检测 (port 5001)
+### 音频检测 (port 5000)
 - `GET  /health`         健康检查
 - `POST /audio/detect`   音频伪造检测
 

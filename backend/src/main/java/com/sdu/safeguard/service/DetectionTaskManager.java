@@ -12,6 +12,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.*;
@@ -92,7 +93,12 @@ public class DetectionTaskManager {
         DetectionTask task = activeTasks.get(taskId);
         if (task == null) return;
         task.setProgress(progress);
-        sendSse(task, "progress", detail);
+        Map<String, Object> eventData = new LinkedHashMap<>();
+        eventData.put("event", "progress");
+        eventData.put("status", task.getStatus());
+        eventData.put("progress", progress);
+        eventData.put("detail", detail);
+        sendSse(task, "progress", eventData);
 
         try {
             AsyncTask asyncTask = asyncTaskMapper.findByTaskId(taskId);
@@ -111,7 +117,12 @@ public class DetectionTaskManager {
         task.setStatus("completed");
         task.setProgress(100);
         task.setResult(result);
-        sendSse(task, "completed", result);
+        Map<String, Object> eventData = new LinkedHashMap<>();
+        eventData.put("event", "completed");
+        eventData.put("status", "completed");
+        eventData.put("progress", 100);
+        eventData.put("result", result);
+        sendSse(task, "completed", eventData);
         closeEmitter(task);
         log.info("异步任务完成: taskId={}", taskId);
 
@@ -124,7 +135,11 @@ public class DetectionTaskManager {
         if (task == null) return;
         task.setStatus("failed");
         task.setError(error);
-        sendSse(task, "error", Map.of("error", error));
+        Map<String, Object> eventData = new LinkedHashMap<>();
+        eventData.put("event", "error");
+        eventData.put("status", "failed");
+        eventData.put("error", error);
+        sendSse(task, "error", eventData);
         closeEmitter(task);
         log.error("异步任务失败: taskId={}, error={}", taskId, error);
 

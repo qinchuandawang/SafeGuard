@@ -105,20 +105,20 @@ python api/app.py
 
 服务启动后，可以通过以下接口调用：
 
-- 健康检查：`GET http://localhost:5000/api/health`
-- 图片检测：`POST http://localhost:5000/api/detect/image`
-- 视频检测：`POST http://localhost:5000/api/detect/video`
+- 健康检查：`GET http://localhost:5002/api/health`
+- 图片检测：`POST http://localhost:5002/api/detect/image`
+- 视频检测：`POST http://localhost:5002/api/detect/video`
 
 ### Step 6: 测试 API
 
 **测试图片检测**：
 ```bash
-curl -X POST -F "file=@test_image.jpg" http://localhost:5000/api/detect/image
+curl -X POST -F "file=@test_image.jpg" http://localhost:5002/api/detect/image
 ```
 
 **测试视频检测**：
 ```bash
-curl -X POST -F "file=@test_video.mp4" http://localhost:5000/api/detect/video
+curl -X POST -F "file=@test_video.mp4" http://localhost:5002/api/detect/video
 ```
 
 ## 📝 你现在需要做什么？

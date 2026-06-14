@@ -1,7 +1,9 @@
 /* ==================== 页面容器 ==================== */
 .page {
   min-height: 100vh;
-  background: var(--bg-color-primary, #f5f7fa);
+  background:
+    radial-gradient(circle at 10% 4%, rgba(0,180,216,0.18), transparent 30%),
+    linear-gradient(180deg, #f8fcff 0%, var(--bg-color-primary, #eef8ff) 46%, #f8fafc 100%);
   padding-bottom: 120rpx;
 }
 
@@ -15,7 +17,9 @@
   align-items: center;
   padding-left: 32rpx;
   padding-right: 32rpx;
-  background: transparent;
+  background: rgba(248,252,255,0.82);
+  backdrop-filter: blur(18rpx);
+  -webkit-backdrop-filter: blur(18rpx);
   z-index: 99;
   box-sizing: border-box;
 }
@@ -24,6 +28,7 @@
   height: 44rpx;
   border-radius: 10rpx;
   flex-shrink: 0;
+  box-shadow: 0 6rpx 18rpx rgba(0,180,216,0.18);
 }
 .header-title {
   font-size: 34rpx;
@@ -38,9 +43,28 @@
 .hero-section {
   position: relative;
   overflow: hidden;
-  padding: 48rpx 32rpx 36rpx;
+  margin: 18rpx 24rpx 0;
+  padding: 34rpx 28rpx;
+  border-radius: 36rpx;
+  background:
+    radial-gradient(circle at 82% 10%, rgba(16,185,129,0.18), transparent 32%),
+    linear-gradient(135deg, rgba(255,255,255,0.94), rgba(224,242,254,0.72));
+  border: 1rpx solid rgba(255,255,255,0.9);
+  box-shadow: 0 20rpx 50rpx rgba(14,116,144,0.10);
+}
+.hero-section::after {
+  content: '';
+  position: absolute;
+  right: -78rpx;
+  bottom: -98rpx;
+  width: 220rpx;
+  height: 220rpx;
+  border-radius: 50%;
+  border: 28rpx solid rgba(0,180,216,0.08);
 }
 .hero-content {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -92,13 +116,14 @@
 
 /* ==================== 项目介绍 ==================== */
 .intro-card {
-  margin: 0 32rpx;
+  margin: 24rpx 32rpx 0;
   padding: 24rpx;
   border-radius: 20rpx;
-  background: linear-gradient(135deg, rgba(0,180,216,0.04), rgba(99,102,241,0.04));
-  border: 1rpx solid rgba(0,180,216,0.1);
+  background: rgba(255,255,255,0.88);
+  border: 1rpx solid rgba(0,180,216,0.10);
   display: flex;
   gap: 16rpx;
+  box-shadow: var(--shadow-sm);
 }
 .intro-icon-wrap {
   width: 64rpx;
@@ -146,14 +171,15 @@
 }
 .stat-card {
   flex: 1;
-  background: var(--bg-color-card, #ffffff);
-  border-radius: 18rpx;
+  background: rgba(255,255,255,0.92);
+  border-radius: 24rpx;
   padding: 18rpx 12rpx 14rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6rpx;
-  box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.04);
+  box-shadow: var(--shadow-sm);
+  border: 1rpx solid rgba(255,255,255,0.9);
 }
 .stat-icon {
   width: 44rpx;
@@ -182,9 +208,10 @@
 .risk-bar-wrap {
   margin: 14rpx 32rpx 0;
   padding: 22rpx 24rpx;
-  background: var(--bg-color-card, #ffffff);
-  border-radius: 18rpx;
-  box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.04);
+  background: rgba(255,255,255,0.92);
+  border-radius: 24rpx;
+  box-shadow: var(--shadow-sm);
+  border: 1rpx solid rgba(255,255,255,0.9);
 }
 .risk-bar-hd {
   display: flex;
@@ -395,8 +422,8 @@
   width: 100%;
   padding: 24rpx 0;
   border-radius: 50rpx;
-  background: linear-gradient(135deg, #00b4d8, #0096c7);
-  box-shadow: 0 8rpx 28rpx rgba(0,180,216,0.3);
+  background: linear-gradient(135deg, #0ea5e9, #06b6d4);
+  box-shadow: 0 14rpx 36rpx rgba(14,165,233,0.28);
 }
 .cta-btn:active { opacity: 0.85; transform: scale(0.97); }
 .cta-text {

@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -104,13 +105,38 @@ public class AdminApiController {
         Map<String, Object> result = new LinkedHashMap<>();
         try {
             LocalDateTime since = LocalDateTime.now().minusDays(days);
-            List<Map<String, Object>> dailyTrend = detectionRecordMapper.countByDateAndType(since);
-            List<Map<String, Object>> typeAvgRisk = detectionRecordMapper.avgRiskScoreByType();
-            List<Map<String, Object>> typeResultCross = detectionRecordMapper.countGroupByTypeAndResult();
+            List<Map<String, Object>> dailyByResult = detectionRecordMapper.countByDateAndResult(since);
 
-            result.put("dailyTrend", dailyTrend);
-            result.put("typeAvgRisk", typeAvgRisk);
-            result.put("typeResultCross", typeResultCross);
+            Map<String, Map<String, Integer>> grouped = new LinkedHashMap<>();
+            for (Map<String, Object> row : dailyByResult) {
+                String date = row.get("date") == null ? "" : row.get("date").toString();
+                String res = row.get("result") == null ? "unknown" : row.get("result").toString();
+                int count = ((Number) row.get("count")).intValue();
+                grouped.computeIfAbsent(date, k -> new LinkedHashMap<>());
+                Map<String, Integer> bucket = grouped.get(date);
+                if ("safe".equals(res)) {
+                    bucket.merge("safe", count, Integer::sum);
+                } else {
+                    bucket.merge("suspicious", count, Integer::sum);
+                }
+            }
+
+            List<String> dates = new ArrayList<>();
+            List<Integer> safeSeries = new ArrayList<>();
+            List<Integer> suspiciousSeries = new ArrayList<>();
+            LocalDate today = LocalDate.now();
+            for (int i = days - 1; i >= 0; i--) {
+                LocalDate d = today.minusDays(i);
+                String key = d.toString();
+                dates.add(key.substring(5)); // MM-dd
+                Map<String, Integer> bucket = grouped.get(key);
+                safeSeries.add(bucket == null ? 0 : bucket.getOrDefault("safe", 0));
+                suspiciousSeries.add(bucket == null ? 0 : bucket.getOrDefault("suspicious", 0));
+            }
+
+            result.put("dates", dates);
+            result.put("safe", safeSeries);
+            result.put("suspicious", suspiciousSeries);
             result.put("days", days);
         } catch (Exception e) {
             log.error("获取趋势统计失败", e);

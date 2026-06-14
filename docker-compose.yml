@@ -85,6 +85,9 @@ services:
       WECHAT_SECRET: ${WECHAT_SECRET:-}
       QDRANT_HOST: qdrant
       QDRANT_PORT: 6333
+      ADMIN_BOOTSTRAP_REGISTER: ${ADMIN_BOOTSTRAP_REGISTER:-false}
+      SQL_INIT_MODE: ${SQL_INIT_MODE:-never}
+      VIDEO_PREPROCESS_ENABLED: ${VIDEO_PREPROCESS_ENABLED:-false}
     ports:
       - "8080:8080"
     volumes:

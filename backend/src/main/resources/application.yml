@@ -26,6 +26,11 @@ spring:
       data-locations: classpath:sql/init-data.sql
       continue-on-error: true
 
+app:
+  admin:
+    # true: 仅允许系统没有管理员账号时开放公开注册；false: 完全关闭公开注册。
+    allow-bootstrap-register: ${ADMIN_BOOTSTRAP_REGISTER:true}
+
 mybatis-plus:
   type-aliases-package: com.sdu.safeguard.entity
   configuration:
@@ -63,7 +68,7 @@ video:
     url: http://localhost:5002/api/detect/video
     image-url: http://localhost:5002/api/detect/image
   preprocess:
-    enabled: true
+    enabled: ${VIDEO_PREPROCESS_ENABLED:true}
     sample-interval-seconds: 1.0
     max-frames: 24
     face-padding-ratio: 0.12

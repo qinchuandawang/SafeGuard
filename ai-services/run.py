@@ -1,14 +1,14 @@
 """
 SafeGuard AI 检测服务 — 统一启动入口
 
-同时启动音频检测 (port 5001) 和视频检测 (port 5002) 两个服务。
+同时启动音频检测 (port 5000) 和视频检测 (port 5002) 两个服务。
 在 PyCharm 中只需运行此文件即可。
 
 用法：
     python run.py
 
 可指定端口：
-    AUDIO_PORT=5001 VIDEO_PORT=5002 python run.py
+    AUDIO_PORT=5000 VIDEO_PORT=5002 python run.py
 """
 
 import subprocess

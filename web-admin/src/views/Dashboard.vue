@@ -25,6 +25,23 @@
 
     <!-- 真实内容（始终在 DOM 中，图表容器挂载后即可初始化） -->
     <div class="dashboard-content" :class="{ 'content-ready': statsLoaded }">
+      <section class="demo-hero">
+        <div class="demo-hero-copy">
+          <span class="demo-kicker">SafeGuard Demo Console</span>
+          <h1>AI 反诈骗检测演示平台</h1>
+          <p>集中展示用户、检测记录、知识库和音视频鉴伪服务状态，适合课程答辩现场快速讲解系统能力。</p>
+        </div>
+        <div class="demo-hero-status">
+          <div class="status-pill ok">
+            <span class="pulse-dot" />
+            后端服务在线
+          </div>
+          <div class="status-pill">
+            多模态检测 · RAG 知识库 · 管理后台
+          </div>
+        </div>
+      </section>
+
       <!-- 统计卡片行 -->
       <div class="stats-grid">
         <div
@@ -304,6 +321,91 @@ function initPieChart() {
 <style scoped>
 .dashboard { max-width: 1400px; position: relative; }
 
+.demo-hero {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+  padding: 28px 32px;
+  border-radius: 24px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(14,165,233,0.18), transparent 28%),
+    radial-gradient(circle at 92% 20%, rgba(16,185,129,0.12), transparent 30%),
+    linear-gradient(135deg, rgba(255,255,255,0.9), rgba(240,249,255,0.74));
+  border: 1px solid rgba(255,255,255,0.78);
+  box-shadow: 0 16px 44px rgba(14, 116, 144, 0.08);
+}
+.demo-hero::after {
+  content: '';
+  position: absolute;
+  right: -80px;
+  bottom: -120px;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  border: 34px solid rgba(14,165,233,0.08);
+}
+.demo-hero-copy,
+.demo-hero-status {
+  position: relative;
+  z-index: 1;
+}
+.demo-kicker {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(14,165,233,0.1);
+  color: #0284c7;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.demo-hero h1 {
+  margin: 14px 0 8px;
+  font-size: 28px;
+  line-height: 1.18;
+  color: var(--text-primary, #0f172a);
+}
+.demo-hero p {
+  max-width: 680px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-secondary, #64748b);
+}
+.demo-hero-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 10px;
+  min-width: 230px;
+}
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 13px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.72);
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(15,23,42,0.06);
+}
+.status-pill.ok { color: #047857; }
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 6px rgba(16,185,129,0.12);
+}
+
 /* ===== 骨架屏遮罩 ===== */
 .skeleton-overlay {
   position: absolute; inset: 0; z-index: 10;
@@ -503,8 +605,12 @@ function initPieChart() {
 @media (max-width: 1200px) {
   .stats-grid, .skeleton-stats-grid { grid-template-columns: repeat(2, 1fr); }
   .charts-grid, .skeleton-charts-grid { grid-template-columns: 1fr; }
+  .demo-hero { flex-direction: column; }
+  .demo-hero-status { align-items: flex-start; min-width: 0; }
 }
 @media (max-width: 768px) {
   .stats-grid, .skeleton-stats-grid { grid-template-columns: 1fr; }
+  .demo-hero { padding: 24px; border-radius: 20px; }
+  .demo-hero h1 { font-size: 24px; }
 }
 </style>

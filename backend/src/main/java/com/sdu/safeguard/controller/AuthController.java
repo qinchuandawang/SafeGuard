@@ -11,6 +11,7 @@ import com.sdu.safeguard.util.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,6 +31,9 @@ public class AuthController {
     private final JwtUtil jwtUtil;
     private final com.sdu.safeguard.mapper.UserMapper userMapper;
     private final BCryptPasswordEncoder passwordEncoder;
+
+    @Value("${app.admin.allow-bootstrap-register:true}")
+    private boolean allowBootstrapRegister;
 
     @PostMapping("/admin/login")
     public Result<LoginResponse> adminLogin(@RequestBody AdminLoginRequest request) {
@@ -66,18 +70,24 @@ public class AuthController {
      */
     @PostMapping("/admin/register")
     public Result<LoginResponse> adminRegister(@RequestBody AdminRegisterRequest request) {
+        if (!allowBootstrapRegister) {
+            return Result.badRequest("管理员公开注册已关闭");
+        }
+        if (userMapper.findAnyAdmin() != null) {
+            return Result.badRequest("系统已存在管理员账号，公开注册已关闭");
+        }
         if (request.getUsername() == null || request.getUsername().trim().isEmpty()) {
-            return Result.error("用户名不能为空");
+            return Result.badRequest("用户名不能为空");
         }
         if (request.getPassword() == null || request.getPassword().length() < 6) {
-            return Result.error("密码长度至少 6 位");
+            return Result.badRequest("密码长度至少 6 位");
         }
         if (request.getNickname() == null || request.getNickname().trim().isEmpty()) {
-            return Result.error("昵称不能为空");
+            return Result.badRequest("昵称不能为空");
         }
         String openid = "admin_" + request.getUsername().trim();
         if (userMapper.findByOpenidAny(openid) != null) {
-            return Result.error("用户名已存在");
+            return Result.badRequest("用户名已存在");
         }
         User admin = User.builder()
                 .openid(openid)

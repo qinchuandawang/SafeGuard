@@ -16,8 +16,8 @@
 
 | 环境 | 地址 |
 |------|------|
-| 本地 | `http://127.0.0.1:5000` |
-| 局域网 | `http://10.27.242.183:5000` |
+| 本地 | `http://127.0.0.1:5002` |
+| 局域网 | `http://10.27.242.183:5002` |
 
 > 启动命令：`python api/app.py`
 
@@ -96,12 +96,12 @@ GET /api/health
 **调用示例**：
 
 ```bash
-curl http://127.0.0.1:5000/api/health
+curl http://127.0.0.1:5002/api/health
 ```
 
 ```python
 import requests
-resp = requests.get("http://127.0.0.1:5000/api/health")
+resp = requests.get("http://127.0.0.1:5002/api/health")
 print(resp.json())
 ```
 
@@ -181,7 +181,7 @@ Content-Type: multipart/form-data
 **curl**：
 
 ```bash
-curl -X POST http://127.0.0.1:5000/api/detect/image \
+curl -X POST http://127.0.0.1:5002/api/detect/image \
      -F "file=@/path/to/image.jpg"
 ```
 
@@ -190,7 +190,7 @@ curl -X POST http://127.0.0.1:5000/api/detect/image \
 ```python
 import requests
 
-url = "http://127.0.0.1:5000/api/detect/image"
+url = "http://127.0.0.1:5002/api/detect/image"
 with open("test.jpg", "rb") as f:
     resp = requests.post(url, files={"file": f})
 
@@ -290,7 +290,7 @@ Content-Type: multipart/form-data
 **curl**：
 
 ```bash
-curl -X POST http://127.0.0.1:5000/api/detect/video \
+curl -X POST http://127.0.0.1:5002/api/detect/video \
      -F "file=@/path/to/video.mp4"
 ```
 
@@ -299,7 +299,7 @@ curl -X POST http://127.0.0.1:5000/api/detect/video \
 ```python
 import requests
 
-url = "http://127.0.0.1:5000/api/detect/video"
+url = "http://127.0.0.1:5002/api/detect/video"
 with open("test.mp4", "rb") as f:
     resp = requests.post(url, files={"file": f})
 
@@ -396,10 +396,10 @@ def detect_deepfake(file_path, file_type="image"):
     """大模型调用换脸检测服务"""
     
     if file_type == "image":
-        url = "http://127.0.0.1:5000/api/detect/image"
+        url = "http://127.0.0.1:5002/api/detect/image"
         timeout = 30
     elif file_type == "video":
-        url = "http://127.0.0.1:5000/api/detect/video"
+        url = "http://127.0.0.1:5002/api/detect/video"
         timeout = 120
     else:
         return None
@@ -458,7 +458,7 @@ def safe_detect(file_path, file_type="image", retries=3):
     
     for attempt in range(retries):
         try:
-            url = f"http://127.0.0.1:5000/api/detect/{file_type}"
+            url = f"http://127.0.0.1:5002/api/detect/{file_type}"
             with open(file_path, "rb") as f:
                 resp = requests.post(url, files={"file": f}, timeout=60)
             

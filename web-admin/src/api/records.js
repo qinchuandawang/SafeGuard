@@ -22,15 +22,15 @@ export function getUsers() {
 
 // Dashboard 趋势图：按日期+结果分组的真实数据
 export function getTrendStats(days = 7) {
-  return request.get('/admin/api/stats/trend', { params: { days } })
+  return request.get('/admin/stats/trend', { params: { days } })
 }
 
 // Dashboard 饼图：按结果统计的占比
 export function getDistributionStats() {
-  return request.get('/admin/api/stats/distribution')
+  return request.get('/admin/stats/distribution')
 }
 
 // 用户管理：近 N 天每日新增用户数
 export function getUserDailyStats(days = 7) {
-  return request.get('/admin/api/users/daily-stats', { params: { days } })
+  return request.get('/admin/users/daily-stats', { params: { days } })
 }

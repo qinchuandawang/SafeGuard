@@ -54,10 +54,9 @@ class TaskWatcher {
       });
 
       let buffer = '';
-      let hasReceived = false;
+      let hasHandledEvent = false;
       requestTask.onChunkReceived((res) => {
         if (this._destroyed) return;
-        hasReceived = true;
 
         try {
           const rawBytes = res.data;
@@ -69,21 +68,14 @@ class TaskWatcher {
           }
           buffer += text;
 
-          // 按行解析 SSE 事件
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
+          const blocks = buffer.split('\n\n');
+          buffer = blocks.pop() || '';
 
-          for (const line of lines) {
-            if (!line.startsWith('data: ')) continue;
-            const payload = line.slice(6).trim();
-            if (payload === '[DONE]') continue;
-
-            try {
-              const data = typeof payload === 'string' ? JSON.parse(payload) : payload;
-              this._handleEvent(data, { onProgress, onDone, onError });
-            } catch (_) {
-              // 非 JSON 数据忽略
-            }
+          for (const block of blocks) {
+            const parsed = this._parseSseBlock(block);
+            if (!parsed) continue;
+            hasHandledEvent = true;
+            this._handleEvent(parsed, { onProgress, onDone, onError });
           }
         } catch (err) {
           console.warn('[TaskWatcher] SSE 解析异常:', err);
@@ -92,10 +84,10 @@ class TaskWatcher {
 
       this._sseTask = requestTask;
 
-      // 5 秒后检查是否收到数据，没收到说明 SSE 连接失败，回退轮询
+      // 5 秒后检查是否解析到有效事件，没解析到则回退轮询
       setTimeout(() => {
-        if (!hasReceived && !this._destroyed) {
-          console.warn('[TaskWatcher] SSE 无数据响应，回退到轮询模式');
+        if (!hasHandledEvent && !this._destroyed) {
+          console.warn('[TaskWatcher] SSE 无有效事件，回退到轮询模式');
           this.destroy();
           this._startPolling(taskId, { onProgress, onDone, onError });
         }
@@ -105,6 +97,31 @@ class TaskWatcher {
     } catch (err) {
       console.warn('[TaskWatcher] SSE 启动失败，回退轮询:', err);
       return false;
+    }
+  }
+
+  _parseSseBlock(block) {
+    if (!block) return null;
+    let eventName = '';
+    const dataLines = [];
+    const lines = block.split('\n');
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
+      if (line.startsWith('event:')) {
+        eventName = line.slice(6).trim();
+      } else if (line.startsWith('data:')) {
+        dataLines.push(line.slice(5).trim());
+      }
+    }
+    if (!dataLines.length) return null;
+    const payload = dataLines.join('\n');
+    if (payload === '[DONE]') return null;
+    try {
+      const data = JSON.parse(payload);
+      if (eventName && !data.event) data.event = eventName;
+      return data;
+    } catch (_) {
+      return eventName ? { event: eventName, message: payload } : null;
     }
   }
 

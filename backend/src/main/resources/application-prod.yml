@@ -11,10 +11,14 @@ spring:
       connection-timeout: 10000
   sql:
     init:
-      mode: always
+      mode: ${SQL_INIT_MODE:never}
       schema-locations: classpath:sql/schema.sql
       data-locations: classpath:sql/init-data.sql
-      continue-on-error: true
+      continue-on-error: false
+
+app:
+  admin:
+    allow-bootstrap-register: ${ADMIN_BOOTSTRAP_REGISTER:false}
 
 # 音频检测服务（容器内使用容器名）
 audio:
