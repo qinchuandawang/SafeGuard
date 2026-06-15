@@ -43,6 +43,8 @@ page {
   --shadow-md: 0 10rpx 28rpx rgba(15, 23, 42, 0.07);
   --shadow-lg: 0 18rpx 52rpx rgba(15, 23, 42, 0.10);
   --shadow-glow: 0 12rpx 34rpx rgba(0, 180, 216, 0.24);
+  --shadow-press: 0 6rpx 18rpx rgba(15, 23, 42, 0.08);
+  --surface-line: rgba(15, 23, 42, 0.06);
 
   /* 圆角 */
   --radius-sm: 8rpx;
@@ -95,18 +97,33 @@ view, scroll-view, swiper, button, input, textarea, label, navigator, image {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20rpx 32rpx;
+  padding: 18rpx 32rpx;
   padding-top: calc(constant(safe-area-inset-top) + 40rpx);
   padding-top: calc(env(safe-area-inset-top) + 40rpx);
-  background-color: var(--bg-color-primary);
+  background: rgba(248,252,255,0.86);
+  backdrop-filter: blur(18rpx);
+  -webkit-backdrop-filter: blur(18rpx);
 }
 
 .page-nav-left {
-  width: 100rpx;
-  height: 100rpx;
+  width: 88rpx;
+  height: 88rpx;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.84);
+  border: 1rpx solid rgba(0,180,216,0.10);
+  box-shadow: 0 8rpx 22rpx rgba(15,23,42,0.06);
+}
+
+.page-nav-left:active {
+  transform: scale(0.94);
+  background: rgba(224,242,254,0.92);
+}
+
+.page-nav-left .t-icon {
+  font-size: 52rpx;
 }
 
 .page-nav-title {
@@ -116,8 +133,8 @@ view, scroll-view, swiper, button, input, textarea, label, navigator, image {
 }
 
 .page-nav-right {
-  width: 100rpx;
-  height: 100rpx;
+  width: 88rpx;
+  height: 88rpx;
 }
 
 /* ==================== 通用类 ==================== */
@@ -211,11 +228,12 @@ view, scroll-view, swiper, button, input, textarea, label, navigator, image {
 
 /* ==================== 卡片样式 ==================== */
 .card {
-  background-color: var(--bg-color-card);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,255,255,0.90));
   border-radius: var(--radius-lg);
   padding: var(--spacing-md);
   box-shadow: var(--shadow-md);
-  border: 1rpx solid rgba(255,255,255,0.85);
+  border: 1rpx solid rgba(255,255,255,0.86);
 }
 
 .card-elevated {
@@ -253,12 +271,14 @@ view, scroll-view, swiper, button, input, textarea, label, navigator, image {
 
 /* 特色卡片（左上角彩色条） */
 .card-featured {
-  background-color: var(--bg-color-card);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,255,255,0.92));
   border-radius: var(--radius-lg);
   padding: var(--spacing-md);
   box-shadow: var(--shadow-md);
   position: relative;
   overflow: hidden;
+  border: 1rpx solid rgba(255,255,255,0.82);
 }
 .card-featured::before {
   content: '';
@@ -269,6 +289,27 @@ view, scroll-view, swiper, button, input, textarea, label, navigator, image {
   height: 100%;
   background: var(--gradient-primary);
   border-radius: 3rpx;
+}
+
+.card-featured::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -42%;
+  width: 38%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.48), transparent);
+  transform: skewX(-18deg);
+  animation: sweepLight 5.6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.card:active,
+.card-bordered:active,
+.card-featured:active,
+.card-glass:active {
+  transform: translateY(2rpx) scale(0.992);
+  box-shadow: var(--shadow-press);
 }
 
 /* ==================== 标签样式 ==================== */
@@ -477,6 +518,10 @@ view, scroll-view, swiper, button, input, textarea, label, navigator, image {
 @keyframes scaleIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
 @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 @keyframes slideDownFadeIn { from { opacity: 0; transform: translateY(-20rpx); } to { opacity: 1; transform: translateY(0); } }
+@keyframes sweepLight { 0%, 58% { transform: translateX(0) skewX(-18deg); opacity: 0; } 66% { opacity: 1; } 100% { transform: translateX(380%) skewX(-18deg); opacity: 0; } }
+@keyframes floatSoft { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8rpx); } }
+@keyframes scanLine { 0% { transform: translateY(-100%); opacity: 0; } 12%, 72% { opacity: 1; } 100% { transform: translateY(180%); opacity: 0; } }
+@keyframes dotPulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.45); opacity: 0.45; } }
 
 .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
 .animate-slideUp { animation: slideUpFadeIn 0.5s ease-out; }
@@ -484,6 +529,11 @@ view, scroll-view, swiper, button, input, textarea, label, navigator, image {
 .animate-slideDown { animation: slideDownFadeIn 0.3s ease-out; }
 .animate-pulse { animation: pulse 2s ease-in-out infinite; }
 .animate-breathe { animation: breathe 2s ease-in-out infinite; }
+.animate-float { animation: floatSoft 3s ease-in-out infinite; }
+.anim-fadeIn { animation: fadeIn 0.3s ease-out; }
+.anim-slideUp { animation: slideUpFadeIn 0.5s ease-out; }
+.anim-scaleIn { animation: scaleIn 0.3s ease-out; }
+.anim-slideDown { animation: slideDownFadeIn 0.3s ease-out; }
 
 /* 错开动画（列表入场） */
 .stagger-1 { animation: slideUpFadeIn 0.5s ease-out both; animation-delay: 0ms; }
@@ -514,6 +564,18 @@ t-navbar { --navbar-color: var(--text-color-primary); --navbar-background-color:
   border-radius: 50%;
   box-shadow: 0 16rpx 36rpx rgba(37,99,235,0.25);
   z-index: 100;
+  animation: floatSoft 3.4s ease-in-out infinite;
+}
+.qa-float-btn::after {
+  content: '';
+  position: absolute;
+  top: -8rpx;
+  left: -8rpx;
+  right: -8rpx;
+  bottom: -8rpx;
+  border-radius: 50%;
+  border: 1rpx solid rgba(37,99,235,0.20);
+  animation: breathe 2.6s ease-in-out infinite;
 }
 .qa-float-btn:active {
   opacity: 0.85;
@@ -531,6 +593,7 @@ t-navbar { --navbar-color: var(--text-color-primary); --navbar-background-color:
     --text-color-tertiary: #64748b;
     --border-color: #334155;
     --border-color-light: #1e293b;
+    --surface-line: rgba(255, 255, 255, 0.08);
     --shadow-sm: 0 2rpx 8rpx rgba(0,0,0,0.3);
     --shadow-md: 0 4rpx 16rpx rgba(0,0,0,0.4);
   }

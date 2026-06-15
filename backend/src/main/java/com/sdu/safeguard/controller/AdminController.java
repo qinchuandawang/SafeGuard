@@ -33,8 +33,19 @@ public class AdminController {
     private final BCryptPasswordEncoder passwordEncoder;
 
     @GetMapping("/login")
-    public String loginPage() {
+    public String loginPage(jakarta.servlet.http.HttpSession session) {
+        if (session != null) {
+            session.invalidate();
+        }
         return "login";
+    }
+
+    @GetMapping("/logout")
+    public String logout(jakarta.servlet.http.HttpSession session) {
+        if (session != null) {
+            session.invalidate();
+        }
+        return "redirect:/admin/login";
     }
 
     @PostMapping("/login")
@@ -44,15 +55,10 @@ public class AdminController {
             model.addAttribute("error", "用户名和密码不能为空");
             return "login";
         }
-        // 1) 优先按用户名对应的 admin openid 查找
         String openid = "admin_" + username.trim();
         User admin = userMapper.findByOpenidAny(openid);
-        // 2) 兼容旧逻辑：取第一个 admin 账号
         if (admin == null) {
-            admin = userMapper.findAnyAdmin();
-        }
-        if (admin == null) {
-            model.addAttribute("error", "管理员账号不存在，请先注册");
+            model.addAttribute("error", "用户名或密码错误");
             return "login";
         }
         if (admin.getPasswordHash() == null || admin.getPasswordHash().isBlank()) {

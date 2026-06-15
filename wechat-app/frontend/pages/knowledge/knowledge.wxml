@@ -4,7 +4,7 @@
   <!-- 自定义导航栏 -->
   <view class="page-navbar px-lg">
     <view class="page-nav-left" bindtap="onBack">
-      <t-icon name="chevron-left" size="48rpx" color="var(--text-color-primary)" />
+      <t-icon name="chevron-left" size="52rpx" color="var(--text-color-primary)" />
     </view>
     <text class="page-nav-title">防骗知识库</text>
     <view class="page-nav-right"></view>
@@ -72,7 +72,7 @@
           </view>
           <view class="article-content">
             <text class="article-title">{{item.title}}</text>
-            <text class="article-summary">{{item.summary}}</text>
+            <text class="article-summary" user-select="true">{{item.summary}}</text>
             <view class="article-meta flex flex-between">
               <view class="article-tags flex" style="gap:12rpx;flex-wrap:wrap;flex:1">
                 <text class="tag tag-primary" wx:for="{{item.tags}}" wx:for-item="tag" wx:key="*this">{{tag}}</text>
@@ -118,15 +118,24 @@
   <!-- ===== RAG 智能问答面板 ===== -->
   <view class="qa-panel {{showQA ? 'active' : ''}}">
     <!-- 面板标题 -->
-    <view class="qa-header flex flex-between">
-      <view class="flex flex-center" style="gap:12rpx">
-        <t-icon name="chat" size="32rpx" color="#7c3aed" />
-        <text class="text-lg font-bold">AI 智能问答</text>
-        <text class="tag tag-primary" style="font-weight:500">RAG</text>
+    <view class="qa-header">
+      <view class="qa-header-main">
+        <view class="qa-header-icon">
+          <t-icon name="ai" size="34rpx" color="#00b4d8" />
+        </view>
+        <view class="qa-header-text">
+          <view class="qa-header-title-row">
+            <text class="qa-header-title">AI 智能问答</text>
+            <view class="qa-header-status">
+              <view class="qa-header-status-dot"></view>
+              <text>在线</text>
+            </view>
+          </view>
+          <text class="qa-header-desc">基于反诈知识库检索，给出可解释的防骗建议</text>
+        </view>
       </view>
-      <view class="qa-header-close flex-center" style="gap:6rpx;padding:12rpx 24rpx;background:var(--bg-color-card);border-radius:var(--radius-full);min-width:100rpx" bindtap="toggleQA">
-        <t-icon name="close" size="36rpx" color="var(--text-color-tertiary)" />
-        <text class="text-sm text-secondary">退出</text>
+      <view class="qa-header-close flex-center" bindtap="toggleQA">
+        <t-icon name="close" size="42rpx" color="var(--text-color-tertiary)" />
       </view>
     </view>
 
@@ -138,9 +147,13 @@
           <t-icon name="chat" size="24rpx" color="#ffffff" />
         </view>
         <view class="qa-msg-content">
-          <view class="card qa-ai-bubble">
-            <text class="qa-bubble-text">你好！我是反诈AI助手，你可以问我任何关于诈骗防范的问题。例如：</text>
-            <view class="qa-suggestions flex flex-wrap" style="gap:12rpx;margin-top:16rpx">
+          <view class="card qa-ai-bubble qa-welcome-bubble">
+            <view class="qa-welcome-label">
+              <t-icon name="verified" size="24rpx" color="#10b981" />
+              <text>反诈 Agent</text>
+            </view>
+            <text class="qa-bubble-text" user-select="true">你好！我是反诈AI助手，可以帮你识别诈骗套路、解释风险点并给出处理建议。</text>
+            <view class="qa-suggestions flex flex-wrap">
               <text class="qa-suggestion tag" bindtap="askQuestion" data-q="{{item}}" wx:for="{{suggestions}}" wx:key="index">{{item}}</text>
             </view>
           </view>
@@ -152,7 +165,7 @@
         <view class="qa-msg user animate-scaleIn" wx:if="{{item.role === 'user'}}">
           <view class="qa-msg-content user-content">
             <view class="bg-primary-light qa-user-bubble">
-              <text class="qa-bubble-text user-text">{{item.content}}</text>
+              <text class="qa-bubble-text user-text" user-select="true">{{item.content}}</text>
             </view>
           </view>
           <view class="qa-msg-avatar user-avatar">我</view>
@@ -165,14 +178,14 @@
           </view>
           <view class="qa-msg-content">
             <view class="card qa-ai-bubble">
-              <text class="qa-bubble-text">{{item.content}}</text>
+              <text class="qa-bubble-text" user-select="true">{{item.content}}</text>
               <!-- 引用来源 -->
               <view class="qa-refs" wx:if="{{item.references && item.references.length > 0}}">
                 <view class="divider"></view>
                 <text class="qa-ref-title text-xs text-tertiary block mb-xs">参考来源</text>
-                <view class="qa-ref-item flex flex-center" wx:for="{{item.references}}" wx:key="index" bindtap="viewArticleByRef" data-id="{{item.articleId}}" style="gap:8rpx;margin-bottom:8rpx;padding:8rpx 12rpx;background:var(--bg-color-card);border-radius:var(--radius-md)">
+                <view class="qa-ref-item flex flex-center" wx:for="{{item.references}}" wx:key="index" bindtap="viewArticleByRef" data-id="{{item.articleId}}">
                   <t-icon name="book-open" size="24rpx" color="var(--success-color)" />
-                  <text class="text-sm" style="color:var(--success-color)">{{item.title}}</text>
+                  <text class="qa-ref-name">{{item.title}}</text>
                 </view>
               </view>
             </view>
@@ -198,11 +211,12 @@
     </scroll-view>
 
     <!-- 输入区域 -->
-    <view class="qa-input-area flex flex-center" style="padding:16rpx 32rpx;padding-bottom:calc(16rpx + constant(safe-area-inset-bottom));padding-bottom:calc(16rpx + env(safe-area-inset-bottom));border-top:1px solid var(--border-color);background:var(--bg-color-card)">
-      <view class="qa-input-wrapper flex-1 flex-center" style="background:var(--bg-color-card);border-radius:var(--radius-full);padding:0 24rpx;margin-right:16rpx">
-        <input class="qa-input" type="text" placeholder="输入防骗问题..." value="{{qaInput}}" bindinput="onQAInput" bindconfirm="sendQuestion" confirm-type="send" style="height:72rpx;font-size:var(--font-size-md);color:var(--text-color-primary);flex:1" />
+    <view class="qa-input-area flex flex-center">
+      <view class="qa-input-wrapper flex-1 flex-center">
+        <t-icon name="search" size="28rpx" color="var(--text-color-tertiary)" />
+        <input class="qa-input" type="text" placeholder="输入防骗问题..." value="{{qaInput}}" bindinput="onQAInput" bindconfirm="sendQuestion" confirm-type="send" />
       </view>
-      <view class="qa-send-btn flex-center {{qaInput.trim() ? 'active' : ''}}" style="width:72rpx;height:72rpx;background:var(--bg-color-card);border-radius:50%" bindtap="sendQuestion">
+      <view class="qa-send-btn flex-center {{qaInput.trim() ? 'active' : ''}}" bindtap="sendQuestion">
         <t-icon name="chat" size="28rpx" color="{{qaInput.trim() ? '#ffffff' : 'var(--text-color-tertiary)'}}" />
       </view>
     </view>

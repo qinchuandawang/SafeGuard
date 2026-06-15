@@ -3,7 +3,7 @@
   <!-- 自定义导航栏 -->
   <view class="page-navbar">
     <view class="page-nav-left flex-center" bindtap="onBack">
-      <t-icon name="chevron-left" size="48rpx" color="var(--text-color-primary)" />
+      <t-icon name="chevron-left" size="52rpx" color="var(--text-color-primary)" />
     </view>
     <text class="page-nav-title">AI内容检测</text>
     <view class="page-nav-right"></view>
@@ -11,6 +11,62 @@
 
   <!-- 页面内容 -->
   <view class="page-content">
+    <!-- Agent 流程概览 -->
+    <view class="agent-flow-card">
+      <view class="agent-card-glow"></view>
+      <view class="agent-card-grid"></view>
+      <view class="agent-flow-main">
+        <view class="agent-flow-icon-wrap">
+          <view class="agent-flow-icon">
+            <t-icon name="ai" size="42rpx" color="#00b4d8" />
+          </view>
+          <view class="agent-online-dot"></view>
+        </view>
+        <view class="agent-flow-text">
+          <view class="agent-title-row">
+            <text class="agent-flow-title">多模态 Agent 工作台</text>
+            <view class="agent-status-pill">
+              <view class="agent-status-dot"></view>
+              <text>在线</text>
+            </view>
+          </view>
+          <text class="agent-flow-desc">自动调度音频、视频、文本模型，生成风险判断和防范建议</text>
+        </view>
+      </view>
+      <view class="agent-meta-row">
+        <view class="agent-meta-item">
+          <text class="agent-meta-value">3</text>
+          <text class="agent-meta-label">模型通道</text>
+        </view>
+        <view class="agent-meta-divider"></view>
+        <view class="agent-meta-item">
+          <text class="agent-meta-value">RAG</text>
+          <text class="agent-meta-label">知识增强</text>
+        </view>
+        <view class="agent-meta-divider"></view>
+        <view class="agent-meta-item">
+          <text class="agent-meta-value">AI</text>
+          <text class="agent-meta-label">综合研判</text>
+        </view>
+      </view>
+      <view class="agent-flow-steps">
+        <view class="agent-step-chip active">
+          <text class="agent-step-index">1</text>
+          <text>输入</text>
+        </view>
+        <view class="agent-step-line"></view>
+        <view class="agent-step-chip">
+          <text class="agent-step-index">2</text>
+          <text>分析</text>
+        </view>
+        <view class="agent-step-line"></view>
+        <view class="agent-step-chip">
+          <text class="agent-step-index">3</text>
+          <text>建议</text>
+        </view>
+      </view>
+    </view>
+
     <!-- Tab切换 -->
     <t-tabs
       default-value="{{currentType}}"
@@ -23,6 +79,7 @@
           <!-- 音频上传区域 -->
           <view class="upload-section">
             <view class="upload-area {{audioFile ? 'has-file' : ''}}" bindtap="chooseAudio">
+              <view class="upload-scan"></view>
               <block wx:if="{{!audioFile}}">
                 <view class="upload-icon flex-center">
                   <t-icon name="microphone" size="80rpx" color="var(--primary-color)" />
@@ -40,7 +97,7 @@
                     <text class="file-size text-xs">{{audioFile.size}}</text>
                   </view>
                   <view class="file-remove flex-center" bindtap="removeAudio">
-                    <t-icon name="close" size="32rpx" color="var(--text-color-tertiary)" />
+                    <t-icon name="close" size="38rpx" color="var(--text-color-tertiary)" />
                   </view>
                 </view>
               </block>
@@ -68,6 +125,7 @@
           <!-- 视频上传区域 -->
           <view class="upload-section">
             <view class="upload-area video-upload {{videoFile ? 'has-file' : ''}}" bindtap="chooseVideo">
+              <view class="upload-scan"></view>
               <block wx:if="{{!videoFile}}">
                 <view class="upload-icon flex-center">
                   <t-icon name="video" size="80rpx" color="var(--info-color)" />
@@ -167,6 +225,7 @@
           <!-- 多文件上传 -->
           <view class="upload-section">
             <view class="upload-area {{audioFile ? 'has-file' : ''}}" bindtap="chooseAudio">
+              <view class="upload-scan"></view>
               <block wx:if="{{!audioFile}}">
                 <t-icon name="microphone" size="48rpx" color="var(--primary-color)" />
                 <text class="upload-mini-text">添加音频</text>
@@ -178,6 +237,7 @@
             </view>
 
             <view class="upload-area {{videoFile ? 'has-file' : ''}}" bindtap="chooseVideo">
+              <view class="upload-scan"></view>
               <block wx:if="{{!videoFile}}">
                 <t-icon name="video" size="48rpx" color="var(--info-color)" />
                 <text class="upload-mini-text">添加视频</text>
@@ -242,7 +302,7 @@
       <view class="result-header flex-between">
         <text class="result-title">检测结果</text>
         <view class="result-close flex-center" bindtap="closeResult">
-          <t-icon name="close" size="40rpx" color="var(--text-color-tertiary)" />
+          <t-icon name="close" size="44rpx" color="var(--text-color-tertiary)" />
         </view>
       </view>
 
@@ -301,7 +361,7 @@
         <view class="agent-card card" wx:if="{{detectionResult && detectionResult.agentSteps}}">
           <view class="agent-header flex-between" bindtap="toggleAgentProcess">
             <view class="agent-header-left flex">
-              <t-icon name="mind" size="32rpx" color="var(--info-color)" />
+              <t-icon name="ai" size="32rpx" color="var(--info-color)" />
               <text class="agent-title">AI 分析过程</text>
             </view>
             <view class="agent-toggle {{showAgentProcess ? 'expanded' : ''}} flex-center">

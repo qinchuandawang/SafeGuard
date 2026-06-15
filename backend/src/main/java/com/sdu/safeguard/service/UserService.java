@@ -9,6 +9,7 @@ import com.sdu.safeguard.mapper.UserMapper;
 import com.sdu.safeguard.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -26,16 +27,25 @@ public class UserService {
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
+    @Value("${wechat.allow-test-login:true}")
+    private boolean allowTestLogin;
+
     @Transactional
     public LoginResponse login(String code, String nickname, String avatarUrl) {
         String openid;
         try {
             openid = code2openid(code);
         } catch (Exception e) {
-            log.warn("微信登录失败, 使用测试模式: {}", e.getMessage());
+            if (!allowTestLogin) {
+                throw e;
+            }
+            log.warn("微信登录失败，课程演示测试模式已启用: {}", e.getMessage());
             openid = "test_" + code.hashCode();
         }
         if (openid == null || openid.isBlank()) {
+            if (!allowTestLogin) {
+                throw new RuntimeException("微信登录未返回 openid");
+            }
             openid = "test_" + System.currentTimeMillis();
         }
 

@@ -58,31 +58,105 @@ Page({
       showLoading: false,
     }).then(data => {
       if (Array.isArray(data) && data.length > 0) {
-        // 从后端文章数据提取分类和标签
-        const catMap = {};
-        const tagSet = new Set();
-        data.forEach(a => {
-          if (a.category) catMap[a.category] = true;
-          if (Array.isArray(a.tags)) a.tags.forEach(t => tagSet.add(t));
-        });
-        const categories = [
-          { id: 'all', name: '全部', icon: 'app', color: '#00d4ff' },
-          ...Object.keys(catMap).map((cat, i) => {
-            const colors = ['#ef4444','#7c3aed','#10b981','#f59e0b','#3b82f6','#06b6d4','#8b5cf6'];
-            return { id: cat, name: cat, icon: 'app', color: colors[i % colors.length] };
-          }),
-        ];
-        this.setData({
-          articles: data,
-          filteredArticles: data,
-          categories,
-          hotTags: [...tagSet].slice(0, 6),
-          currentCategoryName: '全部文章',
-        });
+        this.applyArticleData(data);
+      } else {
+        this.applyArticleData(this.getDefaultArticles());
       }
     }).catch(err => {
-      wx.showToast({ title: '加载知识库失败', icon: 'none' });
+      console.debug('知识库接口不可用，使用本地演示数据:', err && (err.errMsg || err.message || err));
+      this.applyArticleData(this.getDefaultArticles());
     });
+  },
+
+  applyArticleData(articles) {
+    const safeArticles = Array.isArray(articles) ? articles.filter(Boolean) : [];
+    const catMap = {};
+    const tagSet = new Set();
+    safeArticles.forEach(a => {
+      if (a.category) catMap[a.category] = true;
+      if (Array.isArray(a.tags)) a.tags.forEach(t => tagSet.add(t));
+    });
+    const colors = ['#ef4444', '#7c3aed', '#10b981', '#f59e0b', '#3b82f6', '#06b6d4', '#8b5cf6'];
+    const categories = [
+      { id: 'all', name: '全部', icon: 'app', color: '#00d4ff' },
+      ...Object.keys(catMap).map((cat, i) => ({ id: cat, name: cat, icon: 'app', color: colors[i % colors.length] })),
+    ];
+    this.setData({
+      articles: safeArticles,
+      filteredArticles: safeArticles,
+      categories,
+      hotTags: [...tagSet].slice(0, 8),
+      currentCategoryName: '全部文章',
+    });
+  },
+
+  getDefaultArticles() {
+    return [
+      {
+        id: 1,
+        title: 'AI换脸诈骗识别指南：视频里的熟人也要二次确认',
+        summary: '通过面部边缘、光线阴影、眨眼嘴型和多渠道验证，快速识别深度伪造视频诈骗。',
+        category: 'AI诈骗',
+        tags: ['AI换脸', '视频伪造', '身份核验'],
+        date: '2024-03-18',
+      },
+      {
+        id: 8,
+        title: 'AI语音合成诈骗：听到的声音也可能是假的',
+        summary: '诈骗分子可能用短音频克隆亲友声音，遇到紧急借钱要通过视频、暗号或常用号码核实。',
+        category: 'AI诈骗',
+        tags: ['AI语音', '声音克隆', '熟人诈骗'],
+        date: '2024-03-15',
+      },
+      {
+        id: 2,
+        title: '冒充公检法诈骗：不存在所谓安全账户',
+        summary: '公检法机关不会电话办案、不会要求转账、不会索要验证码，接到可疑电话应立即拨打96110。',
+        category: '高发套路',
+        tags: ['公检法', '安全账户', '96110'],
+        date: '2024-03-12',
+      },
+      {
+        id: 3,
+        title: '刷单兼职都是陷阱：先返小钱再骗大钱',
+        summary: '刷单诈骗通常先用小额返利建立信任，再用连单、提现失败等理由诱导持续垫资。',
+        category: '高发套路',
+        tags: ['刷单', '兼职', '垫资'],
+        date: '2024-03-10',
+      },
+      {
+        id: 4,
+        title: '杀猪盘完整揭秘：网恋背后的投资骗局',
+        summary: '陌生网友长期培养感情后推荐投资平台，常见于婚恋交友、虚拟货币和高收益理财场景。',
+        category: '情感诈骗',
+        tags: ['杀猪盘', '网恋', '虚假投资'],
+        date: '2024-03-08',
+      },
+      {
+        id: 5,
+        title: '网购退款诈骗：客服来电的真相',
+        summary: '正规退款会原路返回，任何要求提供银行卡密码、短信验证码或点击陌生链接的客服都要警惕。',
+        category: '生活防骗',
+        tags: ['冒充客服', '退款', '验证码'],
+        date: '2024-03-05',
+      },
+      {
+        id: 6,
+        title: '虚假投资理财诈骗：高收益承诺背后的风险',
+        summary: '承诺保本保息、稳赚不赔、内部消息的平台通常风险极高，投资前应核验金融牌照。',
+        category: '金融诈骗',
+        tags: ['投资理财', '高收益', '非法平台'],
+        date: '2024-03-01',
+      },
+      {
+        id: 7,
+        title: '钓鱼网站和诈骗短信：不要被相似页面骗走信息',
+        summary: '收到短信链接不要直接点击，重要业务请手动打开官方 App 或官网核实。',
+        category: '生活防骗',
+        tags: ['钓鱼网站', '诈骗短信', '隐私保护'],
+        date: '2024-02-28',
+      },
+    ];
   },
 
   onBack() { wx.navigateBack(); },

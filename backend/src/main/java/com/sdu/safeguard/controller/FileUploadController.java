@@ -13,6 +13,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -22,6 +24,10 @@ import java.util.UUID;
 public class FileUploadController {
 
     private static final String TEMP_DIR = System.getProperty("java.io.tmpdir") + "/safe_guard/";
+    private static final long MAX_AUDIO_SIZE = 20L * 1024 * 1024;
+    private static final long MAX_VIDEO_SIZE = 100L * 1024 * 1024;
+    private static final Set<String> AUDIO_EXTENSIONS = Set.of(".wav", ".flac", ".mp3", ".m4a", ".ogg");
+    private static final Set<String> VIDEO_EXTENSIONS = Set.of(".mp4", ".mov", ".avi", ".mkv", ".webm");
 
     private final DetectionService detectionService;
 
@@ -84,6 +90,23 @@ public class FileUploadController {
         }
         if (!isSupportedType(type)) {
             return "type必须为audio或video";
+        }
+        String extension = extractExtension(file.getOriginalFilename()).toLowerCase(Locale.ROOT);
+        if ("audio".equalsIgnoreCase(type)) {
+            if (file.getSize() > MAX_AUDIO_SIZE) {
+                return "音频文件不能超过20MB";
+            }
+            if (!AUDIO_EXTENSIONS.contains(extension)) {
+                return "不支持的音频格式";
+            }
+        }
+        if ("video".equalsIgnoreCase(type)) {
+            if (file.getSize() > MAX_VIDEO_SIZE) {
+                return "视频文件不能超过100MB";
+            }
+            if (!VIDEO_EXTENSIONS.contains(extension)) {
+                return "不支持的视频格式";
+            }
         }
         return null;
     }

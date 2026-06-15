@@ -24,7 +24,9 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -34,6 +36,10 @@ import java.util.UUID;
 public class DetectionController {
 
     private static final String TEMP_DIR = System.getProperty("java.io.tmpdir") + "/safe_guard/";
+    private static final long MAX_AUDIO_SIZE = 20L * 1024 * 1024;
+    private static final long MAX_VIDEO_SIZE = 100L * 1024 * 1024;
+    private static final Set<String> AUDIO_EXTENSIONS = Set.of(".wav", ".flac", ".mp3", ".m4a", ".ogg");
+    private static final Set<String> VIDEO_EXTENSIONS = Set.of(".mp4", ".mov", ".avi", ".mkv", ".webm");
 
     private final DetectionService detectionService;
     private final LLMService llmService;
@@ -43,6 +49,10 @@ public class DetectionController {
     public Result<?> detectAudio(@RequestParam("file") MultipartFile file) {
         if (file == null || file.isEmpty()) {
             return Result.error("音频文件不能为空");
+        }
+        String validationError = validateMediaFile(file, "audio");
+        if (validationError != null) {
+            return Result.badRequest(validationError);
         }
         try {
             // 直接上传 MultipartFile 到检测服务，避免跨容器文件路径问题
@@ -58,6 +68,10 @@ public class DetectionController {
     public Result<?> detectVideo(@RequestParam("file") MultipartFile file) {
         if (file == null || file.isEmpty()) {
             return Result.badRequest("视频文件不能为空");
+        }
+        String validationError = validateMediaFile(file, "video");
+        if (validationError != null) {
+            return Result.badRequest(validationError);
         }
         String filePath;
         try {
@@ -162,6 +176,34 @@ public class DetectionController {
         File destFile = new File(tempDir, fileName);
         file.transferTo(destFile);
         return destFile.getAbsolutePath();
+    }
+
+    private String validateMediaFile(MultipartFile file, String type) {
+        String extension = extractExtension(file.getOriginalFilename()).toLowerCase(Locale.ROOT);
+        if ("audio".equals(type)) {
+            if (file.getSize() > MAX_AUDIO_SIZE) {
+                return "音频文件不能超过20MB";
+            }
+            if (!AUDIO_EXTENSIONS.contains(extension)) {
+                return "不支持的音频格式";
+            }
+        }
+        if ("video".equals(type)) {
+            if (file.getSize() > MAX_VIDEO_SIZE) {
+                return "视频文件不能超过100MB";
+            }
+            if (!VIDEO_EXTENSIONS.contains(extension)) {
+                return "不支持的视频格式";
+            }
+        }
+        return null;
+    }
+
+    private String extractExtension(String originalName) {
+        if (originalName == null || !originalName.contains(".")) {
+            return "";
+        }
+        return originalName.substring(originalName.lastIndexOf('.'));
     }
 
     private static void deleteQuietly(String filePath) {

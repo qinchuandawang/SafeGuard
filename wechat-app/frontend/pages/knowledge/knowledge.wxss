@@ -3,7 +3,10 @@
 /* ==================== 页面容器 ==================== */
 .knowledge-page {
   min-height: 100vh;
-  background-color: var(--bg-color-primary);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(124,58,237,0.10), transparent 30%),
+    radial-gradient(circle at 88% 6%, rgba(0,180,216,0.12), transparent 34%),
+    linear-gradient(180deg, #f8fcff 0%, var(--bg-color-primary) 52%, #f8fafc 100%);
 }
 
 .page-content { padding-top: var(--spacing-sm);
@@ -30,15 +33,23 @@
   min-width: 120rpx;
   padding: 16rpx 32rpx;
   margin-right: 16rpx;
-  border: 1px solid transparent;
-  cursor: pointer;
+  border: 1rpx solid rgba(255,255,255,0.86);
   flex-shrink: 0;
+  background: rgba(255,255,255,0.72);
+  transition: transform 0.2s ease, background 0.2s ease;
 }
 
 .category-item.active {
-  background: var(--bg-color-card);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(0,180,216,0.10), transparent 70%),
+    var(--bg-color-card);
   border-color: var(--primary-color);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2rpx);
+}
+
+.category-item:active {
+  transform: scale(0.96);
 }
 
 .category-text {
@@ -70,22 +81,36 @@
 }
 
 .article-card {
-  background: var(--bg-color-card);
-  border-radius: var(--radius-lg);
+  background: rgba(255,255,255,0.92);
+  border-radius: 22rpx;
   overflow: hidden;
   margin-bottom: 24rpx;
   box-shadow: var(--shadow-sm);
+  border: 1rpx solid rgba(255,255,255,0.86);
+  position: relative;
 }
 
 .article-card:active {
   opacity: 0.9;
-  transform: scale(0.99);
+  transform: translateY(2rpx) scale(0.99);
+}
+
+.article-card::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 4rpx;
+  background: linear-gradient(90deg, #7c3aed, #00b4d8, #10b981);
+  opacity: 0.72;
 }
 
 .article-cover {
   width: 100%;
   height: 300rpx;
-  background: var(--bg-color-card);
+  background:
+    linear-gradient(135deg, rgba(124,58,237,0.08), rgba(0,180,216,0.08));
   overflow: hidden;
 }
 
@@ -147,12 +172,23 @@
 
 .hotline-card {
   padding: 32rpx;
+  border-radius: 24rpx;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(239,68,68,0.12), transparent 42%),
+    rgba(255,255,255,0.94);
+  border-color: rgba(239,68,68,0.16);
+  box-shadow: 0 16rpx 40rpx rgba(239,68,68,0.10);
 }
 
 .hotline-number {
   font-size: 48rpx;
   font-weight: bold;
   color: var(--danger-color);
+}
+
+.hotline-call:active {
+  transform: scale(0.96);
+  opacity: 0.9;
 }
 
 /* ==================== RAG 智能问答浮动按钮 ==================== */
@@ -167,7 +203,9 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(15, 23, 42, 0.46);
+  backdrop-filter: blur(8rpx);
+  -webkit-backdrop-filter: blur(8rpx);
   z-index: 200;
   opacity: 0;
   pointer-events: none;
@@ -186,10 +224,13 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: var(--bg-color-primary);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(0,180,216,0.13), transparent 32%),
+    radial-gradient(circle at 86% 8%, rgba(16,185,129,0.10), transparent 34%),
+    linear-gradient(180deg, #f8fcff 0%, var(--bg-color-primary) 54%, #f8fafc 100%);
   z-index: 300;
   transform: translateY(100%);
-  transition: transform 0.3s ease;
+  transition: transform 0.34s cubic-bezier(0.2, 0.8, 0.2, 1);
   display: flex;
   flex-direction: column;
 }
@@ -200,29 +241,119 @@
 
 /* 面板标题 */
 .qa-header {
-  padding: 24rpx 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18rpx;
+  padding: 22rpx 32rpx 20rpx;
   padding-top: calc(48rpx + constant(safe-area-inset-top));
   padding-top: calc(48rpx + env(safe-area-inset-top));
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid rgba(255,255,255,0.82);
   flex-shrink: 0;
-  background: var(--bg-color-card);
+  background: rgba(255,255,255,0.88);
+  backdrop-filter: blur(18rpx);
+  -webkit-backdrop-filter: blur(18rpx);
+  box-shadow: 0 10rpx 30rpx rgba(14,116,144,0.06);
+}
+
+.qa-header-main {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  min-width: 0;
+  flex: 1;
+}
+
+.qa-header-icon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 22rpx;
+  background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(224,242,254,0.82));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    inset 0 0 0 1rpx rgba(0,180,216,0.14),
+    0 12rpx 24rpx rgba(0,180,216,0.12);
+  flex-shrink: 0;
+}
+
+.qa-header-text {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.qa-header-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.qa-header-title {
+  font-size: 32rpx;
+  font-weight: 800;
+  color: var(--text-color-primary, #1e293b);
+  white-space: nowrap;
+}
+
+.qa-header-status {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 5rpx 12rpx;
+  border-radius: 999rpx;
+  background: rgba(16,185,129,0.12);
+  color: #059669;
+  font-size: 20rpx;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.qa-header-status-dot {
+  width: 10rpx;
+  height: 10rpx;
+  border-radius: 50%;
+  background: #10b981;
+  animation: dotPulse 1.8s ease-in-out infinite;
+}
+
+.qa-header-desc {
+  font-size: 22rpx;
+  color: var(--text-color-tertiary, #94a3b8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qa-header-close {
+  width: 76rpx;
+  height: 76rpx;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.86);
+  border: 1rpx solid rgba(0,180,216,0.10);
+  box-shadow: 0 8rpx 20rpx rgba(15,23,42,0.06);
+  flex-shrink: 0;
 }
 
 .qa-header-close:active {
-  background: var(--border-color);
+  background: rgba(224,242,254,0.92);
+  transform: scale(0.94);
 }
 
 /* ==================== 消息列表 ==================== */
 .qa-messages {
   flex: 1;
-  padding: 24rpx 32rpx;
+  padding: 26rpx 28rpx 30rpx;
   overflow-y: auto;
-  background: var(--bg-color-primary);
+  background: transparent;
 }
 
 .qa-msg {
   display: flex;
-  margin-bottom: 24rpx;
+  margin-bottom: 28rpx;
 }
 
 .qa-msg.ai {
@@ -234,8 +365,8 @@
 }
 
 .qa-msg-avatar {
-  width: 48rpx;
-  height: 48rpx;
+  width: 56rpx;
+  height: 56rpx;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -244,20 +375,23 @@
 }
 
 .qa-msg-avatar.ai-avatar {
-  background: linear-gradient(135deg, #7c3aed, #00d4ff);
+  background: linear-gradient(135deg, #00b4d8, #10b981);
   margin-right: 16rpx;
+  animation: floatSoft 3.4s ease-in-out infinite;
+  box-shadow: 0 10rpx 22rpx rgba(0,180,216,0.18);
 }
 
 .qa-msg-avatar.user-avatar {
-  background: var(--bg-color-card);
+  background: rgba(255,255,255,0.92);
   margin-left: 16rpx;
   font-size: var(--font-size-xs);
   color: var(--text-color-secondary);
-  border: 1px solid var(--border-color);
+  border: 1rpx solid rgba(0,180,216,0.12);
+  box-shadow: 0 8rpx 18rpx rgba(15,23,42,0.05);
 }
 
 .qa-msg-content {
-  max-width: 75%;
+  max-width: 78%;
 }
 
 .qa-msg-content.user-content {
@@ -267,14 +401,20 @@
 
 /* 气泡覆盖 */
 .qa-ai-bubble {
-  padding: 16rpx 20rpx;
+  padding: 20rpx 22rpx;
+  border-radius: 22rpx;
   border-top-left-radius: 8rpx;
+  background: rgba(255,255,255,0.94);
+  border: 1rpx solid rgba(255,255,255,0.86);
+  box-shadow: 0 10rpx 26rpx rgba(15,23,42,0.05);
 }
 
 .qa-user-bubble {
-  padding: 16rpx 20rpx;
+  padding: 18rpx 22rpx;
+  border-radius: 22rpx;
   border-top-right-radius: 8rpx;
-  background: linear-gradient(135deg, #7c3aed, #00d4ff) !important;
+  background: linear-gradient(135deg, #0ea5e9, #06b6d4) !important;
+  box-shadow: 0 10rpx 24rpx rgba(14,165,233,0.20);
 }
 
 .qa-bubble-text {
@@ -282,6 +422,7 @@
   color: var(--text-color-primary);
   white-space: pre-wrap;
   word-break: break-word;
+  line-height: 1.65;
 }
 
 .qa-bubble-text.user-text {
@@ -289,16 +430,52 @@
 }
 
 /* ==================== 建议问题 ==================== */
+.qa-welcome-bubble {
+  position: relative;
+  overflow: hidden;
+}
+
+.qa-welcome-bubble::after {
+  content: '';
+  position: absolute;
+  right: -56rpx;
+  top: -58rpx;
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,180,216,0.10), transparent 70%);
+}
+
+.qa-welcome-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6rpx;
+  margin-bottom: 12rpx;
+  padding: 6rpx 12rpx;
+  border-radius: 999rpx;
+  background: rgba(16,185,129,0.10);
+  color: #059669;
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+.qa-suggestions {
+  gap: 12rpx;
+  margin-top: 18rpx;
+}
+
 .qa-suggestion {
-  color: #7c3aed;
-  background: rgba(124, 58, 237, 0.1);
+  color: #0369a1;
+  background: rgba(0,180,216,0.09);
   font-size: var(--font-size-sm);
-  padding: 8rpx 20rpx;
-  font-weight: 400;
+  padding: 10rpx 18rpx;
+  font-weight: 600;
+  border: 1rpx solid rgba(0,180,216,0.10);
 }
 
 .qa-suggestion:active {
-  background: rgba(124, 58, 237, 0.2);
+  background: rgba(0,180,216,0.16);
+  transform: scale(0.96);
 }
 
 /* ==================== 参考来源 ==================== */
@@ -309,6 +486,25 @@
 
 .qa-ref-title {
   margin-bottom: 8rpx;
+}
+
+.qa-ref-item {
+  gap: 8rpx;
+  margin-bottom: 8rpx;
+  padding: 10rpx 14rpx;
+  background: rgba(16,185,129,0.08);
+  border: 1rpx solid rgba(16,185,129,0.12);
+  border-radius: 14rpx;
+}
+
+.qa-ref-name {
+  color: var(--success-color);
+  font-size: var(--font-size-sm);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .qa-ref-item:active {
@@ -342,8 +538,46 @@
 /* ==================== 输入区域 ==================== */
 .qa-input-area {
   flex-shrink: 0;
+  padding: 16rpx 28rpx;
+  padding-bottom: calc(16rpx + constant(safe-area-inset-bottom));
+  padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
+  border-top: 1rpx solid rgba(255,255,255,0.86);
+  background: rgba(255,255,255,0.90) !important;
+  backdrop-filter: blur(18rpx);
+  -webkit-backdrop-filter: blur(18rpx);
+  box-shadow: 0 -10rpx 28rpx rgba(14,116,144,0.06);
+}
+
+.qa-input-wrapper {
+  min-width: 0;
+  height: 76rpx;
+  background: rgba(15,23,42,0.04);
+  border: 1rpx solid rgba(0,180,216,0.10);
+  border-radius: 999rpx;
+  padding: 0 24rpx;
+  margin-right: 14rpx;
+  gap: 10rpx;
+}
+
+.qa-input {
+  height: 72rpx;
+  font-size: var(--font-size-md);
+  color: var(--text-color-primary);
+  flex: 1;
+}
+
+.qa-send-btn {
+  width: 76rpx;
+  height: 76rpx;
+  border-radius: 50%;
+  background: rgba(15,23,42,0.05);
 }
 
 .qa-send-btn.active {
-  background: linear-gradient(135deg, #7c3aed, #00d4ff) !important;
+  background: linear-gradient(135deg, #0ea5e9, #10b981) !important;
+  box-shadow: 0 10rpx 24rpx rgba(14,165,233,0.20);
+}
+
+.qa-send-btn:active {
+  transform: scale(0.96);
 }

@@ -37,8 +37,10 @@ SAMPLE_RATE = int(os.getenv("SAMPLE_RATE", "16000"))
 MAX_SECONDS = float(os.getenv("MAX_SECONDS", "4.0"))
 UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR", "tmp_uploads"))
 PORT = int(os.getenv("PORT", "5000"))
+MAX_UPLOAD_MB = int(os.getenv("MAX_UPLOAD_MB", "20"))
 
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_MB * 1024 * 1024
 
 SUPPORTED_EXTENSIONS = {".wav", ".flac", ".mp3", ".m4a", ".ogg"}
 
@@ -118,8 +120,7 @@ def audio_detect():
         )
 
     # 保存上传文件
-    ts = str(int(__import__("time").time() * 1000))
-    save_path = UPLOAD_DIR / f"{ts}_{Path(f.filename).name}"
+    save_path = UPLOAD_DIR / f"{uuid.uuid4().hex}{suffix}"
     try:
         f.save(save_path)
 

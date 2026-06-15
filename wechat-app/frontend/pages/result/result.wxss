@@ -3,7 +3,10 @@
 /* ==================== 页面容器 ==================== */
 .result-page {
   min-height: 100vh;
-  background-color: var(--bg-color-primary);
+  background:
+    radial-gradient(circle at 14% 0%, rgba(16,185,129,0.10), transparent 30%),
+    radial-gradient(circle at 86% 8%, rgba(239,68,68,0.08), transparent 32%),
+    linear-gradient(180deg, #f8fcff 0%, var(--bg-color-primary) 52%, #f8fafc 100%);
   padding-bottom: 180rpx;
 }
 
@@ -16,6 +19,20 @@
   display: flex;
   align-items: center;
   margin-bottom: var(--spacing-md);
+  position: relative;
+  overflow: hidden;
+  border-radius: 26rpx;
+}
+
+.status-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(110deg, rgba(255,255,255,0.22), transparent 34%);
+  pointer-events: none;
 }
 
 .status-icon-wrapper {
@@ -27,6 +44,7 @@
   justify-content: center;
   margin-right: var(--spacing-md);
   flex-shrink: 0;
+  animation: floatSoft 3.4s ease-in-out infinite;
 }
 
 .status-icon-wrapper.danger {
@@ -75,6 +93,14 @@
 /* ==================== 置信度卡片 ==================== */
 .confidence-card {
   margin-bottom: var(--spacing-md);
+  border-radius: 26rpx;
+  overflow: hidden;
+}
+
+.confidence-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
 }
 
 /* 主置信度圆环 */
@@ -94,6 +120,7 @@
   position: relative;
   width: 160rpx;
   height: 160rpx;
+  animation: scaleIn 0.45s ease-out both;
 }
 
 .ring-bg {
@@ -154,9 +181,10 @@
 }
 
 .probability-item {
-  background: var(--bg-color-card);
+  background: rgba(255,255,255,0.76);
   border-radius: var(--radius-md);
   padding: var(--spacing-sm) var(--spacing-md);
+  border: 1rpx solid rgba(255,255,255,0.86);
 }
 
 .probability-header {
@@ -207,8 +235,9 @@
   font-size: 26rpx;
   color: var(--text-color-primary);
   padding: 12rpx var(--spacing-sm);
-  background: var(--bg-color-card);
+  background: rgba(255,255,255,0.74);
   border-radius: var(--radius-md);
+  border: 1rpx solid rgba(239,68,68,0.08);
 }
 
 .feature-dot {
@@ -229,6 +258,7 @@
 .advice-item {
   display: flex;
   align-items: flex-start;
+  padding: 12rpx 0;
 }
 
 .advice-number {
@@ -258,8 +288,8 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background: var(--bg-color-card);
-  border-top: 1px solid var(--border-color);
+  background: rgba(255,255,255,0.88);
+  border-top: 1px solid rgba(255,255,255,0.86);
   display: flex;
   align-items: center;
   justify-content: space-around;
@@ -267,6 +297,8 @@
   padding-bottom: calc(var(--spacing-md) + constant(safe-area-inset-bottom));
   padding-bottom: calc(var(--spacing-md) + env(safe-area-inset-bottom));
   z-index: 100;
+  backdrop-filter: blur(18rpx);
+  -webkit-backdrop-filter: blur(18rpx);
 }
 
 .action-item {
@@ -274,6 +306,12 @@
   flex-direction: column;
   align-items: center;
   padding: 8rpx var(--spacing-lg);
+  border-radius: 18rpx;
+}
+
+.action-item:active {
+  background: rgba(15,23,42,0.04);
+  transform: scale(0.96);
 }
 
 .action-item text {

@@ -59,7 +59,7 @@ Page({
       }));
       this.setData({ scripts: scripts.length > 0 ? scripts : this.getDefaultScripts() });
     } catch (err) {
-      console.warn('加载剧本列表失败，使用默认:', err);
+      console.debug('剧本接口不可用，使用本地默认剧本:', err && (err.errMsg || err.message || err));
       this.setData({ scripts: this.getDefaultScripts() });
     }
   },

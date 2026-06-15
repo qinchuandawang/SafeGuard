@@ -20,6 +20,9 @@ app:
   admin:
     allow-bootstrap-register: ${ADMIN_BOOTSTRAP_REGISTER:false}
 
+wechat:
+  allow-test-login: ${WECHAT_ALLOW_TEST_LOGIN:false}
+
 # 音频检测服务（容器内使用容器名）
 audio:
   service:

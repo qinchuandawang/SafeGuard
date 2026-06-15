@@ -3,7 +3,7 @@
   <!-- 自定义导航栏 -->
   <view class="page-navbar">
     <view class="page-nav-left" bindtap="onBack">
-      <t-icon name="chevron-left" size="48rpx" color="#333333" />
+      <t-icon name="chevron-left" size="52rpx" color="var(--text-color-primary)" />
     </view>
     <text class="page-nav-title">关于我们</text>
     <view class="page-nav-right"></view>

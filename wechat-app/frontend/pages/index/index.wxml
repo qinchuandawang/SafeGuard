@@ -8,6 +8,7 @@
 
   <!-- ===== Hero：安全总览 ===== -->
   <view class="hero-section">
+    <view class="hero-scan"></view>
     <view class="hero-content">
       <view class="hero-left">
         <view class="hero-greeting">
@@ -16,11 +17,31 @@
         </view>
         <text class="hero-date">{{todayDate}}</text>
         <text class="hero-quote">AI 守护您的数字生活安全</text>
+        <view class="agent-status">
+          <view class="status-dot"></view>
+          <text>Agent 实时待命</text>
+        </view>
       </view>
       <view class="score-ring-wrap">
         <canvas type="2d" id="scoreCanvas" class="score-ring-canvas"></canvas>
         <text class="score-ring-label" style="color:{{threatColor}}">{{threatLabel}}</text>
       </view>
+    </view>
+  </view>
+
+  <!-- ===== 快捷入口 ===== -->
+  <view class="quick-actions">
+    <view class="quick-action qa-audio" bindtap="goToDetection">
+      <view class="quick-icon"><t-icon name="sound" size="28rpx" color="#0ea5e9" /></view>
+      <text>音频鉴伪</text>
+    </view>
+    <view class="quick-action qa-video" bindtap="goToDetection">
+      <view class="quick-icon"><t-icon name="video" size="28rpx" color="#6366f1" /></view>
+      <text>视频换脸</text>
+    </view>
+    <view class="quick-action qa-sim" bindtap="goToSimulate">
+      <view class="quick-icon"><t-icon name="chat" size="28rpx" color="#10b981" /></view>
+      <text>诈骗模拟</text>
     </view>
   </view>
 
@@ -43,17 +64,17 @@
 
   <!-- 统计 -->
   <view class="stats-row">
-    <view class="stat-card card-d">
+    <view class="stat-card card-d stagger-1">
       <view class="stat-icon si-d"><t-icon name="search" size="28rpx" color="#00b4d8" /></view>
       <text class="stat-val">{{stats.detectionCount}}</text>
       <text class="stat-lbl">总检测</text>
     </view>
-    <view class="stat-card card-a">
+    <view class="stat-card card-a stagger-2">
       <view class="stat-icon si-a"><t-icon name="secured" size="28rpx" color="#6366f1" /></view>
       <text class="stat-val">{{stats.accuracy}}{{stats.accuracy === '--' ? '' : '%'}}</text>
       <text class="stat-lbl">准确率</text>
     </view>
-    <view class="stat-card card-s">
+    <view class="stat-card card-s stagger-3">
       <view class="stat-icon si-s"><t-icon name="heart" size="28rpx" color="#10b981" /></view>
       <text class="stat-val" style="color:{{threatColor}}">{{stats.safeRate}}{{stats.safeRate === '--' ? '' : '%'}}</text>
       <text class="stat-lbl">安全率</text>

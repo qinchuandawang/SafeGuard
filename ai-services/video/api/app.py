@@ -30,6 +30,10 @@ CORS(app)
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 MODEL_PATH = 'pretrained/best_model.pth'
 IMAGE_SIZE = (299, 299)
+MAX_UPLOAD_MB = int(os.environ.get('MAX_UPLOAD_MB', '100'))
+ALLOWED_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.bmp', '.webp'}
+ALLOWED_VIDEO_EXTENSIONS = {'.mp4', '.mov', '.avi', '.mkv', '.webm'}
+app.config['MAX_CONTENT_LENGTH'] = MAX_UPLOAD_MB * 1024 * 1024
 
 # PyTorch 线程数限制 -- CPU 环境下默认会占用所有物理核心，限制后显著降低内存
 os.environ.setdefault("OMP_NUM_THREADS", "2")
@@ -48,6 +52,16 @@ def success_response(data, message="success"):
 def error_response(message, http_status=400, code=1):
     """统一错误响应"""
     return jsonify({"code": code, "message": message, "data": None}), http_status
+
+
+def validate_upload(file, allowed_extensions):
+    """检查上传文件名和后缀，避免非媒体文件进入推理流程"""
+    if file.filename == '':
+        return '文件名为空'
+    suffix = Path(file.filename).suffix.lower()
+    if suffix not in allowed_extensions:
+        return f'不支持的文件格式: {suffix}'
+    return None
 
 
 # ====================================
@@ -224,8 +238,9 @@ def detect_image():
         return error_response('未找到文件')
 
     file = request.files['file']
-    if file.filename == '':
-        return error_response('文件名为空')
+    validation_error = validate_upload(file, ALLOWED_IMAGE_EXTENSIONS)
+    if validation_error:
+        return error_response(validation_error)
     
     # 保存临时文件
     # 使用 NamedTemporaryFile 避免 mktemp 的竞态风险；Windows 下需先关闭句柄再保存
@@ -322,8 +337,9 @@ def detect_video():
         return error_response('未找到文件')
 
     file = request.files['file']
-    if file.filename == '':
-        return error_response('文件名为空')
+    validation_error = validate_upload(file, ALLOWED_VIDEO_EXTENSIONS)
+    if validation_error:
+        return error_response(validation_error)
     
     # 保存临时文件
     # 使用 NamedTemporaryFile 避免 mktemp 的竞态风险；Windows 下需先关闭句柄再保存
@@ -374,6 +390,11 @@ def not_found(error):
 @app.errorhandler(500)
 def internal_error(error):
     return error_response('服务器内部错误', 500, 500)
+
+
+@app.errorhandler(413)
+def request_too_large(error):
+    return error_response(f'文件过大，最大支持 {MAX_UPLOAD_MB}MB', 413, 413)
 
 
 if __name__ == '__main__':

@@ -52,6 +52,10 @@
               <el-form-item>
                 <el-button type="primary" size="large" class="login-btn" :loading="loading" @click="handleLogin">{{ loading ? '登录中...' : '登 录' }}</el-button>
               </el-form-item>
+              <div class="quick-login">
+                <el-button size="large" class="quick-btn" :loading="adminQuickLoading" @click="quickAdminLogin">管理员一键登录</el-button>
+                <el-button size="large" class="quick-btn user" :loading="userQuickLoading" @click="quickUserLogin">用户一键登录</el-button>
+              </div>
             </el-form>
           </template>
 
@@ -100,6 +104,8 @@ const router = useRouter()
 const mode = ref('login')
 const loading = ref(false)
 const regLoading = ref(false)
+const adminQuickLoading = ref(false)
+const userQuickLoading = ref(false)
 const form = reactive({ username: '', password: '' })
 const regForm = reactive({ username: '', nickname: '', password: '', confirm: '' })
 
@@ -120,6 +126,30 @@ async function handleLogin() {
     router.push('/dashboard')
   } catch (e) { /* handled */ }
   finally { loading.value = false }
+}
+
+async function quickAdminLogin() {
+  adminQuickLoading.value = true
+  try {
+    const data = await adminLogin('default', 'admin123')
+    localStorage.setItem('admin_token', data.token)
+    localStorage.setItem('admin_name', data.nickname || '演示管理员')
+    ElMessage.success('已登录演示管理员')
+    router.push('/dashboard')
+  } catch (e) { /* handled */ }
+  finally { adminQuickLoading.value = false }
+}
+
+async function quickUserLogin() {
+  userQuickLoading.value = true
+  try {
+    const data = await adminLogin('default', 'admin123')
+    localStorage.setItem('admin_token', data.token)
+    localStorage.setItem('admin_name', '用户演示')
+    ElMessage.success('已进入用户演示模式')
+    router.push('/dashboard')
+  } catch (e) { /* handled */ }
+  finally { userQuickLoading.value = false }
 }
 
 async function handleRegister() {
@@ -350,6 +380,37 @@ async function handleRegister() {
 }
 .login-btn:active { transform: translateY(0); }
 
+.quick-login {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+.quick-btn {
+  height: 44px;
+  margin: 0;
+  border-radius: 12px;
+  border-color: #bae6fd;
+  background: #f0f9ff;
+  color: #0369a1;
+  font-weight: 600;
+}
+.quick-btn:hover {
+  border-color: #38bdf8;
+  background: #e0f2fe;
+  color: #075985;
+}
+.quick-btn.user {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+  color: #475569;
+}
+.quick-btn.user:hover {
+  border-color: #94a3b8;
+  background: #f1f5f9;
+  color: #334155;
+}
+
 .card-footer {
   margin-top: 32px;
   text-align: center;
@@ -366,5 +427,6 @@ async function handleRegister() {
   .brand-section { border-radius: 28px 28px 0 0; border-right: none; border-bottom: 1px solid rgba(14,165,233,0.06); padding: 32px; }
   .login-card-wrap { width: 100%; }
   .login-card { padding: 36px 28px; }
+  .quick-login { grid-template-columns: 1fr; }
 }
 </style>

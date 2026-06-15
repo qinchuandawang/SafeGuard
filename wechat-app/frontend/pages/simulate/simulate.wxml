@@ -6,7 +6,7 @@
     <!-- 顶部导航 -->
     <view class="page-navbar px-lg">
       <view class="page-nav-left" bindtap="onBack">
-        <t-icon name="chevron-left" size="48rpx" color="var(--text-color-primary)" />
+        <t-icon name="chevron-left" size="52rpx" color="var(--text-color-primary)" />
       </view>
       <text class="page-nav-title">模拟诈骗体验</text>
       <view class="page-nav-right"></view>
@@ -125,7 +125,7 @@
     <!-- 顶部导航 -->
     <view class="chat-nav flex-between">
       <view class="nav-left" bindtap="backToList">
-        <t-icon name="chevron-left" size="48rpx" color="var(--text-color-primary)" />
+        <t-icon name="chevron-left" size="52rpx" color="var(--text-color-primary)" />
       </view>
       <view class="flex-1 text-center">
         <text class="nav-title">{{currentScript.name}}</text>
@@ -135,7 +135,7 @@
         </view>
       </view>
       <view class="nav-left" bindtap="showScriptInfo">
-        <t-icon name="info-circle" size="48rpx" color="var(--text-color-primary)" />
+        <t-icon name="info-circle" size="50rpx" color="var(--text-color-primary)" />
       </view>
     </view>
 

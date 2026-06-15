@@ -6,6 +6,7 @@ import com.sdu.safeguard.mapper.DetectionRecordMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 import java.util.Map;
@@ -19,11 +20,15 @@ public class DetectionRecordController {
     private final DetectionRecordMapper detectionRecordMapper;
 
     @PostMapping("/save")
-    public Result<DetectionRecord> saveRecord(@RequestBody DetectionRecord record) {
+    public Result<DetectionRecord> saveRecord(@RequestBody DetectionRecord record, HttpServletRequest request) {
         if (record.getTaskId() == null) {
             return Result.error("任务ID不能为空");
         }
         try {
+            Long currentUserId = currentUserId(request);
+            if (currentUserId != null && !isAdmin(request)) {
+                record.setUserId(currentUserId);
+            }
             if (record.getCreatedAt() == null) {
                 record.setCreatedAt(java.time.LocalDateTime.now());
             }
@@ -40,12 +45,17 @@ public class DetectionRecordController {
     @GetMapping("/list")
     public Result<List<DetectionRecord>> getRecords(
             @RequestParam(required = false) Long userId,
-            @RequestParam(required = false) Integer limit) {
+            @RequestParam(required = false) Integer limit,
+            HttpServletRequest request) {
         try {
             int safeLimit = (limit == null || limit <= 0) ? 200 : Math.min(limit, 1000);
+            Long queryUserId = userId;
+            if (!isAdmin(request)) {
+                queryUserId = currentUserId(request);
+            }
             List<DetectionRecord> records;
-            if (userId != null) {
-                records = detectionRecordMapper.findByUserIdOrderByCreatedAtDesc(userId);
+            if (queryUserId != null) {
+                records = detectionRecordMapper.findByUserIdOrderByCreatedAtDesc(queryUserId);
                 if (records.size() > safeLimit) {
                     records = records.subList(0, safeLimit);
                 }
@@ -61,7 +71,10 @@ public class DetectionRecordController {
     }
 
     @GetMapping("/stats/daily")
-    public Result<Map<String, Object>> getDailyStats() {
+    public Result<Map<String, Object>> getDailyStats(HttpServletRequest request) {
+        if (!isAdmin(request)) {
+            return Result.badRequest("需要管理员权限");
+        }
         java.util.Map<String, Object> stats = new java.util.LinkedHashMap<>();
         try {
             long total = detectionRecordMapper.selectCount(null);
@@ -77,5 +90,15 @@ public class DetectionRecordController {
             log.error("获取日统计失败", e);
         }
         return Result.success(stats);
+    }
+
+    private Long currentUserId(HttpServletRequest request) {
+        Object userId = request.getAttribute("currentUserId");
+        return userId instanceof Long ? (Long) userId : null;
+    }
+
+    private boolean isAdmin(HttpServletRequest request) {
+        Object role = request.getAttribute("currentRole");
+        return "admin".equals(role);
     }
 }

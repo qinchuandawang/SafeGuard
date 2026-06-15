@@ -116,7 +116,7 @@ Page({
           totalConfidence = records.reduce((sum, r) => sum + (r.riskScore || 0), 0);
         }
       }
-    } catch (e) { console.warn('获取统计失败:', e); }
+    } catch (e) { console.debug('统计接口不可用，使用本地检测记录:', e && (e.errMsg || e.message || e)); }
 
     if (count === 0) {
       const history = app.globalData.detectionHistory || [];
