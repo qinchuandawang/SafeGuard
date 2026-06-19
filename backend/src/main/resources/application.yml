@@ -20,8 +20,9 @@ spring:
       pool-name: SafeGuardHikariCP
   sql:
     init:
-      # 开发环境用 always 自动建表；生产环境请改为 never 并使用 application-prod.yml 覆盖
-      mode: never
+      # 开发环境用 always 自动建表（schema.sql / init-data.sql 均幂等，可安全重复执行）
+      # 生产环境由 application-prod.yml 的 ${SQL_INIT_MODE:never} 覆盖
+      mode: always
       schema-locations: classpath:sql/schema.sql
       data-locations: classpath:sql/init-data.sql
       continue-on-error: true

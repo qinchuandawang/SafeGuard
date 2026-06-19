@@ -61,15 +61,24 @@ echo.
 :: =============================================
 :: Step 2 - Read DB_PASSWORD from .env
 :: =============================================
-echo [2/6] Reading .env configuration...
+echo [2/6] Loading .env configuration...
 set "DB_PASS="
-for /f "usebackq tokens=1,2 delims==" %%a in ("%PROJECT_DIR%\.env") do (
-    if "%%a"=="DB_PASSWORD" set "DB_PASS=%%b"
-)
-if "%DB_PASS%"=="" (
-    echo   [WARN] DB_PASSWORD not set in .env, using empty password
+set "ENV_COUNT=0"
+if exist "%PROJECT_DIR%\.env" (
+    for /f "usebackq eol=# tokens=1,* delims==" %%a in ("%PROJECT_DIR%\.env") do (
+        if not "%%a"=="" (
+            set "LINE=%%b"
+            for /f "tokens=* delims=	 " %%c in ("!LINE!") do set "LINE=%%c"
+            if defined LINE (
+                set "%%a=!LINE!"
+                set /a ENV_COUNT+=1
+            )
+        )
+    )
+    if defined DB_PASSWORD set "DB_PASS=%DB_PASSWORD%"
+    echo   [OK]  .env loaded: %ENV_COUNT% variables exported to current shell
 ) else (
-    echo   [OK]  DB_PASSWORD loaded
+    echo   [WARN] .env not found, only defaults will be used
 )
 echo.
 
@@ -140,9 +149,9 @@ echo [6/6] Starting backend and admin panel...
 
 :: Backend (with DB_PASSWORD from .env)
 if exist "%PROJECT_DIR%\backend\mvnw.cmd" (
-    start "SafeGuard-Backend" cmd /c "cd /d "%PROJECT_DIR%\backend" && set DB_PASSWORD=%DB_PASS% && echo Starting SafeGuard Backend on :8080... && .\mvnw spring-boot:run"
+    start "SafeGuard-Backend" cmd /c "cd /d "%PROJECT_DIR%\backend" && echo [ENV] DB=%DB_PASSWORD% LLM=%LLM_API_KEY:~0,8%... SF=%SILICONFLOW_API_KEY:~0,8%... && echo Starting SafeGuard Backend on :8080... && .\mvnw spring-boot:run"
 ) else (
-    start "SafeGuard-Backend" cmd /c "cd /d "%PROJECT_DIR%\backend" && set DB_PASSWORD=%DB_PASS% && echo Starting SafeGuard Backend on :8080... && mvn spring-boot:run"
+    start "SafeGuard-Backend" cmd /c "cd /d "%PROJECT_DIR%\backend" && echo [ENV] DB=%DB_PASSWORD% LLM=%LLM_API_KEY:~0,8%... SF=%SILICONFLOW_API_KEY:~0,8%... && echo Starting SafeGuard Backend on :8080... && mvn spring-boot:run"
 )
 
 timeout /t 5 /nobreak >nul

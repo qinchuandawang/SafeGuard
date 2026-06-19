@@ -57,6 +57,15 @@ public class DetectionController {
         try {
             // 直接上传 MultipartFile 到检测服务，避免跨容器文件路径问题
             AudioDetectionResult result = detectionService.detectAudioWithMultipart(file);
+            // 调用 LLM 生成详细分析报告（Key 未配置时返回规则化降级报告，非空）
+            if (result != null) {
+                try {
+                    result.setReport(llmService.generateAudioReport(result));
+                } catch (Exception e) {
+                    log.warn("生成音频分析报告失败，使用降级报告: {}", e.getMessage());
+                    result.setReport("AI 报告生成失败，请查看上方模型检测数据。");
+                }
+            }
             return Result.success(result);
         } catch (Exception e) {
             log.error("音频检测失败: {}", e.getMessage(), e);
@@ -93,6 +102,15 @@ public class DetectionController {
             try {
                 VideoDetectionResult result = detectionService.detectVideo(filePath,
                         (pct, detail) -> taskManager.updateProgress(taskId, pct, detail));
+                // 调用 LLM 生成详细分析报告（Key 未配置时返回规则化降级报告，非空）
+                if (result != null) {
+                    try {
+                        result.setReport(llmService.generateVideoReport(result));
+                    } catch (Exception e) {
+                        log.warn("生成视频分析报告失败，使用降级报告: {}", e.getMessage());
+                        result.setReport("AI 报告生成失败，请查看上方模型检测数据。");
+                    }
+                }
                 taskManager.complete(taskId, result);
             } finally {
                 deleteQuietly(filePath);

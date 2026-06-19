@@ -2,8 +2,9 @@
 -- SafeGuard 初始化数据（条件插入，可重复执行）
 -- ===============================================
 
--- 兼容升级：为旧版本数据库补上 password_hash 列（如果已存在则忽略错误）
-ALTER TABLE `user` ADD COLUMN `password_hash` VARCHAR(255) DEFAULT NULL COMMENT '管理员密码的BCrypt哈希' AFTER `role`;
+-- 兼容升级：为旧版本数据库补上 password_hash 列
+-- 注意：schema.sql 已包含此列，新建库无需执行；旧库升级时手动取消注释
+-- ALTER TABLE `user` ADD COLUMN `password_hash` VARCHAR(255) DEFAULT NULL COMMENT '管理员密码的BCrypt哈希' AFTER `role`;
 
 -- ===============================================
 -- 知识库基础数据

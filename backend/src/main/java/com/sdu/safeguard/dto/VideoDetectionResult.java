@@ -12,6 +12,7 @@ public class VideoDetectionResult {
     private String fakeType;
     private List<FrameAnalysis> frameAnalysis;
     private Probabilities probabilities;
+    private String report;  // AI 生成的详细分析报告（纯文本）
 
     @Data
     public static class FrameAnalysis {

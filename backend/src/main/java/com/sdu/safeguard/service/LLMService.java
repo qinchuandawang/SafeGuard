@@ -56,6 +56,103 @@ public class LLMService {
         return callLLM(buildAnalyzePrompt(text));
     }
 
+    /**
+     * 基于音频检测结果生成一段自然语言的 AI 分析报告。
+     * 当 LLM Key 未配置或调用失败时，返回基于规则的降级报告（非空）。
+     */
+    public String generateAudioReport(AudioDetectionResult audio) {
+        if (audio == null) {
+            return "未提供音频检测结果。";
+        }
+        if (llmConfig.getApiKey() == null || llmConfig.getApiKey().isBlank()) {
+            return buildRuleBasedAudioReport(audio);
+        }
+        String label = audio.getLabel() == null ? "未知" : audio.getLabel();
+        double fakeProb = audio.getSpoofProb() != null ? audio.getSpoofProb()
+                : (audio.getFakeProbability() != null ? audio.getFakeProbability() : 0.0);
+        double confidence = audio.getConfidence() != null ? audio.getConfidence() : fakeProb;
+
+        String prompt = String.format(
+                "你是音频伪造检测专家。请根据以下 Wav2Vec2 模型检测结果，用中文写一段 150-250 字的分析报告，"
+                        + "解释为什么判定为该结果、风险点在哪里、给用户什么建议。直接输出报告正文，不要标题、不要 JSON。\n\n"
+                        + "检测结果：\n- 判定标签：%s（bonafide=真实，spoof=伪造）\n"
+                        + "- 伪造概率：%.1f%%\n- 置信度：%.1f%%\n- 风险等级：%s\n",
+                label, fakeProb * 100, confidence * 100,
+                audio.getRiskLevel() == null ? "未评估" : audio.getRiskLevel());
+        return callLLM(prompt);
+    }
+
+    /**
+     * LLM 不可用时的规则化降级报告。
+     */
+    private String buildRuleBasedAudioReport(AudioDetectionResult audio) {
+        double fakeProb = audio.getSpoofProb() != null ? audio.getSpoofProb()
+                : (audio.getFakeProbability() != null ? audio.getFakeProbability() : 0.0);
+        boolean isSpoof = "spoof".equalsIgnoreCase(audio.getLabel()) || fakeProb > 0.5;
+        StringBuilder sb = new StringBuilder();
+        if (isSpoof) {
+            sb.append("该音频被模型判定为【伪造】，伪造概率约 ")
+                    .append(String.format("%.1f%%", fakeProb * 100))
+                    .append("。");
+            sb.append("Wav2Vec2 模型在频谱分布、声纹连贯性等维度检测到异常特征，")
+                    .append("常见于 AI 语音克隆或拼接合成的伪造内容。");
+            sb.append("建议：1）通过其他渠道核实对方身份；2）不要仅凭语音就进行转账；3）如有疑问拨打 96110 咨询。");
+        } else {
+            sb.append("该音频被模型判定为【真实】，伪造概率仅约 ")
+                    .append(String.format("%.1f%%", fakeProb * 100))
+                    .append("。");
+            sb.append("未检测到明显的 AI 合成痕迹，但仍建议结合上下文综合判断，不可单凭一次检测下结论。");
+        }
+        return sb.toString();
+    }
+
+    /**
+     * 基于视频检测结果生成一段自然语言的 AI 分析报告。
+     * 当 LLM Key 未配置或调用失败时，返回基于规则的降级报告（非空）。
+     */
+    public String generateVideoReport(VideoDetectionResult video) {
+        if (video == null) {
+            return "未提供视频检测结果。";
+        }
+        if (llmConfig.getApiKey() == null || llmConfig.getApiKey().isBlank()) {
+            return buildRuleBasedVideoReport(video);
+        }
+        double fakeProb = video.getFakeProbability() != null ? video.getFakeProbability() : 0.0;
+        double confidence = video.getConfidence() != null ? video.getConfidence() : fakeProb;
+        int frameCount = video.getFrameAnalysis() != null ? video.getFrameAnalysis().size() : 0;
+
+        String prompt = String.format(
+                "你是视频换脸检测专家。请根据以下 XceptionNet 模型检测结果，用中文写一段 150-250 字的分析报告，"
+                        + "解释为什么判定为该结果、风险点在哪里、给用户什么建议。直接输出报告正文，不要标题、不要 JSON。\n\n"
+                        + "检测结果：\n- 伪造概率：%.1f%%\n- 置信度：%.1f%%\n- 分析帧数：%d\n",
+                fakeProb * 100, confidence * 100, frameCount);
+        return callLLM(prompt);
+    }
+
+    /**
+     * LLM 不可用时的视频规则化降级报告。
+     */
+    private String buildRuleBasedVideoReport(VideoDetectionResult video) {
+        double fakeProb = video.getFakeProbability() != null ? video.getFakeProbability() : 0.0;
+        boolean isFake = fakeProb > 0.5;
+        StringBuilder sb = new StringBuilder();
+        if (isFake) {
+            sb.append("该视频被 XceptionNet 模型判定为【疑似换脸伪造】，伪造概率约 ")
+                    .append(String.format("%.1f%%", fakeProb * 100))
+                    .append("。");
+            sb.append("模型在多帧人脸特征上检测到与真实人脸不一致的纹理、边缘或频域异常，")
+                    .append("常见于 AI 换脸（Deepfake）或面部重演合成的伪造内容。");
+            sb.append("建议：1）不要轻信视频中的人物身份，通过其他渠道核实；2）要求实时视频通话并让对方做转头、遮脸等动作；3）涉及转账或敏感操作时务必多重确认；4）如有疑问拨打 96110。");
+        } else {
+            sb.append("该视频未检测到明显的 AI 换脸痕迹，伪造概率约 ")
+                    .append(String.format("%.1f%%", fakeProb * 100))
+                    .append("。");
+            sb.append("XceptionNet 在抽帧分析中未发现典型的 Deepfake 合成特征，但建议结合音频、文本等多模态信息综合判断。");
+        }
+        return sb.toString();
+    }
+
+
     public String buildAnalyzePrompt(String text) {
         String knowledge = buildKnowledgeContext(text);
         return promptLoader.loadPrompt("text_analysis", Map.of(

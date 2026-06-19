@@ -16,6 +16,7 @@ public class AudioDetectionResult {
     private Double latencyMs;           // 检测耗时
     private String modelVersion;        // 模型版本
     private String device;              // 推理设备
+    private String report;              // AI 生成的详细分析报告（纯文本）
     
     // 兼容旧格式
     private Double fakeProbability;
