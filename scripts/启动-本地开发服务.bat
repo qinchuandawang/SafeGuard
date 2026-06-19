@@ -119,23 +119,9 @@ goto :retry_loop
 :: Step 4 - Python dependencies
 :: =============================================
 echo [4/6] Checking Python dependencies...
-:: Audio deps
-pip show flask >nul 2>&1
-if errorlevel 1 (
-    echo   Installing audio deps...
-    pip install -r "%PROJECT_DIR%\ai-services\audio\requirements.txt" -q
-)
-:: Video deps
-pip show torchvision >nul 2>&1
-if errorlevel 1 (
-    echo   Installing torchvision...
-    pip install torchvision -q
-)
-pip show dlib-bin >nul 2>&1
-if errorlevel 1 (
-    echo   Installing dlib (pre-built)...
-    pip install dlib-bin -q
-)
+pip install -r "%PROJECT_DIR%\ai-services\audio\requirements.txt" -q 2>nul
+pip install torchvision -q 2>nul
+pip install dlib-bin -q 2>nul
 echo   [OK]  Python deps ready
 echo.
 
