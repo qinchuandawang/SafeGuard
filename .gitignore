@@ -58,6 +58,10 @@ ai-services/**/pretrained/**/*.safetensors
 # JVM 崩溃日志
 hs_err_pid*.log
 
+# 更新源文件夹（内容已合并到对应模块）
+best更新/
+更新/
+
 # Python
 __pycache__/
 *.py[cod]
