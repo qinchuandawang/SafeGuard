@@ -53,8 +53,8 @@ Page({
     switch (currentType) {
       case 'audio': can = !!audioFile && !isDetecting; break;
       case 'video': can = !!videoFile && !isDetecting; break;
-      case 'text': can = textContent.trim().length >= 10 && !isDetecting; break;
-      case 'multi': can = ((!!audioFile || !!videoFile) || textContent.trim().length >= 10) && !isDetecting; break;
+      case 'text': can = textContent.trim().length >= 1 && !isDetecting; break;
+      case 'multi': can = ((!!audioFile || !!videoFile) || textContent.trim().length >= 1) && !isDetecting; break;
     }
     this.setData({ canDetect: can });
   },
@@ -321,9 +321,19 @@ Page({
 
   viewFullReport() {
     const { detectionResult, currentType } = this.data;
-    wx.navigateTo({
-      url: '/pages/result/result?type=' + currentType + '&data=' + encodeURIComponent(JSON.stringify(detectionResult)),
-    });
+    // 优先用 globalData 传完整对象（绕过 URL 2KB 限制，避免长 AI 报告被截断乱码）
+    // 回退：若结果异常大，再走 URL 方式
+    try {
+      const app = getApp();
+      app.globalData.pendingDetectionResult = detectionResult;
+      wx.navigateTo({
+        url: '/pages/result/result?type=' + currentType,
+      });
+    } catch (e) {
+      wx.navigateTo({
+        url: '/pages/result/result?type=' + currentType + '&data=' + encodeURIComponent(JSON.stringify(detectionResult)),
+      });
+    }
   },
 
   openQA() {

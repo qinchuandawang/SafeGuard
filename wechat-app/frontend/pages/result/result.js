@@ -24,12 +24,23 @@ Page({
 
   onLoad(options) {
     if (options && options.type) this.setData({ detectionType: options.type });
-    if (options && options.data) {
+    // 优先从 globalData 读取（避免 URL 2KB 限制导致长 AI 报告被截断乱码）
+    const pending = app.globalData.pendingDetectionResult;
+    if (pending) {
+      app.globalData.pendingDetectionResult = null;
+      this.setData({ detectionType: pending.type || this.data.detectionType });
+      const fileName = pending.fileName || '';
+      const type = pending.type || options.type || this.data.detectionType;
+      const uniqueId = pending.id || pending.taskId || Date.now();
+      const recordId = uniqueId + '|' + fileName + '|' + type;
+      this.setData({ currentRecordId: recordId });
+      this.loadCollectedStatus(recordId);
+      this.processDetectionResult(pending);
+    } else if (options && options.data) {
       try {
         const data = JSON.parse(decodeURIComponent(options.data));
         const fileName = data.fileName || '';
         const type = data.type || options.type || this.data.detectionType;
-        // 使用 data.id（检测记录ID）确保每次检测的收藏标识唯一，避免相同文件名冲突（P1 fix: E3）
         const uniqueId = data.id || data.taskId || Date.now();
         const recordId = uniqueId + '|' + fileName + '|' + type;
         this.setData({ currentRecordId: recordId });
