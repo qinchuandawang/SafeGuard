@@ -7,6 +7,7 @@ import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
 import org.apache.hc.core5.util.TimeValue;
 import org.apache.hc.core5.util.Timeout;
+import org.springframework.beans.factory.annotation.Qualifier; 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpRequest;
@@ -26,6 +27,7 @@ public class RestTemplateConfig {
 
     private static final int CONNECT_TIMEOUT_MS = 5000;
     private static final int READ_TIMEOUT_MS = 30000;
+    private static final int VIDEO_READ_TIMEOUT_MS = 180000; // 3 分钟，视频 CPU 推理耗时较长
     private static final int HEALTH_CHECK_TIMEOUT_MS = 2000;
     private static final int MAX_RETRIES = 2;
     private static final long BASE_DELAY_MS = 500;
@@ -70,6 +72,16 @@ public class RestTemplateConfig {
                 new org.springframework.http.client.SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(Duration.ofMillis(HEALTH_CHECK_TIMEOUT_MS));
         factory.setReadTimeout(Duration.ofMillis(HEALTH_CHECK_TIMEOUT_MS));
+        return new RestTemplate(factory);
+    }
+
+    @Bean
+    @Qualifier("videoRestTemplate")
+    public RestTemplate videoRestTemplate() {
+        org.springframework.http.client.SimpleClientHttpRequestFactory factory =
+                new org.springframework.http.client.SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(Duration.ofMillis(CONNECT_TIMEOUT_MS));
+        factory.setReadTimeout(Duration.ofMillis(VIDEO_READ_TIMEOUT_MS));
         return new RestTemplate(factory);
     }
 

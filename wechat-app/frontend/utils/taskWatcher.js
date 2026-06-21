@@ -88,7 +88,8 @@ class TaskWatcher {
       setTimeout(() => {
         if (!hasHandledEvent && !this._destroyed) {
           console.warn('[TaskWatcher] SSE 无有效事件，回退到轮询模式');
-          this.destroy();
+          this._destroyed = false;
+          this._sseTask = null;
           this._startPolling(taskId, { onProgress, onDone, onError });
         }
       }, 5000);
@@ -188,10 +189,11 @@ class TaskWatcher {
         }
       } catch (err) {
         if (!this._destroyed) {
-          onError?.(err);
-          this.destroy();
-          return;
+          // 单次轮询失败不直接报错，继续重试（避免后端繁忙时误判）
+          await this._sleep(this.pollInterval);
+          continue;
         }
+        return;
       }
     }
   }

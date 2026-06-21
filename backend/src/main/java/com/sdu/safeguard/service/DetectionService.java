@@ -5,6 +5,8 @@ import com.sdu.safeguard.dto.AudioDetectionResult;
 import com.sdu.safeguard.dto.VideoDetectionResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.*;
@@ -24,6 +26,9 @@ import java.util.function.BiConsumer;
 public class DetectionService {
 
     private final RestTemplate restTemplate;
+    @Autowired
+    @Qualifier("videoRestTemplate")
+    private RestTemplate videoRestTemplate;
     private final VideoImagePipelineService videoImagePipelineService;
     private final VideoProperties videoProperties;
 
@@ -179,7 +184,7 @@ public class DetectionService {
         HttpEntity<MultiValueMap<String, Object>> requestEntity = buildMultipartRequest(file);
 
         try {
-            ResponseEntity<Map> response = restTemplate.exchange(
+            ResponseEntity<Map> response = videoRestTemplate.exchange(
                     url, HttpMethod.POST, requestEntity, Map.class);
 
             Map<String, Object> raw = response.getBody();
