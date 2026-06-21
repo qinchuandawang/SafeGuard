@@ -135,8 +135,9 @@ def predict_video(video_path, max_frames=None):
     """预测视频"""
     if max_frames is None:
         # 与后端 application.yml video.preprocess.max-frames=24 保持一致
-        max_frames = int(os.environ.get("MAX_FRAMES", "24"))
-    frame_extractor = FrameExtractor(frame_interval=1)
+        # 8 帧是 CPU 推理下的速度/准确度平衡点（每帧约 3-5 秒，全视频约 25-40 秒）
+        max_frames = int(os.environ.get("MAX_FRAMES", "8"))
+    frame_extractor = FrameExtractor(frame_interval=2)
     
     # 创建临时目录存储帧
     temp_dir = tempfile.mkdtemp()

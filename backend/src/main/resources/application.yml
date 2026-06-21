@@ -75,7 +75,7 @@ video:
   preprocess:
     enabled: ${VIDEO_PREPROCESS_ENABLED:true}
     sample-interval-seconds: 1.0
-    max-frames: 24
+    max-frames: ${VIDEO_MAX_FRAMES:8}
     face-padding-ratio: 0.12
     multipart-field: file
 
