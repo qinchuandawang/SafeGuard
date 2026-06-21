@@ -220,17 +220,52 @@ public class DetectionService {
             Object avgFakeProb = data.get("average_fake_probability");
             Object maxFakeProb = data.get("max_fake_probability");
             Object totalFrames = data.get("total_frames");
+            Object totalFaces = data.get("total_faces");
+            Object frameResults = data.get("frame_results");
 
             double fakeProb = avgFakeProb instanceof Number ? ((Number) avgFakeProb).doubleValue()
                     : (isFake instanceof Boolean && (Boolean) isFake ? 1.0 : 0.0);
             result.setFakeProbability(fakeProb);
 
-            double confidence = Math.abs(fakeProb - 0.5) * 2;
-            result.setConfidence(confidence);
+            // 置信度：模型对"判定结果"的确信度（与 fake_probability 互为补充）
+            // 0.5 两侧等价的 |p-0.5|*2 仍可用，但同时记录"判定方向"
+            double certainty = Math.abs(fakeProb - 0.5) * 2;
+            result.setConfidence(certainty);
+            result.setDetermination(fakeProb > 0.5 ? "fake" : "real");
+
+            // 从 Flask 返回的 frame_results 重建 FrameAnalysis 列表，
+            // 否则 LLM 看到 frameAnalysis=null，报告里写"分析帧数为 0"
+            java.util.List<VideoDetectionResult.FrameAnalysis> analyses = new java.util.ArrayList<>();
+            int synthesizedIdx = 0;
+            if (frameResults instanceof java.util.List) {
+                for (Object frObj : (java.util.List<?>) frameResults) {
+                    if (!(frObj instanceof Map)) continue;
+                    Map<String, Object> fr = (Map<String, Object>) frObj;
+                    Object faces = fr.get("faces");
+                    if (!(faces instanceof java.util.List) || ((java.util.List<?>) faces).isEmpty()) {
+                        continue;
+                    }
+                    for (Object fObj : (java.util.List<?>) faces) {
+                        if (!(fObj instanceof Map)) continue;
+                        Map<String, Object> f = (Map<String, Object>) fObj;
+                        Object fpObj = f.get("fake_probability");
+                        if (fpObj instanceof Number) {
+                            VideoDetectionResult.FrameAnalysis fa = new VideoDetectionResult.FrameAnalysis();
+                            fa.setFrameIndex(synthesizedIdx++);
+                            fa.setFakeProbability(((Number) fpObj).doubleValue());
+                            analyses.add(fa);
+                        }
+                    }
+                }
+            }
+            if (!analyses.isEmpty()) {
+                result.setFrameAnalysis(analyses);
+            }
 
             result.computeProbabilities();
 
-            log.info("视频检测成功(直连): fakeProbability={}, frames={}", fakeProb, totalFrames);
+            log.info("视频检测成功(直连): fakeProbability={}, frames={}, faces={}, frameAnalyses={}",
+                    fakeProb, totalFrames, totalFaces, analyses.size());
             return result;
         } catch (Exception e) {
             log.error("调用视频检测服务失败: {}", url, e);

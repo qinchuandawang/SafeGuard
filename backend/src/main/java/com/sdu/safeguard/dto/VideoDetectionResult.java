@@ -9,6 +9,7 @@ public class VideoDetectionResult {
     private String type = "video";
     private Double fakeProbability;
     private Double confidence;
+    private String determination;  // "fake" / "real" / "uncertain"
     private String fakeType;
     private List<FrameAnalysis> frameAnalysis;
     private Probabilities probabilities;

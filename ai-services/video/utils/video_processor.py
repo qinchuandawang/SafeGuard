@@ -79,9 +79,12 @@ class FaceDetector:
         """
         # 加载图片
         image = face_recognition.load_image_file(image_path)
-        
+
         # 检测人脸
-        face_locations = face_recognition.face_locations(image, model=self.detection_method)
+        # number_of_times_to_upsample=2 提升对远景/小人脸的召回（HOG 模式默认是 1）
+        face_locations = face_recognition.face_locations(
+            image, model=self.detection_method, number_of_times_to_upsample=2
+        )
         
         faces = []
         for (top, right, bottom, left) in face_locations:
