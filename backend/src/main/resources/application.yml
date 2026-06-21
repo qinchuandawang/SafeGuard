@@ -44,6 +44,10 @@ mybatis-plus:
       logic-delete-value: 1
       logic-not-delete-value: 0
 
+# Jackson: 非 ASCII 字符转义为 \uXXXX，避免微信小程序 wx.uploadFile
+# 在 Windows 下按 GBK 解码 UTF-8 响应体导致中文乱码
+# 注意：合并到上方 spring: 块，避免重复 spring: key 覆盖 datasource 等配置
+
 # JWT 配置
 jwt:
   secret: ${JWT_SECRET:dev-jwt-secret-change-in-production}

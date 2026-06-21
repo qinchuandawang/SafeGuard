@@ -99,52 +99,79 @@ function request(options) {
 
 function uploadFile(filePath, url, formData = {}) {
   wx.showLoading({ title: '上传中...', mask: true });
-  let loadingShown = true;
 
   const authModule = getAuth();
   const authHeader = authModule.getAuthHeader();
 
   return new Promise((resolve, reject) => {
-    let finished = false;
-    const uploadTask = wx.uploadFile({
-      url: BASE_URL + url,
+    // 读取文件为 ArrayBuffer，然后用 wx.request 手动构造 multipart 上传
+    // 这样可以用 responseType: 'arraybuffer' + TextDecoder 手动 UTF-8 解码响应
+    // 避免 wx.uploadFile 在 Windows 下按 GBK 解码 UTF-8 响应导致中文乱码
+    const fs = wx.getFileSystemManager();
+    fs.readFile({
       filePath,
-      name: 'file',
-      formData,
-      timeout: 120000,
-      header: authHeader,
-      success: (res) => {
-        finished = true;
-        if (loadingShown) { wx.hideLoading(); loadingShown = false; }
-        if (res.statusCode === 200) {
-          try {
-            const data = JSON.parse(res.data);
-            if (data.code === 200) {
-              resolve(data.data);
-            } else {
-              wx.showToast({ title: data.message || '上传失败', icon: 'none' });
-              reject(new Error(data.message));
+      success: (fileRes) => {
+        const fileName = (filePath.split(/[\\/]/).pop()) || 'file';
+        const boundary = '----SafeGuard' + Date.now() + Math.random().toString(36).slice(2);
+
+        // 构造 multipart/form-data 各部分
+        const headerPart = '--' + boundary + '\r\n' +
+          'Content-Disposition: form-data; name="file"; filename="' + fileName + '"\r\n' +
+          'Content-Type: application/octet-stream\r\n\r\n';
+        const footerPart = '\r\n--' + boundary + '--\r\n';
+
+        // 用 TextEncoder 编码文本部分（UTF-8）
+        const encoder = new TextEncoder();
+        const headerBytes = encoder.encode(headerPart);
+        const footerBytes = encoder.encode(footerPart);
+        const fileBytes = new Uint8Array(fileRes.data);
+
+        // 拼接完整的 multipart 请求体
+        const body = new Uint8Array(headerBytes.length + fileBytes.length + footerBytes.length);
+        body.set(headerBytes, 0);
+        body.set(fileBytes, headerBytes.length);
+        body.set(footerBytes, headerBytes.length + fileBytes.length);
+
+        wx.request({
+          url: BASE_URL + url,
+          method: 'POST',
+          data: body.buffer,
+          timeout: 120000,
+          responseType: 'arraybuffer',
+          header: {
+            'Content-Type': 'multipart/form-data; boundary=' + boundary,
+            ...authHeader,
+          },
+          success: (res) => {
+            wx.hideLoading();
+            // 用 TextDecoder 手动 UTF-8 解码，避免 wx.uploadFile 的 GBK 乱码
+            const decoder = new TextDecoder('utf-8');
+            const text = decoder.decode(new Uint8Array(res.data));
+            try {
+              const data = JSON.parse(text);
+              if (data.code === 200) {
+                resolve(data.data);
+              } else {
+                wx.showToast({ title: data.message || '上传失败', icon: 'none' });
+                reject(new Error(data.message));
+              }
+            } catch (e) {
+              console.error('响应解析失败:', text.substring(0, 200));
+              reject(new Error('解析响应失败'));
             }
-          } catch (e) {
-            reject(new Error('解析响应失败'));
-          }
-        } else {
-          wx.showToast({ title: '上传失败: ' + res.statusCode, icon: 'none' });
-          reject(new Error('上传失败: ' + res.statusCode));
-        }
+          },
+          fail: (err) => {
+            wx.hideLoading();
+            wx.showToast({ title: '上传失败', icon: 'none' });
+            reject(err);
+          },
+        });
       },
       fail: (err) => {
-        finished = true;
-        if (loadingShown) { wx.hideLoading(); loadingShown = false; }
-        wx.showToast({ title: '上传失败', icon: 'none' });
+        wx.hideLoading();
+        wx.showToast({ title: '读取文件失败', icon: 'none' });
         reject(err);
       },
-    });
-
-    uploadTask.onProgressUpdate((res) => {
-      if (!finished && loadingShown) {
-        wx.showLoading({ title: '上传中 ' + res.progress + '%', mask: true });
-      }
     });
   });
 }
