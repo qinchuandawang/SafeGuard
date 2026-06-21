@@ -4,6 +4,7 @@ import com.sdu.safeguard.config.LLMConfig;
 import com.sdu.safeguard.dto.AudioDetectionResult;
 import com.sdu.safeguard.dto.Message;
 import com.sdu.safeguard.dto.ScamScenario;
+import com.sdu.safeguard.dto.TextDetectionResult;
 import com.sdu.safeguard.dto.VideoDetectionResult;
 import com.sdu.safeguard.entity.KnowledgeItem;
 import com.sdu.safeguard.util.PromptLoader;
@@ -54,6 +55,104 @@ public class LLMService {
 
     public String analyzeText(String text) {
         return callLLM(buildAnalyzePrompt(text));
+    }
+
+    /**
+     * 结构化文本分析：调用 LLM，将 JSON 字符串解析为 TextDetectionResult。
+     * 解析失败时降级为基于规则的兜底结果（非空）。
+     */
+    public TextDetectionResult analyzeTextStructured(String text) {
+        TextDetectionResult result = new TextDetectionResult();
+        String raw = callLLM(buildAnalyzePrompt(text));
+        result.setReport(raw);
+
+        // LLM 返回的可能不是合法 JSON 字符串，先尝试去掉 markdown 包裹
+        String json = raw == null ? "" : raw.trim();
+        if (json.startsWith("```")) {
+            int firstNewline = json.indexOf('\n');
+            if (firstNewline > 0) json = json.substring(firstNewline + 1);
+            if (json.endsWith("```")) json = json.substring(0, json.length() - 3);
+            json = json.trim();
+        }
+        // 清除 LLM 输出中可能出现的零宽字符（U+200B, U+200C, U+200D, U+FEFF）
+        // 这些字符会导致 Jackson 解析失败
+        json = json.replaceAll("[\\u200B\\u200C\\u200D\\uFEFF]", "");
+        // 提取第一个 { 到最后一个 } 的 JSON 片段，丢弃前后杂质
+        int firstBrace = json.indexOf('{');
+        int lastBrace = json.lastIndexOf('}');
+        if (firstBrace >= 0 && lastBrace > firstBrace) {
+            json = json.substring(firstBrace, lastBrace + 1);
+        }
+
+        try {
+            // 用 JsonNode 树模型宽容解析：字段类型不匹配（如 advice 是字符串而非数组）不抛错
+            tools.jackson.databind.JsonNode root = objectMapper.readTree(json);
+
+            TextDetectionResult parsed = new TextDetectionResult();
+            parsed.setType("text");
+
+            if (root.has("riskLevel") && root.get("riskLevel").isTextual()) {
+                parsed.setRiskLevel(root.get("riskLevel").asText());
+            }
+            if (root.has("riskProbability") && root.get("riskProbability").isNumber()) {
+                parsed.setRiskProbability(root.get("riskProbability").asDouble());
+            }
+            if (root.has("scamType") && root.get("scamType").isTextual()) {
+                parsed.setScamType(root.get("scamType").asText());
+            }
+            parsed.setSuspiciousPoints(extractStringList(root, "suspiciousPoints"));
+            parsed.setReasoningSteps(extractStringList(root, "reasoningSteps"));
+            // advice 可能是数组或字符串
+            if (root.has("advice")) {
+                tools.jackson.databind.JsonNode adv = root.get("advice");
+                if (adv.isArray()) {
+                    parsed.setAdvice(extractStringList(root, "advice"));
+                } else if (adv.isTextual()) {
+                    String advText = adv.asText();
+                    // 拆成多行建议
+                    java.util.List<String> list = new java.util.ArrayList<>();
+                    for (String line : advText.split("[\\n;；]")) {
+                        String t = line.trim();
+                        if (!t.isEmpty()) list.add(t);
+                    }
+                    if (list.isEmpty()) list.add(advText);
+                    parsed.setAdvice(list);
+                }
+            }
+            parsed.setReport(raw);
+            parsed.computeProbabilities();
+            return parsed;
+        } catch (Exception e) {
+            log.warn("文本分析结果 JSON 解析失败，使用降级结果: {}", e.getMessage());
+            // 降级：基于规则生成基础结果
+            result.setRiskLevel("medium");
+            result.setRiskProbability(0.5);
+            result.setScamType("未知");
+            result.setSuspiciousPoints(java.util.List.of("无法解析 AI 分析结果，请查看原始报告"));
+            result.setReasoningSteps(java.util.List.of("LLM 返回结果格式异常"));
+            result.setAdvice(java.util.List.of("请人工核对原始报告内容"));
+            result.computeProbabilities();
+            return result;
+        }
+    }
+
+    /**
+     * 宽容提取 JSON 数组字段。数组元素若是字符串直接取；若是其他类型转字符串。
+     */
+    private java.util.List<String> extractStringList(tools.jackson.databind.JsonNode root, String fieldName) {
+        java.util.List<String> list = new java.util.ArrayList<>();
+        if (!root.has(fieldName)) return list;
+        tools.jackson.databind.JsonNode node = root.get(fieldName);
+        if (node.isArray()) {
+            for (tools.jackson.databind.JsonNode item : node) {
+                if (item.isTextual()) list.add(item.asText());
+                else list.add(item.toString().replaceAll("^\"|\"$", ""));
+            }
+        } else if (node.isTextual()) {
+            String t = node.asText().trim();
+            if (!t.isEmpty()) list.add(t);
+        }
+        return list;
     }
 
     /**

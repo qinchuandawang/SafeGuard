@@ -120,7 +120,7 @@ public class DetectionController {
     }
 
     @PostMapping("/text")
-    public Result<String> detectText(@RequestBody Map<String, String> request) {
+    public Result<?> detectText(@RequestBody Map<String, String> request) {
         if (request == null) {
             return Result.error("请求体不能为空");
         }
@@ -130,7 +130,7 @@ public class DetectionController {
             return Result.error(validationError);
         }
         try {
-            return Result.success(llmService.analyzeText(text));
+            return Result.success(llmService.analyzeTextStructured(text));
         } catch (Exception e) {
             log.error("文本检测异常: type={}, msg={}", e.getClass().getSimpleName(), e.getMessage(), e);
             return Result.error("检测失败：" + (e.getMessage() != null ? e.getMessage() : "未知错误"));
