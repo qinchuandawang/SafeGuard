@@ -41,6 +41,8 @@ function request(options) {
         method,
         data,
         timeout,
+        // 用 arraybuffer 接收响应，绕过 wx 内部按系统编码解码导致的中文乱码
+        responseType: 'arraybuffer',
         header: {
           'Content-Type': 'application/json',
           ...authHeader,
@@ -61,7 +63,19 @@ function request(options) {
             return;
           }
           if (res.statusCode === 200) {
-            const { code, message, data: resData } = res.data;
+            // 手动 UTF-8 解码响应（避免 wx 内部按 GBK 解码导致中文乱码）
+            const decoder = new TextDecoder('utf-8');
+            const text = decoder.decode(new Uint8Array(res.data));
+            let parsed;
+            try {
+              parsed = JSON.parse(text);
+            } catch (e) {
+              console.error('响应 JSON 解析失败:', text.substring(0, 200));
+              wx.showToast({ title: '响应格式异常', icon: 'none' });
+              reject(new Error('解析响应失败'));
+              return;
+            }
+            const { code, message, data: resData } = parsed;
             if (code === 200) {
               resolve(resData);
             } else {
