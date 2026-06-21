@@ -25,6 +25,9 @@ Page({
     resultDesc: '',
     showAgentProcess: false,
     showKnowledgeSources: false,
+    processLogs: [],      // 处理日志列表
+    processProgress: 0,   // 整体进度 0-100
+    processStage: '',     // 当前阶段名称
     examples: [
       '您好，我是公安局民警，您涉嫌一起洗钱案件，请配合调查并将资金转入安全账户',
       '恭喜您中奖了！请先支付手续费领取奖金',
@@ -157,6 +160,14 @@ Page({
     return (size / (1024 * 1024)).toFixed(1) + ' MB';
   },
 
+  // 添加处理日志
+  addProcessLog(message) {
+    const timestamp = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+    const logs = this.data.processLogs;
+    logs.push({ time: timestamp, text: message });
+    this.setData({ processLogs: logs });
+  },
+
   async startDetection() {
     if (!this.data.canDetect) return;
     const { currentType, audioFile, videoFile, textContent } = this.data;
@@ -165,31 +176,37 @@ Page({
     if (currentType === 'video' && !videoFile) { app.showWarning('请先上传视频文件'); return; }
     if (currentType === 'text' && !textContent.trim()) { app.showWarning('请输入要检测的文本'); return; }
 
-    this.setData({ isDetecting: true, canDetect: false, uploadError: null });
+    this.setData({ isDetecting: true, canDetect: false, uploadError: null, processLogs: [], processProgress: 0, processStage: '' });
+    this.addProcessLog('开始检测...');
 
     try {
       let result;
       switch (currentType) {
         case 'audio':
+          this.addProcessLog('上传音频文件...');
           result = await detectionAPI.detectAudio(audioFile.path);
           break;
         case 'video':
+          this.addProcessLog('上传视频文件...');
           result = await detectionAPI.detectVideo(videoFile.path);
           if (result && result.taskId && result.status === 'processing') {
+            this.addProcessLog('任务已创建，正在跟踪处理进度...');
             this.watchVideoTask(result.taskId);
             return;
           }
           break;
         case 'text':
+          this.addProcessLog('正在分析文本内容...');
           result = await detectionAPI.detectText(textContent);
           break;
         case 'multi':
-          // 综合检测：将音频/视频/文本的检测结果聚合为文本，交由 LLM 综合研判（非原始多模态融合）
+          this.addProcessLog('正在综合检测...');
           result = await detectionAPI.detectMulti(audioFile?.path, videoFile?.path, textContent);
           break;
       }
       this.handleDetectionResult(result);
     } catch (err) {
+      this.addProcessLog('检测失败：' + (err.message || '未知错误'));
       console.error('检测失败:', err);
       app.showError('检测失败，请检查服务是否可用');
       this.setData({ isDetecting: false });
@@ -227,14 +244,23 @@ Page({
     this._taskWatcher = watcher;
     watcher.watch(taskId, {
       onProgress: (progress, data) => {
-        this.setData({ resultName: '分析中...', resultDesc: data?.message || ('正在分析' + progress + '%...') });
+        const msg = data?.message || ('处理中 ' + progress + '%');
+        this.addProcessLog(msg);
+        this.setData({ 
+          resultName: '分析中...', 
+          resultDesc: msg,
+          processProgress: progress || 0,
+          processStage: msg,
+        });
       },
       onDone: (result) => {
-        this.setData({ isDetecting: false });
+        this.addProcessLog('检测完成！');
+        this.setData({ isDetecting: false, processProgress: 100, processStage: '检测完成' });
         this.updateCanDetect();
         this.handleDetectionResult(result);
       },
       onError: (err) => {
+        this.addProcessLog('检测失败：' + (err.message || err));
         this.setData({ isDetecting: false });
         this.updateCanDetect();
         console.error('视频检测任务失败:', err);

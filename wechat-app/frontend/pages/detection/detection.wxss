@@ -498,6 +498,62 @@
   box-shadow: 0 12rpx 32rpx rgba(0,180,216,0.24);
 }
 
+/* ==================== 处理进度面板 ==================== */
+.process-panel {
+  margin: var(--spacing-md) var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: var(--bg-card);
+}
+.process-header {
+  align-items: center;
+  margin-bottom: var(--spacing-sm);
+  gap: var(--spacing-xs);
+}
+.process-title {
+  flex: 1;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--text-color-primary);
+}
+.process-pct {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+.process-bar {
+  height: 8rpx;
+  background: var(--bg-input);
+  border-radius: 4rpx;
+  margin-bottom: var(--spacing-sm);
+  overflow: hidden;
+}
+.process-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary-color), #48cae4);
+  border-radius: 4rpx;
+  transition: width 0.4s ease;
+}
+.process-logs {
+  max-height: 260rpx;
+  padding: var(--spacing-xs) 0;
+}
+.log-entry {
+  display: flex;
+  gap: var(--spacing-sm);
+  padding: 6rpx 0;
+  align-items: baseline;
+}
+.log-time {
+  font-size: 22rpx;
+  color: var(--text-color-tertiary);
+  flex-shrink: 0;
+  font-family: monospace;
+}
+.log-text {
+  font-size: 26rpx;
+  color: var(--text-color-secondary);
+  line-height: 1.4;
+}
+
 /* ==================== 结果弹窗 ==================== */
 .result-popup {
   max-height: 80vh;

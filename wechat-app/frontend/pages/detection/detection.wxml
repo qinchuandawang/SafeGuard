@@ -291,6 +291,25 @@
     </view>
   </view>
 
+  <!-- 处理进度面板（检测中显示） -->
+  <view class="process-panel card" wx:if="{{isDetecting && processLogs.length > 0}}">
+    <view class="process-header flex">
+      <t-icon name="loading" size="28rpx" color="var(--primary-color)" />
+      <text class="process-title">处理进度</text>
+      <text class="process-pct text-xs">{{processProgress}}%</text>
+    </view>
+    <view class="process-bar">
+      <view class="process-bar-fill" style="width: {{processProgress}}%"></view>
+    </view>
+    <scroll-view class="process-logs" scroll-y scroll-into-view="log-bottom">
+      <view class="log-entry" wx:for="{{processLogs}}" wx:key="index" wx:for-item="log">
+        <text class="log-time">{{log.time}}</text>
+        <text class="log-text">{{log.text}}</text>
+      </view>
+      <view id="log-bottom"></view>
+    </scroll-view>
+  </view>
+
   <!-- 检测结果弹窗 -->
   <t-popup
     visible="{{showResult}}"

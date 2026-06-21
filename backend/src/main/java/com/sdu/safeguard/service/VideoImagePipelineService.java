@@ -55,12 +55,18 @@ public class VideoImagePipelineService {
             }
 
             var pre = videoProperties.getPreprocess();
+            if (progressCallback != null) {
+                progressCallback.accept(5, Map.of("message", "正在提取视频帧..."));
+            }
             List<File> frames = videoFrameExtractorService.extractFrames(
                     videoFile,
                     workDir,
                     pre.getSampleIntervalSeconds(),
                     pre.getMaxFrames()
             );
+            if (progressCallback != null) {
+                progressCallback.accept(10, Map.of("message", "帧提取完成，共 " + frames.size() + " 帧，开始 AI 检测..."));
+            }
 
             List<VideoDetectionResult.FrameAnalysis> analyses = Collections.synchronizedList(new ArrayList<>());
             double[] maxProbRef = new double[]{0.0};
@@ -71,6 +77,11 @@ public class VideoImagePipelineService {
             List<CompletableFuture<Void>> futures = new ArrayList<>();
             for (int i = 0; i < frames.size(); i++) {
                 final int idx = i;
+                final int totalFrames = frames.size();
+                if (progressCallback != null) {
+                    int pct = 10 + (i * 70 / totalFrames); // 10% -> 80%
+                    progressCallback.accept(pct, Map.of("message", "正在检测第 " + (i + 1) + "/" + totalFrames + " 帧..."));
+                }
                 File frameFile = frames.get(idx);
                 CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
                     File cropFile = new File(workDir, "face_" + idx + ".png");
@@ -107,6 +118,10 @@ public class VideoImagePipelineService {
             }
 
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+            if (progressCallback != null) {
+                progressCallback.accept(85, Map.of("message", "帧检测完成，正在聚合分析结果..."));
+            }
 
             int counted = countedRef[0];
             double maxProb = maxProbRef[0];

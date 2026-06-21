@@ -71,7 +71,13 @@ public class DetectionService {
         if (shouldUseVideoPreprocess()) {
             result = videoImagePipelineService.detectFromVideoFile(filePath, progressCallback);
         } else {
+            if (progressCallback != null) {
+                progressCallback.accept(10, Map.of("message", "正在向 AI 检测服务提交视频..."));
+            }
             result = callVideoDetection(filePath, videoServiceUrl);
+            if (progressCallback != null && result != null) {
+                progressCallback.accept(80, Map.of("message", "AI 检测完成，正在汇总结果..."));
+            }
         }
         if (result != null) {
             result.computeProbabilities();

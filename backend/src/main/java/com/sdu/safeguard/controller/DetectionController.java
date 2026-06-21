@@ -100,11 +100,13 @@ public class DetectionController {
         }
         taskManager.runAsync(task.getTaskId(), taskId -> {
             try {
+                taskManager.updateProgress(taskId, 0, Map.of("message", "准备处理视频文件..."));
                 VideoDetectionResult result = detectionService.detectVideo(filePath,
                         (pct, detail) -> taskManager.updateProgress(taskId, pct, detail));
                 // 调用 LLM 生成详细分析报告（Key 未配置时返回规则化降级报告，非空）
                 if (result != null) {
                     try {
+                        taskManager.updateProgress(taskId, 90, Map.of("message", "正在生成 AI 分析报告..."));
                         result.setReport(llmService.generateVideoReport(result));
                     } catch (Exception e) {
                         log.warn("生成视频分析报告失败，使用降级报告: {}", e.getMessage());
