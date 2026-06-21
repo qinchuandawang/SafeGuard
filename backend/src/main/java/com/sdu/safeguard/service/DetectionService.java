@@ -217,21 +217,30 @@ public class DetectionService {
             result.setType("video");
 
             Object isFake = data.get("is_fake");
+            Object isUncertainObj = data.get("is_uncertain");
             Object avgFakeProb = data.get("average_fake_probability");
             Object maxFakeProb = data.get("max_fake_probability");
             Object totalFrames = data.get("total_frames");
             Object totalFaces = data.get("total_faces");
             Object frameResults = data.get("frame_results");
 
-            double fakeProb = avgFakeProb instanceof Number ? ((Number) avgFakeProb).doubleValue()
-                    : (isFake instanceof Boolean && (Boolean) isFake ? 1.0 : 0.0);
+            boolean isUncertain = isUncertainObj instanceof Boolean && (Boolean) isUncertainObj;
+            double fakeProb;
+            if (isUncertain) {
+                // 模型没有可用的人脸证据时，把概率置 0.5，置信度置 0，
+                // determination 置 uncertain，让 LLM/前端知道这是"无法判定"
+                fakeProb = 0.5;
+                result.setConfidence(0.0);
+                result.setDetermination("uncertain");
+            } else {
+                fakeProb = avgFakeProb instanceof Number ? ((Number) avgFakeProb).doubleValue()
+                        : (isFake instanceof Boolean && (Boolean) isFake ? 1.0 : 0.0);
+                // 置信度：模型对"判定结果"的确信度（与 fake_probability 互为补充）
+                double certainty = Math.abs(fakeProb - 0.5) * 2;
+                result.setConfidence(certainty);
+                result.setDetermination(fakeProb > 0.5 ? "fake" : "real");
+            }
             result.setFakeProbability(fakeProb);
-
-            // 置信度：模型对"判定结果"的确信度（与 fake_probability 互为补充）
-            // 0.5 两侧等价的 |p-0.5|*2 仍可用，但同时记录"判定方向"
-            double certainty = Math.abs(fakeProb - 0.5) * 2;
-            result.setConfidence(certainty);
-            result.setDetermination(fakeProb > 0.5 ? "fake" : "real");
 
             // 从 Flask 返回的 frame_results 重建 FrameAnalysis 列表，
             // 否则 LLM 看到 frameAnalysis=null，报告里写"分析帧数为 0"

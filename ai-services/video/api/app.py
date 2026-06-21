@@ -152,6 +152,7 @@ def predict_video(video_path, max_frames=None):
         # 检测人脸并预测
         frame_results = []
         face_detector = FaceDetector(detection_method='hog')
+        frames_with_face = 0  # 至少有一张人脸的帧数
         
         for frame_file in sorted(Path(frames_dir).glob("*.jpg")):
             faces, locations = face_detector.detect_faces(str(frame_file), IMAGE_SIZE)
@@ -161,11 +162,22 @@ def predict_video(video_path, max_frames=None):
                 'faces': []
             }
             
-            for i, face in enumerate(faces):
-                face_pil = Image.fromarray(cv2.cvtColor(face, cv2.COLOR_BGR2RGB))
-                prediction = predict_image(face_pil)
-                prediction['face_location'] = locations[i]
-                frame_result['faces'].append(prediction)
+            if not faces:
+                # 与图片接口保持一致：无人脸时降级为全图检测，
+                # 否则 total_faces=0 直接判定 is_fake=False，会把"完全没人脸的视频"判为真实
+                full_image = Image.open(str(frame_file)).convert('RGB')
+                full_pred = predict_image(full_image)
+                full_pred['face_location'] = None
+                full_pred['fallback'] = True
+                full_pred['fallback_reason'] = '未检测到独立人脸，使用全图检测'
+                frame_result['faces'].append(full_pred)
+            else:
+                frames_with_face += 1
+                for i, face in enumerate(faces):
+                    face_pil = Image.fromarray(cv2.cvtColor(face, cv2.COLOR_BGR2RGB))
+                    prediction = predict_image(face_pil)
+                    prediction['face_location'] = locations[i]
+                    frame_result['faces'].append(prediction)
             
             frame_results.append(frame_result)
         
@@ -181,14 +193,24 @@ def predict_video(video_path, max_frames=None):
         else:
             avg_fake_prob = 0.0
             max_fake_prob = 0.0
-        
+
+        # 全部帧都无人脸时：不能简单判定为"真实"
+        # 标记为"uncertain"并把 fake_probability 设为 0.5
+        is_uncertain = frames_with_face == 0
+        if is_uncertain:
+            avg_fake_prob = 0.5
+            max_fake_prob = 0.5
+
         return {
             'frame_results': frame_results,
             'total_frames': len(frame_results),
             'total_faces': len(all_fake_probs),
+            'frames_with_face': frames_with_face,
             'average_fake_probability': float(avg_fake_prob),
             'max_fake_probability': float(max_fake_prob),
-            'is_fake': avg_fake_prob > 0.5
+            'is_fake': (not is_uncertain) and (avg_fake_prob > 0.5),
+            'is_uncertain': is_uncertain,
+            'uncertain_reason': '所有帧均未检测到人脸' if is_uncertain else None,
         }
     finally:
         # 确保临时目录始终被清理

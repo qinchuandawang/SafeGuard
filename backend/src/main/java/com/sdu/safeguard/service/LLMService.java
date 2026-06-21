@@ -219,7 +219,9 @@ public class LLMService {
         double fakeProb = video.getFakeProbability() != null ? video.getFakeProbability() : 0.0;
         double confidence = video.getConfidence() != null ? video.getConfidence() : Math.abs(fakeProb - 0.5) * 2;
         int frameCount = video.getFrameAnalysis() != null ? video.getFrameAnalysis().size() : 0;
-        String determination = fakeProb > 0.5 ? "伪造嫌疑较高" : "未发现明显伪造痕迹";
+        String determination = "uncertain".equals(video.getDetermination())
+                ? "无法判定（视频中未检测到人脸）"
+                : (fakeProb > 0.5 ? "伪造嫌疑较高" : "未发现明显伪造痕迹");
 
         String prompt = String.format(
                 "你是视频换脸检测专家。本系统仅使用 XceptionNet 一种模型，不要在报告中推荐 EfficientNet、MesoNet、"
@@ -229,8 +231,8 @@ public class LLMService {
                         + "1) 伪造概率=0.0%% 表示模型判定为【真实】而非检测失败，请务必说明这是真实判定。\n"
                         + "2) 置信度=100%% 表示模型对【自己的判定结果】非常确信（0.5 两侧等价的 |p-0.5|*2 公式），"
                         + "   不是说'确定是假'，请勿让用户误读。\n"
-                        + "3) 分析帧数=0 时，说明 XceptionNet 整图降级检测或直连 Flask 模式下聚合结果为空，"
-                        + "   请不要写成'无法获取有效视频帧'，应该写成'模型对整张关键帧进行了检测'。\n\n"
+                        + "3) 当判定方向是'无法判定'时，说明视频中未检测到人脸，必须告诉用户重新提交清晰的正脸视频，"
+                        + "   不要写成'无法获取有效视频帧'。\n\n"
                         + "检测结果：\n- 判定方向：%s\n- 伪造概率：%.1f%%\n- 置信度（模型对自己判定的确信程度）：%.1f%%\n- 分析人脸数：%d\n",
                 determination, fakeProb * 100, confidence * 100, frameCount);
         return callLLM(prompt);
@@ -243,27 +245,37 @@ public class LLMService {
         double fakeProb = video.getFakeProbability() != null ? video.getFakeProbability() : 0.0;
         double confidence = video.getConfidence() != null ? video.getConfidence() : Math.abs(fakeProb - 0.5) * 2;
         int frameCount = video.getFrameAnalysis() != null ? video.getFrameAnalysis().size() : 0;
-        boolean isFake = fakeProb > 0.5;
+        String det = video.getDetermination();
+        boolean isUncertain = "uncertain".equals(det);
         StringBuilder sb = new StringBuilder();
-        if (isFake) {
-            sb.append("该视频被 XceptionNet 模型判定为【疑似换脸伪造】，伪造概率约 ")
-                    .append(String.format("%.1f%%", fakeProb * 100))
-                    .append("，模型对自己判定的确信程度约 ")
-                    .append(String.format("%.1f%%", confidence * 100))
-                    .append("。");
-            sb.append("模型在 ").append(frameCount > 0 ? frameCount + " 张人脸" : "关键帧")
-                    .append("上检测到与真实人脸不一致的纹理、边缘或频域异常，常见于 AI 换脸（Deepfake）或面部重演合成的伪造内容。");
-            sb.append("建议：1）不要轻信视频中的人物身份，通过其他渠道核实；2）要求实时视频通话并让对方做转头、遮脸等动作；3）涉及转账或敏感操作时务必多重确认；4）如有疑问拨打 96110。");
+        if (isUncertain) {
+            sb.append("本次检测【无法判定】视频真伪。原因是 XceptionNet 模型在所有抽样帧中均未检测到清晰的人脸区域，")
+                    .append("无法对人脸特征进行换脸痕迹分析。");
+            sb.append("建议：1）请重新提交时长不少于 2 秒、人物正脸清晰、")
+                    .append("光线正常、画面稳定的视频；2）避免使用风景、动物、纯文字等无人脸内容；")
+                    .append("3）若有疑问可结合音频、文本等多模态信息综合判断。");
         } else {
-            sb.append("该视频被 XceptionNet 模型判定为【真实视频】，伪造概率约 ")
-                    .append(String.format("%.1f%%", fakeProb * 100))
-                    .append("，模型对自己判定的确信程度约 ")
-                    .append(String.format("%.1f%%", confidence * 100))
-                    .append("。");
-            sb.append("模型在 ").append(frameCount > 0 ? frameCount + " 张人脸" : "关键帧")
-                    .append("上未发现典型的 Deepfake 合成特征。");
-            sb.append("注意：本系统仅使用 XceptionNet 一种模型，对抗性优化或新型扩散模型生成的视频可能产生误判，"
-                    + "建议结合音频、文本等多模态信息综合判断，必要时通过电话或线下方式二次确认。");
+            boolean isFake = fakeProb > 0.5;
+            if (isFake) {
+                sb.append("该视频被 XceptionNet 模型判定为【疑似换脸伪造】，伪造概率约 ")
+                        .append(String.format("%.1f%%", fakeProb * 100))
+                        .append("，模型对自己判定的确信程度约 ")
+                        .append(String.format("%.1f%%", confidence * 100))
+                        .append("。");
+                sb.append("模型在 ").append(frameCount > 0 ? frameCount + " 张人脸" : "关键帧")
+                        .append("上检测到与真实人脸不一致的纹理、边缘或频域异常，常见于 AI 换脸（Deepfake）或面部重演合成的伪造内容。");
+                sb.append("建议：1）不要轻信视频中的人物身份，通过其他渠道核实；2）要求实时视频通话并让对方做转头、遮脸等动作；3）涉及转账或敏感操作时务必多重确认；4）如有疑问拨打 96110。");
+            } else {
+                sb.append("该视频被 XceptionNet 模型判定为【真实视频】，伪造概率约 ")
+                        .append(String.format("%.1f%%", fakeProb * 100))
+                        .append("，模型对自己判定的确信程度约 ")
+                        .append(String.format("%.1f%%", confidence * 100))
+                        .append("。");
+                sb.append("模型在 ").append(frameCount > 0 ? frameCount + " 张人脸" : "关键帧")
+                        .append("上未发现典型的 Deepfake 合成特征。");
+                sb.append("注意：本系统仅使用 XceptionNet 一种模型，对抗性优化或新型扩散模型生成的视频可能产生误判，"
+                        + "建议结合音频、文本等多模态信息综合判断，必要时通过电话或线下方式二次确认。");
+            }
         }
         return sb.toString();
     }
