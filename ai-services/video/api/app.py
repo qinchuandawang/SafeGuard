@@ -427,4 +427,4 @@ if __name__ == '__main__':
     print(f"模型路径：{MODEL_PATH}")
     print(f"API 文档：http://localhost:{port}/api/health")
 
-    app.run(host='0.0.0.0', port=port, debug=os.environ.get('FLASK_DEBUG', '0') == '1')
+    app.run(host='0.0.0.0', port=port, threaded=True, debug=os.environ.get('FLASK_DEBUG', '0') == '1')
