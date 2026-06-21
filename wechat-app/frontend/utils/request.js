@@ -64,8 +64,25 @@ function request(options) {
           }
           if (res.statusCode === 200) {
             // 手动 UTF-8 解码响应（避免 wx 内部按 GBK 解码导致中文乱码）
-            const decoder = new TextDecoder('utf-8');
-            const text = decoder.decode(new Uint8Array(res.data));
+            // 兼容 res.data 是 ArrayBuffer 或其他类型
+            let text;
+            if (res.data instanceof ArrayBuffer) {
+              const decoder = new TextDecoder('utf-8');
+              text = decoder.decode(new Uint8Array(res.data));
+            } else if (typeof res.data === 'string') {
+              // 某些情况下 responseType 未生效，res.data 仍是字符串
+              text = res.data;
+            } else {
+              // 已经是对象（wx 自动解析了 JSON）
+              const { code, message, data: resData } = res.data;
+              if (code === 200) {
+                resolve(resData);
+              } else {
+                wx.showToast({ title: message || '请求失败', icon: 'none' });
+                reject(new Error(message));
+              }
+              return;
+            }
             let parsed;
             try {
               parsed = JSON.parse(text);
@@ -113,79 +130,62 @@ function request(options) {
 
 function uploadFile(filePath, url, formData = {}) {
   wx.showLoading({ title: '上传中...', mask: true });
+  let loadingShown = true;
 
   const authModule = getAuth();
   const authHeader = authModule.getAuthHeader();
 
   return new Promise((resolve, reject) => {
-    // 读取文件为 ArrayBuffer，然后用 wx.request 手动构造 multipart 上传
-    // 这样可以用 responseType: 'arraybuffer' + TextDecoder 手动 UTF-8 解码响应
-    // 避免 wx.uploadFile 在 Windows 下按 GBK 解码 UTF-8 响应导致中文乱码
-    const fs = wx.getFileSystemManager();
-    fs.readFile({
+    let finished = false;
+    const uploadTask = wx.uploadFile({
+      url: BASE_URL + url,
       filePath,
-      success: (fileRes) => {
-        const fileName = (filePath.split(/[\\/]/).pop()) || 'file';
-        const boundary = '----SafeGuard' + Date.now() + Math.random().toString(36).slice(2);
-
-        // 构造 multipart/form-data 各部分
-        const headerPart = '--' + boundary + '\r\n' +
-          'Content-Disposition: form-data; name="file"; filename="' + fileName + '"\r\n' +
-          'Content-Type: application/octet-stream\r\n\r\n';
-        const footerPart = '\r\n--' + boundary + '--\r\n';
-
-        // 用 TextEncoder 编码文本部分（UTF-8）
-        const encoder = new TextEncoder();
-        const headerBytes = encoder.encode(headerPart);
-        const footerBytes = encoder.encode(footerPart);
-        const fileBytes = new Uint8Array(fileRes.data);
-
-        // 拼接完整的 multipart 请求体
-        const body = new Uint8Array(headerBytes.length + fileBytes.length + footerBytes.length);
-        body.set(headerBytes, 0);
-        body.set(fileBytes, headerBytes.length);
-        body.set(footerBytes, headerBytes.length + fileBytes.length);
-
-        wx.request({
-          url: BASE_URL + url,
-          method: 'POST',
-          data: body.buffer,
-          timeout: 120000,
-          responseType: 'arraybuffer',
-          header: {
-            'Content-Type': 'multipart/form-data; boundary=' + boundary,
-            ...authHeader,
-          },
-          success: (res) => {
-            wx.hideLoading();
-            // 用 TextDecoder 手动 UTF-8 解码，避免 wx.uploadFile 的 GBK 乱码
-            const decoder = new TextDecoder('utf-8');
-            const text = decoder.decode(new Uint8Array(res.data));
+      name: 'file',
+      formData,
+      timeout: 120000,
+      header: authHeader,
+      success: (res) => {
+        finished = true;
+        if (loadingShown) { wx.hideLoading(); loadingShown = false; }
+        if (res.statusCode === 200) {
+          try {
+            // wx.uploadFile 在 Windows 下可能按 GBK 解码 UTF-8 响应导致中文乱码
+            // 尝试用 escape/decodeURIComponent 重新解码（Latin1→UTF-8 修复）
+            let text = res.data;
             try {
-              const data = JSON.parse(text);
-              if (data.code === 200) {
-                resolve(data.data);
-              } else {
-                wx.showToast({ title: data.message || '上传失败', icon: 'none' });
-                reject(new Error(data.message));
-              }
+              text = decodeURIComponent(escape(res.data));
             } catch (e) {
-              console.error('响应解析失败:', text.substring(0, 200));
-              reject(new Error('解析响应失败'));
+              // 重新解码失败，用原始字符串
+              text = res.data;
             }
-          },
-          fail: (err) => {
-            wx.hideLoading();
-            wx.showToast({ title: '上传失败', icon: 'none' });
-            reject(err);
-          },
-        });
+            const data = JSON.parse(text);
+            if (data.code === 200) {
+              resolve(data.data);
+            } else {
+              wx.showToast({ title: data.message || '上传失败', icon: 'none' });
+              reject(new Error(data.message));
+            }
+          } catch (e) {
+            console.error('上传响应解析失败:', res.data && res.data.substring(0, 200));
+            reject(new Error('解析响应失败'));
+          }
+        } else {
+          wx.showToast({ title: '上传失败: ' + res.statusCode, icon: 'none' });
+          reject(new Error('上传失败: ' + res.statusCode));
+        }
       },
       fail: (err) => {
-        wx.hideLoading();
-        wx.showToast({ title: '读取文件失败', icon: 'none' });
+        finished = true;
+        if (loadingShown) { wx.hideLoading(); loadingShown = false; }
+        wx.showToast({ title: '上传失败', icon: 'none' });
         reject(err);
       },
+    });
+
+    uploadTask.onProgressUpdate((res) => {
+      if (!finished && loadingShown) {
+        wx.showLoading({ title: '上传中 ' + res.progress + '%', mask: true });
+      }
     });
   });
 }
