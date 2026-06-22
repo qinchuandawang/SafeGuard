@@ -3,14 +3,25 @@ package com.sdu.safeguard.dto;
 import lombok.Data;
 
 import java.util.List;
+import java.util.Map;
 
 @Data
 public class VideoDetectionResult {
     private String type = "video";
     private Double fakeProbability;
+    private Double visualFakeProbability;
+    private Double averageFakeProbability;
+    private Double maxFakeProbability;
+    private Double suspiciousFrameRatio;
     private Double confidence;
     private String determination;  // "fake" / "real" / "uncertain"
     private String fakeType;
+    private Integer totalFrames;
+    private Integer totalFaces;
+    private Integer framesWithFace;
+    private Boolean aigcMetadataDetected;
+    private Map<String, String> metadataEvidence;
+    private List<String> evidenceReasons;
     private List<FrameAnalysis> frameAnalysis;
     private Probabilities probabilities;
     private String report;  // AI 生成的详细分析报告（纯文本）

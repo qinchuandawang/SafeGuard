@@ -73,15 +73,49 @@
         </el-table-column>
         <el-table-column prop="lastLoginAt" label="最后登录" width="180" />
         <el-table-column prop="createdAt" label="创建时间" width="180" />
+        <el-table-column label="操作" width="150" fixed="right">
+          <template #default="{ row }">
+            <el-button link type="primary" size="small" @click="openEdit(row)">编辑</el-button>
+            <el-button link type="danger" size="small" @click="removeUser(row)">删除</el-button>
+          </template>
+        </el-table-column>
       </el-table>
     </div>
+
+    <el-dialog v-model="dialogVisible" title="编辑用户" width="560px">
+      <el-form :model="form" label-width="80px">
+        <el-form-item label="昵称">
+          <el-input v-model="form.nickname" />
+        </el-form-item>
+        <el-form-item label="角色">
+          <el-select v-model="form.role" style="width:100%">
+            <el-option label="普通用户" value="user" />
+            <el-option label="管理员" value="admin" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="手机号">
+          <el-input v-model="form.phone" />
+        </el-form-item>
+        <el-form-item label="部门">
+          <el-input v-model="form.department" />
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="form.bio" type="textarea" :rows="3" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="saving" @click="saveUser">保存</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { Search } from '@element-plus/icons-vue'
-import { getUsers, getUserDailyStats } from '../api/records'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { deleteUser, getUsers, getUserDailyStats, updateUser } from '../api/records'
 import ChartCard from '../components/ChartCard.vue'
 import * as echarts from 'echarts'
 
@@ -90,6 +124,16 @@ const loading = ref(false)
 const search = ref('')
 const dailyDates = ref([])
 const dailyCounts = ref([])
+const dialogVisible = ref(false)
+const saving = ref(false)
+const editingUser = ref(null)
+const form = ref({
+  nickname: '',
+  role: 'user',
+  phone: '',
+  department: '',
+  bio: '',
+})
 
 const adminCount = computed(() => users.value.filter(u => u.role === 'admin').length)
 const recentCount = computed(() => {
@@ -136,11 +180,51 @@ const filteredUsers = computed(() => {
   if (!search.value) return users.value
   const q = search.value.toLowerCase()
   return users.value.filter(u =>
-    (u.nickname && u.nickname.toLowerCase().includes(q))
+    (u.nickname && u.nickname.toLowerCase().includes(q)) ||
+    (u.openid && u.openid.toLowerCase().includes(q)) ||
+    (u.role && u.role.toLowerCase().includes(q))
   )
 })
 
-onMounted(async () => {
+function openEdit(row) {
+  editingUser.value = row
+  form.value = {
+    nickname: row.nickname || '',
+    role: row.role || 'user',
+    phone: row.phone || '',
+    department: row.department || '',
+    bio: row.bio || '',
+  }
+  dialogVisible.value = true
+}
+
+async function saveUser() {
+  if (!editingUser.value?.id) return
+  saving.value = true
+  try {
+    await updateUser(editingUser.value.id, form.value)
+    ElMessage.success('用户已更新')
+    dialogVisible.value = false
+    await loadUsers()
+  } catch (e) {
+    ElMessage.error('保存失败')
+  } finally {
+    saving.value = false
+  }
+}
+
+async function removeUser(row) {
+  try {
+    await ElMessageBox.confirm(`确定删除用户「${row.nickname || row.openid || row.id}」吗？`, '删除确认', { type: 'warning' })
+    await deleteUser(row.id)
+    ElMessage.success('已删除')
+    await loadUsers()
+  } catch (e) {
+    if (e !== 'cancel') ElMessage.error('删除失败')
+  }
+}
+
+async function loadUsers() {
   loading.value = true
   try {
     const [userList, daily] = await Promise.allSettled([getUsers(), getUserDailyStats(7)])
@@ -151,6 +235,10 @@ onMounted(async () => {
     }
   } catch (e) { console.error(e) }
   finally { loading.value = false }
+}
+
+onMounted(async () => {
+  await loadUsers()
 })
 </script>
 

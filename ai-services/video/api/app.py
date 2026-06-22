@@ -16,7 +16,7 @@ from PIL import Image
 import numpy as np
 import cv2
 import tempfile
-import os
+import threading
 from pathlib import Path
 
 from models.xception import xception
@@ -27,7 +27,20 @@ app = Flask(__name__)
 CORS(app)
 
 # 配置
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+def select_device():
+    """优先使用环境变量指定的设备，演示环境默认走 GPU。"""
+    requested = os.environ.get('SAFEGUARD_DEVICE', 'cuda').strip().lower()
+    if requested.startswith('cuda'):
+        if torch.cuda.is_available():
+            return torch.device(requested)
+        print('[WARN] SAFEGUARD_DEVICE=cuda，但当前 PyTorch 未检测到 CUDA，已退回 CPU')
+        return torch.device('cpu')
+    if requested == 'cpu':
+        return torch.device('cpu')
+    return torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+
+DEVICE = select_device()
 MODEL_PATH = 'pretrained/best_model.pth'
 IMAGE_SIZE = (299, 299)
 MAX_UPLOAD_MB = int(os.environ.get('MAX_UPLOAD_MB', '100'))
@@ -68,29 +81,31 @@ def validate_upload(file, allowed_extensions):
 
 # 模型引用，惰性加载
 _model_instance = None
+_model_lock = threading.RLock()
 
 def load_model(model_path):
     """惰性加载模型，仅在首次请求时加载"""
     global _model_instance
     if _model_instance is not None:
         return _model_instance
-    print(f"[首次加载] 模型: {model_path}, 设备: {DEVICE}")
+    with _model_lock:
+        if _model_instance is not None:
+            return _model_instance
+        print(f"[首次加载] 模型: {model_path}, 设备: {DEVICE}")
 
-    if not os.path.exists(model_path):
-        raise FileNotFoundError(
-            f"模型文件不存在: {model_path}。请先下载预训练模型并放置到 {MODEL_PATH}。"
-        )
+        if not os.path.exists(model_path):
+            raise FileNotFoundError(
+                f"模型文件不存在: {model_path}。请先下载预训练模型并放置到 {MODEL_PATH}。"
+            )
 
-    model = xception(num_classes=2)
-    checkpoint = torch.load(model_path, map_location=DEVICE, weights_only=False)
-    model.load_state_dict(checkpoint['model_state_dict'])
-    print(f"模型加载成功：{model_path}")
-    model.to(DEVICE)
-    model.eval()
-    if DEVICE.type == "cuda":
-        model.half()
-    _model_instance = model
-    return model
+        model = xception(num_classes=2)
+        checkpoint = torch.load(model_path, map_location=DEVICE, weights_only=False)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        print(f"模型加载成功：{model_path}")
+        model.to(DEVICE)
+        model.eval()
+        _model_instance = model
+        return model
 
 
 def get_model():
@@ -115,14 +130,18 @@ def detect_faces_in_image(image_path):
 
 
 def predict_image(image):
-    """预测单张图片（半精度推理）"""
-    dtype = torch.float16 if DEVICE.type == "cuda" else torch.float32
+    """预测单张图片。
+
+    演示场景优先保证判定稳定性，CUDA 上也使用 float32，避免半精度把低概率压得过低。
+    """
+    dtype = torch.float32
     image_tensor = transform(image).unsqueeze(0).to(DEVICE, dtype=dtype)
 
-    with torch.no_grad():
-        outputs = get_model()(image_tensor)
-        probs = F.softmax(outputs, dim=1)
-        fake_prob = probs[0][1].item()
+    with _model_lock:
+        with torch.no_grad():
+            outputs = get_model()(image_tensor)
+            probs = F.softmax(outputs, dim=1)
+            fake_prob = probs[0][1].item()
     
     return {
         'is_fake': fake_prob > 0.5,
@@ -191,9 +210,11 @@ def predict_video(video_path, max_frames=None):
         if len(all_fake_probs) > 0:
             avg_fake_prob = float(np.mean(all_fake_probs))
             max_fake_prob = float(np.max(all_fake_probs))
+            suspicious_frame_ratio = float(sum(1 for p in all_fake_probs if p >= 0.5) / len(all_fake_probs))
         else:
             avg_fake_prob = 0.0
             max_fake_prob = 0.0
+            suspicious_frame_ratio = 0.0
 
         # 全部帧都无人脸时：不能简单判定为"真实"
         # 标记为"uncertain"并把 fake_probability 设为 0.5
@@ -201,6 +222,14 @@ def predict_video(video_path, max_frames=None):
         if is_uncertain:
             avg_fake_prob = 0.5
             max_fake_prob = 0.5
+            suspicious_frame_ratio = 0.0
+
+        aggregate_fake_probability = max(
+            avg_fake_prob,
+            max_fake_prob * 0.82,
+            0.62 + min(0.18, suspicious_frame_ratio * 0.25) if suspicious_frame_ratio >= 0.25 else 0.0,
+            0.45 + suspicious_frame_ratio * 0.5 if suspicious_frame_ratio > 0 else 0.0,
+        )
 
         return {
             'frame_results': frame_results,
@@ -209,7 +238,9 @@ def predict_video(video_path, max_frames=None):
             'frames_with_face': frames_with_face,
             'average_fake_probability': float(avg_fake_prob),
             'max_fake_probability': float(max_fake_prob),
-            'is_fake': (not is_uncertain) and (avg_fake_prob > 0.5),
+            'aggregate_fake_probability': float(aggregate_fake_probability),
+            'suspicious_frame_ratio': float(suspicious_frame_ratio),
+            'is_fake': (not is_uncertain) and (aggregate_fake_probability >= 0.55),
             'is_uncertain': is_uncertain,
             'uncertain_reason': '所有帧均未检测到人脸' if is_uncertain else None,
         }
@@ -221,12 +252,21 @@ def predict_video(video_path, max_frames=None):
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
-    """健康检查"""
-    return success_response({
-        'status': 'healthy',
-        'device': str(DEVICE),
-        'model_loaded': True
-    })
+    """健康检查，同时预热模型，避免演示时第一次检测才暴露模型问题"""
+    try:
+        get_model()
+        return success_response({
+            'status': 'healthy',
+            'device': str(DEVICE),
+            'model_loaded': True,
+            'model_path': MODEL_PATH
+        })
+    except Exception as exc:
+        return error_response(
+            f'视频模型未就绪: {exc}',
+            http_status=503,
+            code=503
+        )
 
 
 @app.route('/api/detect/image', methods=['POST'])

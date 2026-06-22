@@ -1,208 +1,252 @@
 # SafeGuard - AI 反诈骗检测系统
 
-> 基于大模型智能体的全方位 AI 反诈骗检测平台
+> 基于 DeepSeek 智能体调度的多模态 AI 反诈骗检测平台。项目面向课程设计演示，重点实现文本、音频、视频和多模态检测链路跑通，并提供微信小程序端、管理后台和本地 AI 推理服务。
+
+## 核心功能
+
+| 模块 | 功能说明 |
+|------|----------|
+| AI 智能助手 | 基于 DeepSeek 和反诈知识库回答用户问题，支持流式输出中文回复 |
+| 文本检测 | 支持文本框输入和文档上传，调用大模型分析诈骗话术、风险等级和处置建议 |
+| 音频检测 | 使用 Wav2Vec2 音频伪造检测模型，支持单文件和批量音频检测 |
+| 视频检测 | 使用 XceptionNet 对视频关键帧进行换脸/面部篡改检测，并结合 AIGC 元数据证据生成报告 |
+| 多模态检测 | 由 DeepSeek 作为中枢 Agent 融合文本、音频、视频结果并输出综合判断 |
+| 模拟诈骗训练 | 模拟真实诈骗对话场景，帮助用户识别风险话术和训练应对方式 |
+| 检测历史 | 小程序端可查看历史检测记录，便于演示完整业务闭环 |
+| 管理后台 | 提供数据统计、检测记录、用户管理、模型信息和知识库管理能力 |
 
 ## 项目结构
 
-```
+```text
 SafeGuard/
-├── backend/                  # Spring Boot 后端 (Java 17)
-│   ├── src/main/java/        # Java 源码
-│   ├── src/main/resources/   # 配置、SQL、知识库
-│   └── pom.xml               # Maven 构建
+├── backend/                  # Spring Boot 后端，统一 API、任务调度、报告生成
 ├── ai-services/              # Python AI 推理服务
-│   ├── audio/                # 音频伪造检测 (Wav2Vec2)
-│   │   └── pretrained/       # 模型文件（已包含）
-│   ├── video/                # 视频换脸检测 (XceptionNet)
-│   │   └── pretrained/       # 模型文件（已包含）
-│   └── run.py                # 一键启动脚本
-├── web-admin/                # 管理后台 (Vue 3)
-├── wechat-app/               # 微信小程序
-│   └── frontend/             # 小程序源码
-└── docker-compose.yml        # 容器编排
+│   ├── audio/                # Wav2Vec2 音频伪造检测服务，端口 5000
+│   └── video/                # XceptionNet 视频/图像检测服务，端口 5002
+├── wechat-app/
+│   └── frontend/             # 微信小程序源码，演示时打开这个目录
+├── web-admin/                # Vue 3 管理后台，端口 5173
+├── scripts/                  # 本地服务启动脚本
+├── test_data/                # 文本、音频、视频测试素材
+├── start-backend.cmd         # Windows 一键启动脚本
+└── docker-compose.yml        # MySQL、Qdrant 等容器编排
 ```
 
-## 快速开始
+## 小组分工
 
-### 环境要求
+| 成员 | 分工 | 工作内容 |
+|------|------|----------|
+| 彭宏缤 | 后端 | 负责 Spring Boot 后端接口、检测任务调度、数据库记录、历史查询、DeepSeek 调用、报告生成和多模态融合逻辑 |
+| 朱乘雨 | 前端 | 负责微信小程序端和管理后台页面，包括检测页面、AI 助手、模拟诈骗、检测历史、结果展示和交互优化 |
+| 刘志恒 | 音频训练 | 负责音频伪造检测方向，包括 Wav2Vec2 模型训练、音频预处理、模型权重整理和 Python 音频推理服务 |
+| 王家和 | 视频训练 | 负责视频检测方向，包括 XceptionNet 模型训练、视频抽帧、人脸/关键帧检测、模型权重整理和 Python 视频推理服务 |
 
-| 工具 | 版本 | 用途 |
-|------|------|------|
+## 技术架构
+
+```text
+微信小程序 / 管理后台
+        |
+        v
+Spring Boot 后端
+        |
+        +-- DeepSeek：文本分析、AI 助手、模拟诈骗、多模态综合研判
+        +-- Wav2Vec2 音频服务：音频伪造检测
+        +-- XceptionNet 视频服务：视频关键帧换脸/面部篡改检测
+        +-- MySQL：用户、检测记录、模型记录
+        +-- Qdrant / 内存回退：反诈知识检索
+```
+
+本项目的设计口径是“大模型作为中枢大脑”：DeepSeek 负责理解任务、生成分析报告和融合多源证据；音频、视频训练模型作为专用工具被后端调度。视频检测目前聚焦换脸/面部篡改风险，不等同于通用视频大模型直接判断所有 AI 生成视频。
+
+## 环境要求
+
+| 工具 | 建议版本 | 用途 |
+|------|----------|------|
 | JDK | 17+ | 运行后端 |
-| Maven | 3.9+（或用 mvnw） | 构建后端 |
+| Maven | 3.9+ | 构建后端 |
 | MySQL | 8.0+ | 数据库 |
-| Python | 3.11 | AI 推理服务 |
+| Python | 3.11 | 音频/视频 AI 服务 |
+| PyTorch | CUDA 版本优先 | GPU 推理 |
 | Node.js | 18+ | 管理后台 |
-| 微信开发者工具 | 最新 | 运行小程序 |
-| Docker（可选） | 最新 | Qdrant / 一键部署 |
+| 微信开发者工具 | 最新版 | 运行小程序 |
+| Docker | 可选 | Qdrant / MySQL 容器 |
 
----
+如果本机有 NVIDIA GPU，音频和视频服务默认会优先使用 `cuda`。启动窗口会打印设备信息，示例：`设备: cuda`。
 
-### 第 1 步：后端
+## 快速启动
+
+### 方式 A：Windows 一键启动（推荐演示使用）
+
+在项目根目录运行：
+
+```bat
+start-backend.cmd
+```
+
+脚本会打开独立控制台窗口启动：
+
+| 服务 | 地址 |
+|------|------|
+| Java 后端 | `http://localhost:8080` |
+| 音频检测服务 | `http://localhost:5000/health` |
+| 视频检测服务 | `http://localhost:5002/api/health` |
+| 管理后台 | `http://localhost:5173` |
+
+一键脚本会在启动后访问音频和视频健康检查接口，提前加载本地模型，减少第一次检测时的等待时间。演示前建议等待主窗口出现：
+
+```text
+[OK] Audio model ready and warmed.
+[OK] Video model ready and warmed.
+```
+
+### 方式 B：手动启动
+
+后端：
 
 ```bash
-# 1.1 创建数据库
-mysql -u root -p
-CREATE DATABASE safeguard CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
-# 1.2 配置 API Key（如需使用大模型和 RAG 功能）
-#    编辑 backend/src/main/resources/application.yml
-#    - llm.api-key     → DeepSeek / SophNet 的 API Key（文本分析用）
-#    - siliconflow.api-key → SiliconFlow 的 API Key（RAG 向量检索用）
-#    不配置也不影响运行，只是"文本分析"和"RAG查询"功能会降级
-
-# 1.3 编译并启动
 cd backend
-mvn compile
 mvn spring-boot:run
-# 访问 http://localhost:8080/api/health 验证启动
 ```
 
-后端会自动创建表结构并写入初始数据。
-
-### 第 2 步：AI 推理服务（Python）
+音频服务：
 
 ```bash
-cd ai-services
-
-# 2.1 创建虚拟环境（Python 3.11）
-python -m venv .venv
-
-# 2.2 安装依赖
-.\.venv\Scripts\python.exe -m pip install -U pip
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-
-# 2.3 启动（音频 :5000 + 视频 :5002；可通过环境变量覆盖）
-.\.venv\Scripts\python.exe run.py
+scripts/start-audio-service.cmd
 ```
 
-> 模型文件已包含在仓库中，无需额外下载：
-> - 音频：`audio/pretrained/asvspoof-finetuned/`（361MB）
-> - 视频：`video/pretrained/best_model.pth`（245MB，准确率 85%）
+视频服务：
 
-### 第 3 步：管理后台
+```bash
+scripts/start-video-service.cmd
+```
+
+管理后台：
 
 ```bash
 cd web-admin
 npm install
 npm run dev
-# 访问 http://localhost:5173
-# 首次使用需在登录页点击"注册管理员"创建一个管理员账号
 ```
 
-### 第 4 步：微信小程序
+微信小程序：
 
-1. 打开**微信开发者工具**
-2. 导入项目 → 选择 `wechat-app/frontend` 目录
-3. 无需修改配置（默认连接 `localhost:8080`）
-4. 编译运行
+1. 打开微信开发者工具。
+2. 导入项目时选择 `wechat-app/frontend`。
+3. 编译运行。
+4. 默认连接 `http://localhost:8080`，真机预览时需要把接口地址改成电脑局域网 IP。
+
+## 配置说明
+
+项目支持通过根目录 `.env` 或系统环境变量配置关键参数。演示环境通常使用本地 MySQL：
+
+```env
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=safeguard
+DB_USERNAME=root
+DB_PASSWORD=
+
+LLM_API_KEY=你的 DeepSeek API Key
+LLM_MODEL=DeepSeek-V4-Pro
+SILICONFLOW_API_KEY=你的 SiliconFlow API Key
+SAFEGUARD_DEVICE=cuda
+```
+
+说明：
+
+- `LLM_API_KEY` 用于文本检测、AI 助手、模拟诈骗和综合报告。
+- `SILICONFLOW_API_KEY` 用于 RAG 向量检索；未配置时会降级为关键词检索或内存回退。
+- `SAFEGUARD_DEVICE=cuda` 表示音频/视频 Python 服务优先使用 GPU；如果 PyTorch 未检测到 CUDA，会自动退回 CPU 并在控制台提示。
+
+## 模型文件
+
+大模型权重不提交到 Git，演示机器本地需要保留：
+
+| 模型 | 路径 |
+|------|------|
+| 音频 Wav2Vec2 | `ai-services/audio/pretrained/asvspoof-finetuned/model.safetensors` |
+| 视频 XceptionNet | `ai-services/video/pretrained/best_model.pth` |
+
+重新克隆项目后，需要从组员提供的模型包或备份中恢复上述文件。
+
+## 测试素材
+
+`test_data/` 目录提供演示素材：
+
+```text
+test_data/
+├── text/       # 文本诈骗话术与文档素材
+├── audio/      # 音频检测素材
+└── video/      # 视频检测素材
+```
+
+建议演示顺序：
+
+1. 打开 AI 智能助手，提问一个反诈问题，展示流式中文回复。
+2. 文本检测：输入文本或上传文档，展示大模型分析报告。
+3. 音频检测：上传 `test_data/audio` 中的素材，展示 Wav2Vec2 检测结果和处理进度。
+4. 视频检测：上传 `test_data/video` 中的素材，展示抽帧进度、逐帧风险、元数据证据和综合报告。
+5. 打开检测历史，展示记录已保存。
+6. 打开模拟诈骗，展示真实感对话训练。
 
 ## 端口一览
 
 | 服务 | 端口 | 说明 |
 |------|------|------|
-| Spring Boot 后端 | 8080 | API 服务 |
-| 音频检测 (Python) | 5000 | 音频伪造检测（`AUDIO_PORT` 覆盖） |
-| 视频检测 (Python) | 5002 | 视频换脸检测（`VIDEO_PORT` 覆盖） |
-| 管理后台 (Vite) | 5173 | Web 管理界面 |
-| MySQL | 3306 | 数据库 |
-| Qdrant（可选） | 6333 | 向量数据库 |
+| Spring Boot 后端 | 8080 | 小程序和管理后台 API |
+| 音频检测服务 | 5000 | Wav2Vec2 音频伪造检测 |
+| 视频检测服务 | 5002 | XceptionNet 图像/视频检测 |
+| 管理后台 | 5173 | Vue 3 Web 管理界面 |
+| MySQL | 3306 | 业务数据库 |
+| Qdrant | 6333 | 向量数据库，可选 |
 
 ## 数据库
 
-### 方式 A：使用 Docker（推荐）
-
-```bash
-docker compose up -d db qdrant
-```
-
-### 方式 B：本地 MySQL
+本地 MySQL 示例：
 
 ```bash
 mysql -u root -p
 CREATE DATABASE safeguard CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-> Qdrant 不可用时，系统会自动使用内存回退模式，不影响演示。
->
-> **RAG 知识库完整使用条件**：① Docker 启动 Qdrant 容器（自动）；② 配置 `SILICONFLOW_API_KEY` 环境变量（用于生成 embedding 向量）。缺一则知识问答降级为关键词匹配。详见"常见问题"。
+如果使用 Docker：
 
-## 依赖服务说明
-
-| 服务 | 是否必需 | 不配置的影响 |
-|------|---------|-------------|
-| MySQL | **必需** | 后端无法启动 |
-| Qdrant | 可选 | 自动内存回退，功能正常 |
-| LLM API Key | 可选 | 文本分析、模拟诈骗功能不可用 |
-| SiliconFlow Key | 可选 | RAG 检索降级为关键词匹配 |
-
-### 获取 API Key（如需使用全部功能）
-
-- **LLM API（文本分析、模拟诈骗）**：注册 SophNet / DeepSeek 获取 API Key，填入 `application.yml` 的 `llm.api-key`
-- **SiliconFlow（RAG 向量检索）**：注册 SiliconFlow 获取 API Key，填入 `application.yml` 的 `siliconflow.api-key`
-- 主要演示功能（音频检测、视频检测、知识库、后台管理）**不需要 API Key**
-
-## 演示流程
-
-1. 依次启动后端 → Python 服务 → 管理后台
-2. 浏览器打开管理后台，登录查看知识库、统计数据
-3. 微信开发者工具打开小程序，选择音频/视频文件进行检测
-4. `test_data/` 目录下已有测试用的音频、视频、文本文件
-
-## 常见问题
-
-**Q: Python 依赖安装失败？**
-A: 确保已安装 Python 3.11，使用虚拟环境安装：
 ```bash
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+docker compose up -d db qdrant
 ```
 
-**Q: face_recognition 安装报错？**
-A: 需要 CMake 编译工具，但也已预编译好的 `dlib-bin` 包：
-```bash
-.\.venv\Scripts\python.exe -m pip install dlib-bin
-```
-
-**Q: 后端启动端口 8080 被占用？**
-A: 上次关闭时进程未完全退出，手动杀掉：
-```bash
-netstat -ano | findstr :8080
-taskkill /F /PID 查到的PID
-```
-> 早期版本曾自动 `taskkill /F /PID` 占用 8080 的进程，但该行为会误杀用户机器上其他服务（调试中的另一组 Spring Boot、API 工具等），已移除。如遇端口冲突请按上述方式手动处理。
-
-**Q: 音频模型需要训练吗？**
-A: 不需要。`pretrained/asvspoof-finetuned/` 已包含微调好的模型，直接可用。训练由组员单独负责。
-
-**Q: 视频模型需要训练吗？**
-A: 不需要。`pretrained/best_model.pth` 已包含训练好的模型（85% 准确率），直接可用。
-
-**Q: 启动时出现 `Qdrant 批量插入失败: 400 ... value fixed_xxx is not a valid point ID`？**
-A: 这是 `QdrantService` 已知 bug。Qdrant 1.7+ 严格要求 point ID 为 unsigned integer 或 UUID，而项目生成的 chunkId 形如 `"fixed_anti_fraud_knowledge.txt_0"` 含 `.` 字符。已在 1 个文件中修复：把 `point.put("id", chunkIds.get(i))` 改为 `point.put("id", toQdrantId(chunkIds.get(i)))`（用 `UUID.nameUUIDFromBytes()` 派生）。**注意**：即使修复了 Qdrant ID，如果 `SILICONFLOW_API_KEY` 仍未配置，向量本身是垃圾，语义检索仍然搜不准。需先配置 SiliconFlow Key 才能体验完整 RAG。
-
-**Q: 管理后台默认账号密码是什么？**
-A: 系统**没有默认管理员账号**。首次部署后，请打开登录页点击"注册管理员"创建第一个管理员账号（用户名、昵称、密码 ≥ 6 位）。
-
-**Q: 管理后台 AI 安全助手如何使用？**
-A: 右下角浮动按钮 → 输入问题 → 自动调用后端大模型流式接口（SSE）。需要 `application.yml` 中配置 `llm.api-key`（DeepSeek/SophNet），未配置时会返回降级提示。
-
-**Q: Dashboard 趋势图/饼图是真实数据吗？**
-A: 是。后端从 `detection_record` 表按日期+结果分组聚合，缺失日期补 0。`web-admin/src/views/Dashboard.vue` 调 `/admin/api/stats/trend?days=7|30` 与 `/admin/api/stats/distribution`。
-
-**Q: 用户列表的 OpenID 为何只显示前 4 后 4？**
-A: 为保护用户隐私，列表中 OpenID 默认脱敏显示（`xxxx…xxxx`），鼠标悬停 tooltip 可查看完整值。
+Qdrant 不可用时，系统会使用内存回退模式，不影响核心演示。
 
 ## 技术栈
 
 | 技术 | 用途 |
 |------|------|
-| Spring Boot 4.0 + Java 17 | 后端框架 |
-| MyBatis-Plus + MySQL | 数据库 |
-| Wav2Vec2 (HuggingFace) | 音频伪造检测 |
-| XceptionNet (PyTorch) | 视频换脸检测 |
-| DeepSeek / SophNet API | 大模型文本分析 |
-| SiliconFlow API | 向量嵌入 + 重排序 |
-| Qdrant | 向量数据库 |
-| Vue 3 + Element Plus | 管理后台 |
+| Spring Boot + Java 17 | 后端 API、任务调度、报告生成 |
+| MyBatis-Plus + MySQL | 数据持久化 |
+| DeepSeek | 文本分析、AI 助手、多模态研判 |
+| Wav2Vec2 + PyTorch | 音频伪造检测 |
+| XceptionNet + PyTorch | 视频换脸/面部篡改检测 |
+| FFmpeg / JavaCV | 视频元数据读取、抽帧 |
+| SiliconFlow + Qdrant | RAG 知识检索 |
 | 微信小程序 + TDesign | 用户端 |
+| Vue 3 + Element Plus | 管理后台 |
+
+## 常见问题
+
+**Q：微信开发者工具应该打开哪个目录？**  
+A：打开 `wechat-app/frontend`，不要打开 `frontend` 或仓库根目录。
+
+**Q：首次检测为什么慢？**  
+A：音频和视频本地模型首次运行需要加载权重到 CPU/GPU。一键启动脚本已经通过健康检查预热模型，建议等预热完成后再演示。
+
+**Q：为什么视频检测报告会区分视觉风险和综合风险？**  
+A：XceptionNet 主要检测换脸/面部篡改痕迹；如果视频元数据包含 AIGC 来源标记，系统会把它作为强证据提高综合风险。因此可能出现“视觉换脸风险不高，但综合风险较高”的情况。
+
+**Q：文本检测为什么需要 DeepSeek？**  
+A：文本诈骗识别需要理解语义、话术、上下文和反诈知识，不能靠后端写死规则。后端会调用 DeepSeek 输出结构化风险判断，再转成正常中文报告。
+
+**Q：没有配置 SiliconFlow 会怎样？**  
+A：RAG 语义检索能力会下降，但系统会降级为关键词检索或内存回退，不影响核心检测链路演示。
+
+**Q：管理后台默认账号是什么？**  
+A：没有默认管理员账号。首次使用需要在登录页注册管理员。

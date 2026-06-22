@@ -19,6 +19,11 @@ public class LLMConfig {
 
     @PostConstruct
     public void validate() {
+        if ("deepseek-v4-pro".equalsIgnoreCase(model)) {
+            model = "DeepSeek-V4-Pro";
+        } else if ("deepseek-v4-flash".equalsIgnoreCase(model)) {
+            model = "DeepSeek-V4-Flash";
+        }
         if (apiKey == null || apiKey.isBlank()) {
             log.warn("LLM API Key 未配置");
         }
@@ -27,6 +32,8 @@ public class LLMConfig {
         }
         if (model == null || model.isBlank()) {
             log.warn("LLM model 未配置");
+        } else {
+            log.info("LLM 配置加载完成: model={}", model);
         }
     }
 }

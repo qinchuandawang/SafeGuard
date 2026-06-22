@@ -32,8 +32,9 @@ public class AsyncConfig {
     @Bean(name = "videoFrameExecutor")
     public Executor videoFrameExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(4);
-        executor.setMaxPoolSize(8);
+        // 视频模型占用显存/内存较高，演示环境优先稳定，逐帧串行调用 Python 服务。
+        executor.setCorePoolSize(1);
+        executor.setMaxPoolSize(1);
         executor.setQueueCapacity(30);
         executor.setThreadNamePrefix("video-frame-");
         executor.setWaitForTasksToCompleteOnShutdown(true);

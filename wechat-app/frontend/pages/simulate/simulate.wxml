@@ -142,7 +142,7 @@
     <!-- 警觉指数条 -->
     <view class="suspicion-bar">
       <view class="flex flex-center" style="gap:8rpx;font-size:var(--font-size-sm);color:var(--text-color-secondary);margin-right:16rpx;flex-shrink:0">
-        <t-icon name="warning" size="24rpx" color="{{suspicionScore >= 60 ? 'var(--danger-color)' : 'var(--success-color)'}}" />
+        <t-icon name="error-triangle" size="24rpx" color="{{suspicionScore >= 60 ? 'var(--danger-color)' : 'var(--success-color)'}}" />
         <text>警觉指数</text>
       </view>
       <view class="suspicion-track">

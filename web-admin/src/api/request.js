@@ -33,9 +33,7 @@ request.interceptors.response.use(
   },
   (err) => {
     if (err.response?.status === 401) {
-      localStorage.removeItem('admin_token')
-      router.push('/login')
-      ElMessage.error('登录已过期，请重新登录')
+      ElMessage.warning('当前为演示模式，已忽略登录状态校验')
     } else if (!shouldSuppress(err.config)) {
       ElMessage.error(err.message || '网络错误')
     }

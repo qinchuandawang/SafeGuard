@@ -35,12 +35,13 @@ Page({
   },
 
   onShow() {
+    this._destroyed = false;
     if (this.data.selectedScript && !this.data.isTyping) {
       this.setData({ inputFocused: true });
     }
   },
 
-  onHide() { this._destroyed = true; this.stopStreaming(); },
+  onHide() { this.stopStreaming(); },
   onUnload() { this._destroyed = true; this.stopStreaming(); },
 
   async loadScripts() {
@@ -93,7 +94,8 @@ Page({
 
   onTipVisibleChange(e) {
     // e 为 TDesign popup visible-change 事件：{ detail: { visible: boolean } }
-    const visible = e?.detail?.visible === true;
+    const datasetVisible = e?.currentTarget?.dataset?.visible;
+    const visible = datasetVisible === 'false' ? false : e?.detail?.visible === true;
     this.setData({ showStartTip: visible });
   },
 
@@ -112,8 +114,17 @@ Page({
 
     try {
       const response = await simulateAPI.startSimulation(this.data.currentScript.id);
-      const content = typeof response === 'string' ? response : (response.content || response.message || response.data || '模拟开始');
-      await this._processAIMessage({ content });
+      const payload = typeof response === 'string'
+        ? { content: response }
+        : {
+            content: response.content || response.message || '模拟开始',
+            quickReplies: response.quickReplies,
+            suspicionDelta: response.suspicionDelta,
+          };
+      if (typeof payload.suspicionDelta === 'number') {
+        this.applySuspicionDelta(payload.suspicionDelta);
+      }
+      await this._processAIMessage(payload);
     } catch (err) {
       console.error('开始模拟失败:', err);
       this.setData({ loadingError: '无法连接到AI服务，请检查网络后重试' });
@@ -133,7 +144,12 @@ Page({
     this.setData({ messages: newMessages });
     this.scrollToBottom();
 
-    await this.tryStream(aiMessageId, { ...safeResponse, content: aiContent });
+    try {
+      await this.tryStream(aiMessageId, { ...safeResponse, content: aiContent });
+    } catch (err) {
+      console.warn('模拟消息播放失败:', err);
+      this.finishStreaming(aiMessageId, aiContent || '网络有点不稳定，我稍后再说。');
+    }
   },
 
   async sendMessage() {
@@ -162,19 +178,27 @@ Page({
         messages.map(m => ({ role: m.role, content: m.content }))
       );
 
-      const aiContent = typeof response === 'string' ? response : (response.content || response.message || '');
-      await this._processAIMessage({ content: aiContent, quickReplies: response?.quickReplies });
+      const payload = typeof response === 'string'
+        ? { content: response }
+        : {
+            content: response.content || response.message || '',
+            quickReplies: response.quickReplies,
+            suspicionDelta: response.suspicionDelta,
+            finished: response.finished,
+            analysis: response.analysis,
+            tips: response.tips,
+          };
+      await this._processAIMessage(payload);
 
       // 自增轮次计数（P0 fix: E1）
       const newTurnCount = this.data.turnCount + 1;
       this.setData({ turnCount: newTurnCount });
 
-      if (response && typeof response !== 'string' && response.suspicionDelta) {
-        const newScore = Math.max(0, Math.min(100, this.data.suspicionScore + response.suspicionDelta));
-        this.setData({ suspicionScore: newScore });
+      if (typeof payload.suspicionDelta === 'number') {
+        this.applySuspicionDelta(payload.suspicionDelta);
       }
-      if (response && typeof response !== 'string' && response.finished) {
-        setTimeout(() => this.showEndSummary(response), 800);
+      if (payload.finished) {
+        setTimeout(() => this.showEndSummary(payload), 800);
       } else if (newTurnCount >= this.data.maxTurns) {
         // 达到最大轮次，自动结束模拟
         const endData = { analysis: '', tips: [] };
@@ -184,6 +208,11 @@ Page({
       console.error('发送消息失败:', err);
       this.setData({ isTyping: false, loadingError: '消息发送失败，请重试' });
     }
+  },
+
+  applySuspicionDelta(delta) {
+    const newScore = Math.max(0, Math.min(100, this.data.suspicionScore + delta));
+    this.setData({ suspicionScore: newScore });
   },
 
   tryStream(messageId, response) {
@@ -262,26 +291,31 @@ Page({
 
   async streamContent(messageId, fullContent) {
     this.setData({ isStreaming: true, streamingMessageId: messageId, streamingContent: '' });
-    for (let i = 0; i <= fullContent.length; i++) {
-      if (this._destroyed || !this.data.isStreaming || this.data.streamingMessageId !== messageId) break;
-      this.updateStreamingMessage(messageId, fullContent.slice(0, i));
-      const char = fullContent[i - 1];
-      let delay = 30;
-      if (char && /[一-龥]/.test(char)) delay = 40;
-      else if (char && /[.,!?;:，。！？；：]/.test(char)) delay = 120;
-      else if (char === '\n') delay = 80;
-      await this.sleep(delay);
-    }
-    if (!this._destroyed) {
-      this.finishStreaming(messageId, fullContent);
+    const step = fullContent.length > 120 ? 2 : 1;
+    try {
+      for (let i = 0; i <= fullContent.length; i += step) {
+        if (this._destroyed || !this.data.isStreaming || this.data.streamingMessageId !== messageId) break;
+        this.updateStreamingMessage(messageId, fullContent.slice(0, i));
+        const char = fullContent[i - 1];
+        let delay = 18;
+        if (char && /[.,!?;:，。！？；：]/.test(char)) delay = 70;
+        else if (char === '\n') delay = 50;
+        await this.sleep(delay);
+      }
+    } finally {
+      if (!this._destroyed && this.data.streamingMessageId === messageId) {
+        this.finishStreaming(messageId, fullContent);
+      }
     }
   },
 
   stopStreaming() {
     if (this._sseRequestTask) { this._sseRequestTask.abort(); this._sseRequestTask = null; }
     if (this.data.isStreaming && this.data.streamingMessageId) {
-      const messages = this.data.messages.map(msg => msg.id === this.data.streamingMessageId ? { ...msg, content: this.data.streamingContent, isLoading: false } : msg);
+      const messages = this.data.messages.map(msg => msg.id === this.data.streamingMessageId ? { ...msg, content: this.data.streamingContent || msg.content, isLoading: false } : msg);
       this.setData({ messages, isTyping: false, isStreaming: false, streamingMessageId: null });
+    } else if (this.data.isTyping) {
+      this.setData({ isTyping: false });
     }
     if (this._streamResolve) { this._streamResolve(); this._streamResolve = null; }
   },

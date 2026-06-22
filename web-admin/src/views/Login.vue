@@ -53,8 +53,8 @@
                 <el-button type="primary" size="large" class="login-btn" :loading="loading" @click="handleLogin">{{ loading ? '登录中...' : '登 录' }}</el-button>
               </el-form-item>
               <div class="quick-login">
-                <el-button size="large" class="quick-btn" :loading="adminQuickLoading" @click="quickAdminLogin">管理员一键登录</el-button>
-                <el-button size="large" class="quick-btn user" :loading="userQuickLoading" @click="quickUserLogin">用户一键登录</el-button>
+                <el-button size="large" class="quick-btn" :loading="adminQuickLoading" @click="quickAdminLogin">演示一键登录</el-button>
+                <el-button size="large" class="quick-btn user" @click="fillDemoAccount">填入演示账号</el-button>
               </div>
             </el-form>
           </template>
@@ -105,7 +105,6 @@ const mode = ref('login')
 const loading = ref(false)
 const regLoading = ref(false)
 const adminQuickLoading = ref(false)
-const userQuickLoading = ref(false)
 const form = reactive({ username: '', password: '' })
 const regForm = reactive({ username: '', nickname: '', password: '', confirm: '' })
 
@@ -140,16 +139,10 @@ async function quickAdminLogin() {
   finally { adminQuickLoading.value = false }
 }
 
-async function quickUserLogin() {
-  userQuickLoading.value = true
-  try {
-    const data = await adminLogin('default', 'admin123')
-    localStorage.setItem('admin_token', data.token)
-    localStorage.setItem('admin_name', '用户演示')
-    ElMessage.success('已进入用户演示模式')
-    router.push('/dashboard')
-  } catch (e) { /* handled */ }
-  finally { userQuickLoading.value = false }
+function fillDemoAccount() {
+  form.username = 'default'
+  form.password = 'admin123'
+  ElMessage.success('已填入演示账号')
 }
 
 async function handleRegister() {

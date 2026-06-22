@@ -1,0 +1,265 @@
+{
+  "input": "D:\\Git\\SafeGuard\\\u6587\u6863\\ppt\\SafeGuard\u9879\u76ee\u6c47\u62a5.pptx",
+  "style_preset": "executive-clinical",
+  "renderer_detected": "python-pptx",
+  "summary": {
+    "slide_count": 13,
+    "violation_count": 10,
+    "error_count": 0,
+    "warning_count": 10,
+    "density_score_by_slide": [
+      {
+        "slide_index": 0,
+        "density_score": 0.269
+      },
+      {
+        "slide_index": 1,
+        "density_score": 1.0
+      },
+      {
+        "slide_index": 2,
+        "density_score": 0.4592
+      },
+      {
+        "slide_index": 3,
+        "density_score": 0.5471
+      },
+      {
+        "slide_index": 4,
+        "density_score": 0.6018
+      },
+      {
+        "slide_index": 5,
+        "density_score": 0.6484
+      },
+      {
+        "slide_index": 6,
+        "density_score": 1.0
+      },
+      {
+        "slide_index": 7,
+        "density_score": 1.0
+      },
+      {
+        "slide_index": 8,
+        "density_score": 1.0
+      },
+      {
+        "slide_index": 9,
+        "density_score": 0.4706
+      },
+      {
+        "slide_index": 10,
+        "density_score": 1.0
+      },
+      {
+        "slide_index": 11,
+        "density_score": 0.5193
+      },
+      {
+        "slide_index": 12,
+        "density_score": 0.4275
+      }
+    ]
+  },
+  "slides": [
+    {
+      "slide_index": 0,
+      "slide_type": "title",
+      "violations": [],
+      "density_score": 0.269,
+      "empty_ratio": 0.731
+    },
+    {
+      "slide_index": 1,
+      "slide_type": "content",
+      "violations": [
+        {
+          "type": "density_too_high",
+          "shape_ids": [],
+          "severity": "warning",
+          "delta_inches": 0.04,
+          "suggested_fix": "Reduce number/size of blocks or split content across slides.",
+          "slide_type": "content",
+          "visual_density_score": 1.0
+        }
+      ],
+      "density_score": 1.0,
+      "empty_ratio": 0.0
+    },
+    {
+      "slide_index": 2,
+      "slide_type": "content",
+      "violations": [
+        {
+          "type": "content_span_too_short",
+          "shape_ids": [
+            "shape-1",
+            "shape-2",
+            "shape-4",
+            "shape-5"
+          ],
+          "severity": "warning",
+          "delta_inches": 0.0316,
+          "suggested_fix": "Content occupies a short vertical band with a large dead zone; enlarge the evidence block, add a visual/table/sidebar, or switch to a deliberate sparse variant.",
+          "slide_type": "content",
+          "variant": "cards-3",
+          "content_span_height_ratio": 0.3484,
+          "max_vertical_dead_ratio": 0.6435
+        }
+      ],
+      "density_score": 0.4592,
+      "empty_ratio": 0.5408
+    },
+    {
+      "slide_index": 3,
+      "slide_type": "content",
+      "violations": [],
+      "density_score": 0.5471,
+      "empty_ratio": 0.4529
+    },
+    {
+      "slide_index": 4,
+      "slide_type": "content",
+      "violations": [],
+      "density_score": 0.6018,
+      "empty_ratio": 0.3982
+    },
+    {
+      "slide_index": 5,
+      "slide_type": "content",
+      "violations": [
+        {
+          "type": "margin_bottom",
+          "shape_ids": [
+            "shape-14"
+          ],
+          "severity": "warning",
+          "delta_inches": 0.1,
+          "suggested_fix": "Raise card or reduce height to preserve footer breathing room."
+        },
+        {
+          "type": "column_misalignment",
+          "shape_ids": [
+            "shape-2",
+            "shape-14"
+          ],
+          "severity": "warning",
+          "delta_inches": 0.07,
+          "suggested_fix": "Align left edges across repeated card columns."
+        }
+      ],
+      "density_score": 0.6484,
+      "empty_ratio": 0.3516
+    },
+    {
+      "slide_index": 6,
+      "slide_type": "content",
+      "violations": [
+        {
+          "type": "density_too_high",
+          "shape_ids": [],
+          "severity": "warning",
+          "delta_inches": 0.04,
+          "suggested_fix": "Reduce number/size of blocks or split content across slides.",
+          "slide_type": "content",
+          "visual_density_score": 1.0
+        }
+      ],
+      "density_score": 1.0,
+      "empty_ratio": 0.0
+    },
+    {
+      "slide_index": 7,
+      "slide_type": "content",
+      "violations": [
+        {
+          "type": "density_too_high",
+          "shape_ids": [],
+          "severity": "warning",
+          "delta_inches": 0.04,
+          "suggested_fix": "Reduce number/size of blocks or split content across slides.",
+          "slide_type": "content",
+          "visual_density_score": 1.0
+        }
+      ],
+      "density_score": 1.0,
+      "empty_ratio": 0.0
+    },
+    {
+      "slide_index": 8,
+      "slide_type": "content",
+      "violations": [
+        {
+          "type": "density_too_high",
+          "shape_ids": [],
+          "severity": "warning",
+          "delta_inches": 0.04,
+          "suggested_fix": "Reduce number/size of blocks or split content across slides.",
+          "slide_type": "content",
+          "visual_density_score": 1.0
+        }
+      ],
+      "density_score": 1.0,
+      "empty_ratio": 0.0
+    },
+    {
+      "slide_index": 9,
+      "slide_type": "content",
+      "violations": [],
+      "density_score": 0.4706,
+      "empty_ratio": 0.5294
+    },
+    {
+      "slide_index": 10,
+      "slide_type": "content",
+      "violations": [
+        {
+          "type": "margin_bottom",
+          "shape_ids": [
+            "shape-18"
+          ],
+          "severity": "warning",
+          "delta_inches": 0.1,
+          "suggested_fix": "Raise card or reduce height to preserve footer breathing room."
+        },
+        {
+          "type": "column_misalignment",
+          "shape_ids": [
+            "shape-2",
+            "shape-10",
+            "shape-18"
+          ],
+          "severity": "warning",
+          "delta_inches": 0.07,
+          "suggested_fix": "Align left edges across repeated card columns."
+        },
+        {
+          "type": "density_too_high",
+          "shape_ids": [],
+          "severity": "warning",
+          "delta_inches": 0.02,
+          "suggested_fix": "Reduce number/size of blocks or split content across slides.",
+          "slide_type": "content",
+          "visual_density_score": 1.0
+        }
+      ],
+      "density_score": 1.0,
+      "empty_ratio": 0.0
+    },
+    {
+      "slide_index": 11,
+      "slide_type": "content",
+      "violations": [],
+      "density_score": 0.5193,
+      "empty_ratio": 0.4807
+    },
+    {
+      "slide_index": 12,
+      "slide_type": "content",
+      "violations": [],
+      "density_score": 0.4275,
+      "empty_ratio": 0.5725
+    }
+  ]
+}

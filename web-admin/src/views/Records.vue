@@ -34,8 +34,9 @@
 
     <div class="glass-card">
       <div class="page-header">
-        <h3>音频检测记录</h3>
+        <h3>检测记录</h3>
         <div class="header-actions">
+          <el-button size="small" @click="loadRecords">刷新</el-button>
           <el-select v-model="riskFilter" placeholder="风险等级" size="small" clearable style="width:130px">
             <el-option label="高风险" value="high" />
             <el-option label="中风险" value="medium" />
@@ -99,6 +100,11 @@
         </el-table-column>
         <el-table-column prop="status" label="状态" width="80" />
         <el-table-column prop="createdAt" label="检测时间" width="175" sortable />
+        <el-table-column label="操作" width="90" fixed="right">
+          <template #default="{ row }">
+            <el-button link type="danger" size="small" @click="removeRecord(row)">删除</el-button>
+          </template>
+        </el-table-column>
       </el-table>
     </div>
   </div>
@@ -107,7 +113,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { Search, WarningFilled, CircleCheck } from '@element-plus/icons-vue'
-import { getAudioRecords } from '../api/records'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { deleteDetectionRecord, getAudioRecords } from '../api/records'
 import ChartCard from '../components/ChartCard.vue'
 
 const records = ref([])
@@ -168,12 +175,27 @@ function riskLabel(level) {
   return m[level] || level || '-'
 }
 
-onMounted(async () => {
+async function removeRecord(row) {
+  try {
+    await ElMessageBox.confirm(`确定删除检测记录「${row.fileName || row.taskId || row.id}」吗？`, '删除确认', { type: 'warning' })
+    await deleteDetectionRecord(row.id)
+    ElMessage.success('已删除')
+    await loadRecords()
+  } catch (e) {
+    if (e !== 'cancel') ElMessage.error('删除失败')
+  }
+}
+
+async function loadRecords() {
   loading.value = true
   try {
     records.value = (await getAudioRecords()) || []
   } catch (e) { console.error(e) }
   finally { loading.value = false }
+}
+
+onMounted(async () => {
+  await loadRecords()
 })
 </script>
 

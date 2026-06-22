@@ -24,46 +24,46 @@
         </view>
         <view class="agent-flow-text">
           <view class="agent-title-row">
-            <text class="agent-flow-title">多模态 Agent 工作台</text>
-            <view class="agent-status-pill">
+            <text class="agent-flow-title">{{agentPanel.title}}</text>
+            <view class="agent-status-pill {{agentPanel.statusClass}}">
               <view class="agent-status-dot"></view>
-              <text>在线</text>
+              <text>{{workflowStatusText}}</text>
             </view>
           </view>
-          <text class="agent-flow-desc">自动调度音频、视频、文本模型，生成风险判断和防范建议</text>
+          <text class="agent-flow-desc">{{agentPanel.desc}}</text>
         </view>
       </view>
       <view class="agent-meta-row">
         <view class="agent-meta-item">
-          <text class="agent-meta-value">3</text>
-          <text class="agent-meta-label">模型通道</text>
+          <text class="agent-meta-value">{{agentPanel.channelValue}}</text>
+          <text class="agent-meta-label">{{agentPanel.channelLabel}}</text>
         </view>
         <view class="agent-meta-divider"></view>
         <view class="agent-meta-item">
-          <text class="agent-meta-value">RAG</text>
-          <text class="agent-meta-label">知识增强</text>
+          <text class="agent-meta-value">{{agentPanel.ragValue}}</text>
+          <text class="agent-meta-label">{{agentPanel.ragLabel}}</text>
         </view>
         <view class="agent-meta-divider"></view>
         <view class="agent-meta-item">
-          <text class="agent-meta-value">AI</text>
-          <text class="agent-meta-label">综合研判</text>
+          <text class="agent-meta-value">{{agentPanel.aiValue}}</text>
+          <text class="agent-meta-label">{{agentPanel.aiLabel}}</text>
         </view>
       </view>
+      <view class="agent-progress-track">
+        <view class="agent-progress-fill {{agentPanel.statusClass}}" style="width: {{workflowProgress}}%"></view>
+      </view>
       <view class="agent-flow-steps">
-        <view class="agent-step-chip active">
-          <text class="agent-step-index">1</text>
-          <text>输入</text>
-        </view>
-        <view class="agent-step-line"></view>
-        <view class="agent-step-chip">
-          <text class="agent-step-index">2</text>
-          <text>分析</text>
-        </view>
-        <view class="agent-step-line"></view>
-        <view class="agent-step-chip">
-          <text class="agent-step-index">3</text>
-          <text>建议</text>
-        </view>
+        <block wx:for="{{agentPanel.steps}}" wx:key="index">
+          <view class="agent-step-chip {{item.state}}">
+            <text class="agent-step-index">{{item.index}}</text>
+            <text>{{item.label}}</text>
+          </view>
+          <view class="agent-step-line {{item.state}}" wx:if="{{index < agentPanel.steps.length - 1}}"></view>
+        </block>
+      </view>
+      <view class="agent-live-row" wx:if="{{agentPanel.liveText}}">
+        <view class="agent-live-dot"></view>
+        <text>{{agentPanel.liveText}}</text>
       </view>
     </view>
 
@@ -85,7 +85,7 @@
                   <t-icon name="microphone" size="80rpx" color="var(--primary-color)" />
                 </view>
                 <text class="upload-text">点击上传可疑音频</text>
-                <text class="upload-hint text-xs">支持 MP3、WAV 格式，最大 10MB</text>
+                <text class="upload-hint text-xs">支持 MP3、WAV、M4A、OGG、FLAC，单个最大 20MB，可批量选择</text>
               </block>
               <block wx:else>
                 <view class="file-preview">
@@ -93,8 +93,8 @@
                     <t-icon name="microphone" size="64rpx" color="var(--primary-color)" />
                   </view>
                   <view class="file-info">
-                    <text class="file-name text-ellipsis">{{audioFile.name}}</text>
-                    <text class="file-size text-xs">{{audioFile.size}}</text>
+                    <text class="file-name text-ellipsis">{{audioFiles.length > 1 ? ('已选择 ' + audioFiles.length + ' 个音频文件') : audioFile.name}}</text>
+                    <text class="file-size text-xs">{{audioFiles.length > 1 ? '将依次完成批量检测' : audioFile.size}}</text>
                   </view>
                   <view class="file-remove flex-center" bindtap="removeAudio">
                     <t-icon name="close" size="38rpx" color="var(--text-color-tertiary)" />
@@ -131,7 +131,7 @@
                   <t-icon name="video" size="80rpx" color="var(--info-color)" />
                 </view>
                 <text class="upload-text">点击上传可疑视频</text>
-                <text class="upload-hint text-xs">支持 MP4、MOV 格式，最大 50MB</text>
+                <text class="upload-hint text-xs">支持 MP4、AVI、MOV、MKV、WEBM，单个最大 100MB</text>
               </block>
               <block wx:else>
                 <video
@@ -168,6 +168,16 @@
         <view class="tab-content anim-fadeIn">
           <!-- 文本输入区域 -->
           <view class="text-input-section card">
+            <view class="input-toolbar">
+              <view class="toolbar-btn" bindtap="chooseTextDocument">
+                <t-icon name="file" size="30rpx" color="var(--primary-color)" />
+                <text>{{textDocument ? '更换文档' : '上传文档'}}</text>
+              </view>
+              <view class="toolbar-btn danger" wx:if="{{textContent || textDocument}}" bindtap="clearTextInput">
+                <t-icon name="close-circle" size="30rpx" color="var(--danger-color)" />
+                <text>清空文本</text>
+              </view>
+            </view>
             <t-textarea
               placeholder="请输入可疑的短信、聊天内容或话术..."
               value="{{textContent}}"
@@ -175,6 +185,21 @@
               maxlength="2000"
               indicator
             />
+          </view>
+
+          <view class="doc-file-card" wx:if="{{textDocument}}">
+            <view class="file-preview">
+              <view class="file-icon flex-center">
+                <t-icon name="file" size="52rpx" color="var(--success-color)" />
+              </view>
+              <view class="file-info">
+                <text class="file-name text-ellipsis">{{textDocument.name}}</text>
+                <text class="file-size text-xs">{{textDocument.ext}} · {{textDocument.size}}</text>
+              </view>
+              <view class="file-remove flex-center" bindtap="removeTextDocument">
+                <t-icon name="close" size="38rpx" color="var(--text-color-tertiary)" />
+              </view>
+            </view>
           </view>
 
           <!-- 字数统计 -->
@@ -251,12 +276,37 @@
 
           <!-- 文本输入 -->
           <view class="text-input-section card">
+            <view class="input-toolbar">
+              <view class="toolbar-btn" bindtap="chooseTextDocument">
+                <t-icon name="file" size="30rpx" color="var(--primary-color)" />
+                <text>{{textDocument ? '更换文档' : '添加文档'}}</text>
+              </view>
+              <view class="toolbar-btn danger" wx:if="{{textContent || textDocument || audioFile || videoFile}}" bindtap="clearAllInputs">
+                <t-icon name="close-circle" size="30rpx" color="var(--danger-color)" />
+                <text>清空全部</text>
+              </view>
+            </view>
             <t-textarea
               placeholder="输入可疑文本内容..."
               value="{{textContent}}"
               bind:change="onTextChange"
               maxlength="2000"
             />
+          </view>
+
+          <view class="doc-file-card" wx:if="{{textDocument}}">
+            <view class="file-preview">
+              <view class="file-icon flex-center">
+                <t-icon name="file" size="52rpx" color="var(--success-color)" />
+              </view>
+              <view class="file-info">
+                <text class="file-name text-ellipsis">{{textDocument.name}}</text>
+                <text class="file-size text-xs">{{textDocument.ext}} · {{textDocument.size}}</text>
+              </view>
+              <view class="file-remove flex-center" bindtap="removeTextDocument">
+                <t-icon name="close" size="38rpx" color="var(--text-color-tertiary)" />
+              </view>
+            </view>
           </view>
 
           <!-- 检测说明 -->
@@ -344,7 +394,7 @@
 
           <!-- 置信度 -->
           <view class="metric-item" wx:if="{{detectionResult.confidence}}">
-            <text class="metric-label">置信度</text>
+            <text class="metric-label">{{detectionResult.metricLabel || '置信度'}}</text>
             <view class="metric-value-row flex">
               <view class="progress-bar">
                 <view
@@ -358,14 +408,25 @@
 
           <!-- 概率分布 -->
           <view class="metric-item" wx:if="{{detectionResult.probabilities}}">
-            <text class="metric-label">真实验概率</text>
+            <text class="metric-label">{{currentType === 'text' ? '文本风险分布' : (currentType === 'video' ? '综合风险分布' : '真伪概率分布')}}</text>
             <view class="probability-bar">
               <view class="prob-real" style="width: {{detectionResult.probabilities.real * 100}}%"></view>
               <view class="prob-fake" style="width: {{detectionResult.probabilities.fake * 100}}%"></view>
             </view>
             <view class="probability-labels flex-between">
-              <text class="prob-label real">真实 {{detectionResult.realText}}%</text>
-              <text class="prob-label fake">伪造 {{detectionResult.fakeText}}%</text>
+              <text class="prob-label real">{{detectionResult.realLabel || '真实'}} {{detectionResult.realText}}%</text>
+              <text class="prob-label fake">{{detectionResult.fakeLabel || '伪造'}} {{detectionResult.fakeText}}%</text>
+            </view>
+          </view>
+
+          <view class="metric-note" wx:if="{{currentType === 'video'}}">
+            <text>XceptionNet 主要检测换脸/面部篡改痕迹，不等同通用视频大模型；综合风险会叠加 AIGC 元数据证据。</text>
+          </view>
+
+          <view class="video-evidence-grid" wx:if="{{currentType === 'video' && detectionResult.videoEvidence}}">
+            <view class="video-evidence-item" wx:for="{{detectionResult.videoEvidence}}" wx:key="label">
+              <text class="video-evidence-label">{{item.label}}</text>
+              <text class="video-evidence-value">{{item.value}}</text>
             </view>
           </view>
         </view>
@@ -374,6 +435,29 @@
         <view class="report-card card" wx:if="{{detectionResult && detectionResult.report}}">
           <text class="report-title">AI 分析报告</text>
           <text class="report-content">{{detectionResult.report}}</text>
+        </view>
+
+        <!-- 批量音频明细 -->
+        <view class="batch-card card" wx:if="{{detectionResult && detectionResult.batchDetails}}">
+          <text class="report-title">批量检测明细</text>
+          <view class="batch-summary" wx:if="{{detectionResult.batchSummary}}">
+            <text>共 {{detectionResult.batchSummary.total}} 个</text>
+            <text>成功 {{detectionResult.batchSummary.success}} 个</text>
+            <text>失败 {{detectionResult.batchSummary.failed}} 个</text>
+          </view>
+
+          <view class="batch-list">
+            <view class="batch-item" wx:for="{{detectionResult.batchDetails}}" wx:key="index">
+              <view class="batch-item-main">
+                <text class="batch-file-name">{{item.index}}. {{item.fileName}}</text>
+                <text class="batch-file-meta">{{item.success ? ('伪造 ' + item.fakeText + ' · 真实 ' + item.realText + ' · 置信度 ' + item.confidenceText) : item.report}}</text>
+              </view>
+              <view class="batch-level {{item.level === '高风险' ? 'danger' : (item.level === '中风险' ? 'warning' : (item.success ? 'success' : 'failed'))}}">
+                {{item.level}}
+              </view>
+            </view>
+          </view>
+
         </view>
 
         <!-- 🤖 Agent 分析过程 -->
@@ -394,8 +478,8 @@
                 <view class="step-line" wx:if="{{index < detectionResult.agentSteps.length - 1}}"></view>
               </view>
               <view class="step-content">
-                <text class="step-label">{{item.label}}</text>
-                <text class="step-desc text-xs">{{item.desc}}</text>
+                <text class="step-label">{{item.label || item.name}}</text>
+                <text class="step-desc text-xs">{{item.desc || item.description}}</text>
               </view>
             </view>
           </view>

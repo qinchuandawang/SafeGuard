@@ -150,7 +150,7 @@ if __name__ == "__main__":
     print(f"  设备: {get_device()}")
     print(f"  采样率: {SAMPLE_RATE}")
     print(f"  端口: {PORT}")
-    print("  模型将在首次请求时加载（懒加载）")
+    print("  访问 /health 会加载并预热模型，建议演示前先完成健康检查")
     print("=" * 50)
 
     app.run(host="0.0.0.0", port=PORT, debug=False)

@@ -1,0 +1,77 @@
+<view class="history-page">
+  <view class="page-navbar">
+    <view class="page-nav-left flex-center" bindtap="onBack">
+      <t-icon name="chevron-left" size="52rpx" color="var(--text-color-primary)" />
+    </view>
+    <text class="page-nav-title">检测历史</text>
+    <view class="page-nav-right flex-center" bindtap="clearHistory" wx:if="{{records.length > 0}}">
+      <t-icon name="delete" size="34rpx" color="var(--danger-color)" />
+    </view>
+  </view>
+
+  <view class="history-content">
+    <view class="search-card">
+      <t-search
+        value="{{searchKey}}"
+        placeholder="搜索文件名、报告内容或风险类型"
+        bind:change="onSearchChange"
+        bind:clear="clearSearch"
+      />
+    </view>
+
+    <scroll-view scroll-x class="filter-scroll" show-scrollbar="{{false}}">
+      <view class="filter-row">
+        <view
+          class="filter-chip {{activeType === item.value ? 'active' : ''}}"
+          wx:for="{{typeFilters}}"
+          wx:key="value"
+          data-value="{{item.value}}"
+          bindtap="changeType"
+        >{{item.label}}</view>
+      </view>
+    </scroll-view>
+
+    <scroll-view scroll-x class="filter-scroll" show-scrollbar="{{false}}">
+      <view class="filter-row">
+        <view
+          class="filter-chip level {{activeLevel === item.value ? 'active' : ''}}"
+          wx:for="{{levelFilters}}"
+          wx:key="value"
+          data-value="{{item.value}}"
+          bindtap="changeLevel"
+        >{{item.label}}</view>
+      </view>
+    </scroll-view>
+
+    <view class="summary-row">
+      <text>共 {{filteredRecords.length}} 条结果</text>
+      <text wx:if="{{records.length !== filteredRecords.length}}">全部 {{records.length}} 条</text>
+    </view>
+
+    <view class="history-list" wx:if="{{filteredRecords.length > 0}}">
+      <view class="history-item" wx:for="{{filteredRecords}}" wx:key="id" data-id="{{item.id}}" bindtap="openRecord">
+        <view class="item-icon {{item.resultLevel}}">
+          <t-icon name="{{item.icon}}" size="34rpx" color="#ffffff" />
+        </view>
+        <view class="item-main">
+          <view class="item-title-row">
+            <text class="item-title">{{item.fileName || (item.typeText + '检测')}}</text>
+            <text class="item-level {{item.resultLevel}}">{{item.levelText}}</text>
+          </view>
+          <text class="item-report">{{item.report || '暂无报告摘要'}}</text>
+          <view class="item-meta">
+            <text>{{item.typeText}}</text>
+            <text>风险 {{item.riskScore}}%</text>
+            <text>{{item.timeText}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="empty-state" wx:else>
+      <t-icon name="search" size="86rpx" color="var(--text-color-tertiary)" />
+      <text class="empty-title">{{records.length > 0 ? '没有匹配记录' : '暂无检测历史'}}</text>
+      <text class="empty-desc">{{records.length > 0 ? '调整关键词或筛选条件后再试' : '完成文本、音频或视频检测后会自动保存到这里'}}</text>
+    </view>
+  </view>
+</view>

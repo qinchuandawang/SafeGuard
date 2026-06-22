@@ -20,6 +20,18 @@ export function getUsers() {
   return request.get('/admin/users')
 }
 
+export function updateUser(id, data) {
+  return request.put(`/admin/users/${id}`, data)
+}
+
+export function deleteUser(id) {
+  return request.delete(`/admin/users/${id}`)
+}
+
+export function deleteDetectionRecord(id) {
+  return request.delete(`/admin/records/${id}`)
+}
+
 // Dashboard 趋势图：按日期+结果分组的真实数据
 export function getTrendStats(days = 7) {
   return request.get('/admin/stats/trend', { params: { days } })

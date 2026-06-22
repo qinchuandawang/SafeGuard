@@ -37,6 +37,8 @@ temp/
 *.docx
 *.txt
 !requirements.txt
+!backend/src/main/resources/prompts/
+!backend/src/main/resources/prompts/*.txt
 
 # 配置文件（含敏感信息）
 .env

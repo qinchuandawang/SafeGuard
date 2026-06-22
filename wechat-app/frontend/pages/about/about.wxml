@@ -13,7 +13,7 @@
     <!-- Logo区域 -->
     <view class="logo-section">
       <view class="logo-icon">
-        <t-icon name="shield-check" size="80rpx" color="#ffffff" />
+        <t-icon name="secured" size="80rpx" color="#ffffff" />
       </view>
       <text class="app-name">诈骗克星</text>
       <text class="app-version">版本 1.0.0</text>

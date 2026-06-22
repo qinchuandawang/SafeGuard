@@ -14,10 +14,12 @@ class TaskWatcher {
   constructor(options = {}) {
     this.pollInterval = options.pollInterval || 1500;
     this.baseUrl = options.baseUrl || app.globalData.apiBaseUrl;
+    this.preferPolling = options.preferPolling !== false;
     this._sseTask = null;
     this._destroyed = false;
     this._pollAttempts = 0;
     this._maxPollAttempts = options.maxPollAttempts || 120;
+    this._lastPollError = null;
   }
 
   /**
@@ -28,6 +30,11 @@ class TaskWatcher {
   watch(taskId, callbacks = {}) {
     const { onProgress, onDone, onError } = callbacks;
     this._destroyed = false;
+
+    if (this.preferPolling) {
+      this._startPolling(taskId, { onProgress, onDone, onError });
+      return;
+    }
 
     // 优先尝试 SSE
     const sseStarted = this._startSSE(taskId, { onProgress, onDone, onError });
@@ -153,11 +160,13 @@ class TaskWatcher {
   async _startPolling(taskId, { onProgress, onDone, onError }) {
     const url = `${this.baseUrl}/api/detection/task/${taskId}`;
     this._pollAttempts = 0;
+    this._lastPollError = null;
 
     while (!this._destroyed) {
       this._pollAttempts++;
       if (this._pollAttempts > this._maxPollAttempts) {
-        onError?.(new Error('轮询超时'));
+        const suffix = this._lastPollError ? `，最后一次错误：${this._lastPollError}` : '';
+        onError?.(new Error(`任务查询超时${suffix}`));
         this.destroy();
         return;
       }
@@ -166,7 +175,12 @@ class TaskWatcher {
         const res = await this._request(url);
         if (this._destroyed) break;
 
-        const taskData = res.data || res;
+        if (res && typeof res.code === 'number' && res.code !== 200) {
+          onError?.(new Error(res.message || '任务查询失败'));
+          this.destroy();
+          return;
+        }
+        const taskData = this._unwrapResult(res);
 
         switch (taskData.status) {
           case 'queued':
@@ -181,7 +195,7 @@ class TaskWatcher {
             return;
           case 'failed':
           case 'error':
-            onError?.(new Error(taskData.error || '任务处理失败'));
+            onError?.(new Error(this._buildTaskError(taskData)));
             this.destroy();
             return;
           default:
@@ -190,6 +204,7 @@ class TaskWatcher {
       } catch (err) {
         if (!this._destroyed) {
           // 单次轮询失败不直接报错，继续重试（避免后端繁忙时误判）
+          this._lastPollError = this._formatError(err);
           await this._sleep(this.pollInterval);
           continue;
         }
@@ -214,6 +229,38 @@ class TaskWatcher {
         fail: reject,
       });
     });
+  }
+
+  _unwrapResult(res) {
+    if (!res) return {};
+    if (res.code === 200 && res.data) return res.data;
+    if (res.data && res.data.status) return res.data;
+    return res;
+  }
+
+  _buildTaskError(taskData) {
+    const rawMessage = taskData.error || taskData.message || '任务处理失败';
+    return this._formatServiceError(rawMessage);
+  }
+
+  _formatError(err) {
+    if (!err) return '未知错误';
+    const rawMessage = err.errMsg || err.message || String(err);
+    return this._formatServiceError(rawMessage);
+  }
+
+  _formatServiceError(rawMessage) {
+    const message = String(rawMessage || '未知错误');
+    if (message.includes('localhost:5002') || message.includes('127.0.0.1:5002')) {
+      return '视频检测服务未启动或不可访问，请确认 SafeGuard-Video-Service 窗口正在运行，并检查 http://localhost:5002/api/health';
+    }
+    if (message.includes('localhost:5000') || message.includes('127.0.0.1:5000')) {
+      return '音频检测服务未启动或不可访问，请确认 SafeGuard-Audio-Service 窗口正在运行，并检查 http://localhost:5000/health';
+    }
+    if (message.includes('timeout')) {
+      return `请求超时：${message}`;
+    }
+    return message;
   }
 
   /** 停止监控，释放资源 */

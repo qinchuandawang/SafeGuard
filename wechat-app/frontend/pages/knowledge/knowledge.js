@@ -249,19 +249,40 @@ Page({
       const aiId = msgId + 1;
 
       if (ragSuccess) {
-        const ragContext = ragResults.map((r, i) => `[${i + 1}] ${r.content || ''}`).join('\n');
-        const contextPrompt = `知识库内容：\n${ragContext}\n\n用户问题：${text}\n请基于知识库回答，简洁准确。`;
+        const selectedResults = ragResults.slice(0, 2);
+        const ragContext = selectedResults
+          .map((r, i) => `[${i + 1}] ${this._truncateText(r.content || r.answer || r.summary || '', 220)}`)
+          .filter(Boolean)
+          .join('\n');
+        const contextPrompt = `知识库内容：\n${ragContext}\n\n用户问题：${text}\n请基于知识库回答，直接输出自然中文。`;
 
         this.setData({ qaMessages: [...this.data.qaMessages, { id: aiId, role: 'ai', content: '', references: [] }], msgCounter: aiId, lastMsgId: `msg-${aiId}` });
 
         let streamOk = false;
+        let pendingContent = '';
+        let lastRenderAt = 0;
+        const renderStreamContent = (fullContent, force = false) => {
+          pendingContent = fullContent || pendingContent;
+          const now = Date.now();
+          if (!force && now - lastRenderAt < 120) return;
+          lastRenderAt = now;
+          this.setData({
+            qaMessages: this.data.qaMessages.map(m => m.id === aiId ? { ...m, content: pendingContent } : m),
+          });
+        };
         try {
           await new Promise((resolve, reject) => {
             const streamResult = requestStream('/api/llm/analyze/stream', { text: contextPrompt }, {
               onMessage: (chunk, fullContent) => {
-                this.setData({ qaMessages: this.data.qaMessages.map(m => m.id === aiId ? { ...m, content: fullContent } : m) });
+                renderStreamContent(fullContent, false);
               },
-              onDone: (fullContent) => { streamOk = true; resolve(); },
+              onDone: (fullContent) => {
+                streamOk = true;
+                if (fullContent) {
+                  renderStreamContent(fullContent, true);
+                }
+                resolve();
+              },
               onError: (err) => { reject(err); },
             });
             streamTask = streamResult;
@@ -310,6 +331,12 @@ Page({
       matched.push({ title: ragResults[0].source || ragResults[0].category || '相关知识库', articleId: null });
     }
     return matched;
+  },
+
+  _truncateText(text, maxLength) {
+    const value = String(text || '').replace(/\s+/g, ' ').trim();
+    if (value.length <= maxLength) return value;
+    return value.slice(0, maxLength) + '...';
   },
 
   askQuestion(e) {

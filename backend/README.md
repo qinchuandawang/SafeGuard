@@ -1,6 +1,6 @@
 # SafeGuard Backend — AI反诈骗检测系统后端
 
-SafeGuard 是"诈骗克星"系统的后端服务，基于 **Spring Boot 4.0.4 + Java 17**，集成大语言模型（LLM）、RAG知识检索、CoT思维链推理、ReAct推理循环与多Agent编排调度，为前端提供28个API端点。
+SafeGuard 是"诈骗克星"系统的后端服务，基于 **Spring Boot 4.0.4 + Java 17**，集成大语言模型（LLM）、RAG知识检索、CoT思维链推理、ReAct推理循环与多Agent编排调度，为微信小程序和 Web 管理后台提供 API。
 
 ## 项目概述
 
@@ -41,14 +41,13 @@ backend/
 │   │   └── MemoryService.java           # 短期+长期记忆
 │   ├── service/                         # 业务服务（7个）
 │   │   ├── LLMService.java              # LLM调用 + SSE流式
-│   │   ├── KnowledgeService.java        # 知识库JPA持久化
+│   │   ├── KnowledgeService.java        # 知识库业务服务
 │   │   ├── DetectionService.java        # 检测调度
 │   │   ├── DetectionTaskManager.java    # 异步任务管理
 │   │   ├── VideoFrameExtractorService.java
 │   │   ├── FaceCropService.java
 │   │   └── VideoImagePipelineService.java
-│   ├── repository/
-│   │   └── KnowledgeItemRepository.java # JPA Repository
+│   ├── mapper/                          # MyBatis-Plus Mapper
 │   └── util/
 │       └── PromptLoader.java            # 提示词模板加载器
 ├── src/main/resources/
@@ -67,7 +66,7 @@ backend/
 | Spring Boot | 4.0.4 | Web框架 |
 | Java | 17 | 运行环境 |
 | Maven | 3.9+ | 构建工具 |
-| MySQL 8.0 + JPA | - | 知识库持久化 |
+| MySQL 8.0 + MyBatis-Plus | - | 业务数据持久化 |
 | H2 | - | 测试内存数据库 |
 | SiliconFlow API | - | BGE嵌入 / 重排序 |
 | DeepSeek API | - | 大语言模型调用 |
@@ -108,7 +107,7 @@ Thought → Action → Observation 循环（最多5步）
 - 长期记忆：持久化到磁盘（1000条上限）
 - 重要性评分自动升级短→长
 
-## API文档（28个端点）
+## API文档（核心端点）
 
 ### 文件上传
 | 方法 | 路径 | 说明 |
@@ -229,15 +228,16 @@ curl http://localhost:8080/api/knowledge
 ## 项目依赖
 
 - [wechat-app/frontend](../wechat-app/frontend/) — 微信小程序前端
-- [wechat-app/audio-training](../wechat-app/audio-training/) — 音频检测Flask服务
-- [wechat-app/video-training](../wechat-app/video-training/) — 视频检测Flask服务
+- [web-admin](../web-admin/) — Vue 管理后台
+- [ai-services/audio](../ai-services/audio/) — 音频检测 Flask 服务
+- [ai-services/video](../ai-services/video/) — 视频检测 Flask 服务
 
 ## 注意事项
 
 1. **DeepSeek API Key 已关闭**：LLM功能返回fallback提示，不影响非LLM功能
 2. **SiliconFlow Key 独立**：RAG嵌入不受DeepSeek影响
 3. **MySQL 需手动创建**：首次运行前需创建 `safeguard` 数据库
-4. **JPA自动建表**：`ddl-auto: update` 会自动创建 `knowledge_item` 表并初始化5条默认数据
+4. **数据库初始化**：`backend/src/main/resources/sql/schema.sql` 和 `init-data.sql` 提供基础表结构与演示数据；本地启动时也会按配置执行初始化。
 
 ---
 

@@ -1,0 +1,8 @@
+{
+  "usingComponents": {
+    "t-icon": "tdesign-miniprogram/icon/icon",
+    "t-search": "tdesign-miniprogram/search/search"
+  },
+  "navigationBarTitleText": "检测历史",
+  "navigationStyle": "custom"
+}

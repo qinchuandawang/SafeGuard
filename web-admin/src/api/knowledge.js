@@ -16,5 +16,8 @@ export function deleteKnowledge(id) {
   return request.delete(`/knowledge/${id}`)
 }
 
-// 知识库 PDF 上传功能暂未实现后端接口
-// uploadKnowledgePdf / getKnowledgeDocuments / deleteKnowledgeDocument 需要先实现后端 Controller 路由
+export function importKnowledgeDocument(formData) {
+  return request.post('/knowledge/import', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+}

@@ -17,12 +17,13 @@ ai-services/
 │   │   ├── utils.py        # 音频处理工具
 │   │   └── train_wav2vec2.py
 │   ├── outputs/            # 训练产出的模型
-│   ├── pretrained/         # 预训练模型
+│   ├── pretrained/         # 本地模型目录（大权重文件不提交 Git）
 │   └── requirements.txt
 ├── video/              # 视频检测模块 (port 5002)
 │   ├── api/app.py          # Flask 服务入口
 │   ├── models/xception.py  # XceptionNet 模型
 │   ├── utils/              # 视频处理工具
+│   ├── pretrained/         # 本地模型目录（大权重文件不提交 Git）
 │   ├── train.py            # 训练脚本
 │   └── requirements.txt
 ├── run.py              # 统一启动入口
@@ -83,14 +84,27 @@ python run.py
 
 激活后终端前缀会显示 `(.venv)`，此时可直接使用 `python`、`pip` 等命令。
 
+## 模型文件
+
+演示环境需要以下本地模型文件：
+
+| 模块 | 路径 |
+|------|------|
+| 音频 | `ai-services/audio/pretrained/asvspoof-finetuned/model.safetensors` |
+| 视频 | `ai-services/video/pretrained/best_model.pth` |
+
+上述大权重文件被 `.gitignore` 排除，重新克隆仓库后需要从备份或组员提供的压缩包恢复。
+
 ## 单独启动
 
 ```bash
 # 音频
-cd audio && python run.py               # 默认 5000
+cd ai-services/audio
+python app.py                           # 默认 5000
 
 # 视频
-cd video && python api/app.py           # 默认 5002
+cd ai-services/video
+python api/app.py                       # 默认 5002
 ```
 
 ## PyCharm 配置

@@ -43,7 +43,7 @@ public class AgentOrchestrator {
 
         memoryService.addShortTerm(sessionId, "user", request.getQuery(), List.of("query"));
 
-        final long TOTAL_TIMEOUT_MS = 60_000;
+        final long TOTAL_TIMEOUT_MS = 120_000;
         long remaining = TOTAL_TIMEOUT_MS;
 
         // 阶段A: 依赖解析 — RAG、CoT、ReAct 并行执行

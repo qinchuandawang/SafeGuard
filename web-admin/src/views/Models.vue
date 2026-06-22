@@ -106,7 +106,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { Cpu } from '@element-plus/icons-vue'
-import { getActiveModel, getAllModels } from '../api/models'
+import { getManagedModels } from '../api/models'
 import ChartCard from '../components/ChartCard.vue'
 import * as echarts from 'echarts'
 
@@ -162,9 +162,9 @@ const modelTypes = computed(() => {
 onMounted(async () => {
   loading.value = true
   try {
-    const [active, all] = await Promise.allSettled([getActiveModel(), getAllModels()])
-    if (active.status === 'fulfilled') activeModel.value = active.value
-    if (all.status === 'fulfilled') models.value = all.value || []
+    const data = await getManagedModels()
+    activeModel.value = data?.activeModel || null
+    models.value = data?.models || []
   } catch (e) { console.error(e) }
   finally { loading.value = false }
 })

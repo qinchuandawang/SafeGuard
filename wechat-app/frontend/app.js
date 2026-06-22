@@ -19,8 +19,7 @@ App({
     this.initCloud();
     this.loadLocalData();
     this.checkUpdate();
-    this.tryAutoLogin();
-    this.loadHistoryFromBackend();
+    this.bootstrapRemoteData();
     console.log('诈骗克星小程序启动');
   },
 
@@ -71,14 +70,24 @@ App({
     }
   },
 
+  bootstrapRemoteData() {
+    setTimeout(() => {
+      this.tryAutoLogin()
+        .then(() => this.loadHistoryFromBackend())
+        .catch(() => {
+          console.debug('远程初始化跳过，本地演示模式继续');
+        });
+    }, 300);
+  },
+
   tryAutoLogin() {
     if (!auth.isLoggedIn()) {
       const loginTimeout = 5000;
       const loginPromise = auth.login();
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('登录超时')), loginTimeout)
+      const timeoutPromise = new Promise((resolve) =>
+        setTimeout(() => resolve(null), loginTimeout)
       );
-      Promise.race([loginPromise, timeoutPromise]).then(data => {
+      return Promise.race([loginPromise, timeoutPromise]).then(data => {
         if (data) {
           this.globalData.userInfo = {
             userId: data.userId,
@@ -88,11 +97,14 @@ App({
           };
           console.log('自动登录成功, userId:', data.userId);
         }
+        return data;
       }).catch(err => {
         console.debug('自动登录跳过（匿名模式继续）');
+        return null;
       });
     } else {
       this.globalData.userInfo = auth.getUserInfo();
+      return Promise.resolve(this.globalData.userInfo);
     }
   },
 
@@ -122,9 +134,14 @@ App({
   },
 
   async addDetectionRecord(record) {
+    const normalizedLevel = record.resultLevel
+      || (typeof record.result === 'string' ? record.result : '')
+      || 'safe';
     const recordWithTime = {
       ...record,
       id: record.id || Date.now(),
+      resultLevel: normalizedLevel,
+      result: normalizedLevel,
       createTime: record.createTime || new Date().toISOString(),
     };
     this.globalData.detectionHistory.unshift(recordWithTime);

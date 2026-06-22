@@ -99,15 +99,17 @@ public class RAGService {
             List<List<Float>> allVectors = new ArrayList<>();
             List<Map<String, Object>> allMetadatas = new ArrayList<>();
 
+            int sectionIndex = 0;
             for (Map.Entry<String, String> section : sections.entrySet()) {
                 String title = section.getKey();
                 String content = section.getValue();
 
                 String category = extractCategory(title);
                 List<String> tags = extractTags(title, content);
+                String sectionSource = "anti_fraud_knowledge_" + sectionIndex + ".txt";
 
                 List<ChunkResult> chunks = hybridChunker.hybridChunk(
-                        content, "anti_fraud_knowledge.txt", category, tags);
+                        content, sectionSource, category, tags);
 
                 for (ChunkResult chunk : chunks) {
                     List<Float> vector = embeddingService.getEmbedding(chunk.getContent());
@@ -125,6 +127,7 @@ public class RAGService {
                     allVectors.add(vector);
                     allMetadatas.add(metadata);
                 }
+                sectionIndex++;
             }
 
             qdrantService.batchInsert(allChunkIds, allVectors, allMetadatas);

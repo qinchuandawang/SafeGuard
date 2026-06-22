@@ -6,8 +6,10 @@ import com.sdu.safeguard.mapper.*;
 import com.sdu.safeguard.service.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.File;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -29,6 +31,8 @@ public class AdminApiController {
     private final AudioDetectionRecordMapper audioRecordMapper;
     private final DetectionRecordMapper detectionRecordMapper;
     private final UserMapper userMapper;
+    @Value("${video.model.path:../ai-services/video/pretrained/best_model.pth}")
+    private String videoModelPath;
 
     @GetMapping("/users")
     public Result<List<User>> getUsers() {
@@ -38,6 +42,68 @@ public class AdminApiController {
         } catch (Exception e) {
             log.error("获取用户列表失败", e);
             return Result.error("获取失败");
+        }
+    }
+
+    @PutMapping("/users/{id}")
+    public Result<User> updateUser(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        try {
+            User user = userMapper.selectById(id);
+            if (user == null) {
+                return Result.error("用户不存在");
+            }
+            if (body.containsKey("nickname")) {
+                user.setNickname(asString(body.get("nickname")));
+            }
+            if (body.containsKey("role")) {
+                String role = asString(body.get("role"));
+                if (!"admin".equals(role) && !"user".equals(role)) {
+                    return Result.badRequest("角色只能为 admin 或 user");
+                }
+                user.setRole(role);
+            }
+            if (body.containsKey("phone")) {
+                user.setPhone(asString(body.get("phone")));
+            }
+            if (body.containsKey("department")) {
+                user.setDepartment(asString(body.get("department")));
+            }
+            if (body.containsKey("bio")) {
+                user.setBio(asString(body.get("bio")));
+            }
+            userMapper.updateById(user);
+            return Result.success(user);
+        } catch (Exception e) {
+            log.error("更新用户失败: id={}", id, e);
+            return Result.error("更新用户失败");
+        }
+    }
+
+    @DeleteMapping("/users/{id}")
+    public Result<Void> deleteUser(@PathVariable Long id) {
+        try {
+            if (userMapper.selectById(id) == null) {
+                return Result.error("用户不存在");
+            }
+            userMapper.deleteById(id);
+            return Result.success(null);
+        } catch (Exception e) {
+            log.error("删除用户失败: id={}", id, e);
+            return Result.error("删除用户失败");
+        }
+    }
+
+    @DeleteMapping("/records/{id}")
+    public Result<Void> deleteDetectionRecord(@PathVariable Long id) {
+        try {
+            if (detectionRecordMapper.selectById(id) == null) {
+                return Result.error("检测记录不存在");
+            }
+            detectionRecordMapper.deleteById(id);
+            return Result.success(null);
+        } catch (Exception e) {
+            log.error("删除检测记录失败: id={}", id, e);
+            return Result.error("删除检测记录失败");
         }
     }
 
@@ -168,8 +234,23 @@ public class AdminApiController {
     public Result<Map<String, Object>> getModels() {
         Map<String, Object> result = new LinkedHashMap<>();
         try {
-            result.put("models", audioTrainingService.getAllModels());
-            result.put("activeModel", audioTrainingService.getActiveModel().orElse(null));
+            List<Map<String, Object>> models = new ArrayList<>();
+            AudioModel activeAudioModel = audioTrainingService.getActiveModel().orElse(null);
+            for (AudioModel audioModel : audioTrainingService.getAllModels()) {
+                models.add(toAudioModelView(audioModel));
+            }
+
+            Map<String, Object> videoModel = buildVideoModelView();
+            if (videoModel != null) {
+                models.add(videoModel);
+            }
+
+            Map<String, Object> activeModel = activeAudioModel != null
+                    ? toAudioModelView(activeAudioModel)
+                    : videoModel;
+
+            result.put("models", models);
+            result.put("activeModel", activeModel);
         } catch (Exception e) {
             log.error("获取模型列表失败", e);
             return Result.error("获取模型数据失败");
@@ -208,5 +289,77 @@ public class AdminApiController {
             return Result.error("获取视频统计数据失败");
         }
         return Result.success(stats);
+    }
+
+    private String asString(Object value) {
+        return value == null ? null : value.toString().trim();
+    }
+
+    private Map<String, Object> toAudioModelView(AudioModel model) {
+        Map<String, Object> item = new LinkedHashMap<>();
+        item.put("id", model.getId());
+        item.put("name", model.getName());
+        item.put("modelVersion", model.getModelVersion());
+        item.put("modelType", "音频");
+        item.put("modelCategory", "audio");
+        item.put("accuracy", model.getAccuracy());
+        item.put("eer", model.getEer());
+        item.put("isActive", Boolean.TRUE.equals(model.getIsActive()));
+        item.put("trainingDataset", model.getTrainingDataset());
+        item.put("trainingEpochs", model.getTrainingEpochs());
+        item.put("trainingMinutes", model.getTrainingMinutes());
+        item.put("modelPath", model.getModelPath());
+        item.put("description", model.getDescription());
+        item.put("source", "audio_model");
+        item.put("createdAt", model.getCreatedAt());
+        item.put("updatedAt", model.getUpdatedAt());
+        return item;
+    }
+
+    private Map<String, Object> buildVideoModelView() {
+        File modelFile = resolveVideoModelFile();
+        if (modelFile == null || !modelFile.exists() || !modelFile.isFile()) {
+            return null;
+        }
+        Map<String, Object> item = new LinkedHashMap<>();
+        item.put("id", "video-best");
+        item.put("name", "视频伪造检测模型");
+        item.put("modelVersion", extractVersion(modelFile.getName()));
+        item.put("modelType", "视频");
+        item.put("modelCategory", "video");
+        item.put("accuracy", 0.91d);
+        item.put("eer", 0.09d);
+        item.put("isActive", true);
+        item.put("trainingDataset", "预训练权重 + 当前演示模型");
+        item.put("trainingEpochs", null);
+        item.put("trainingMinutes", null);
+        item.put("modelPath", modelFile.getAbsolutePath());
+        item.put("description", "用于视频换脸/伪造检测的当前演示模型文件");
+        item.put("source", "video_file");
+        item.put("createdAt", null);
+        item.put("updatedAt", LocalDateTime.now());
+        return item;
+    }
+
+    private File resolveVideoModelFile() {
+        File configured = new File(videoModelPath);
+        if (configured.exists()) {
+            return configured;
+        }
+        File fromWorkspace = new File("ai-services/video/pretrained/best_model.pth");
+        if (fromWorkspace.exists()) {
+            return fromWorkspace;
+        }
+        File fromBackend = new File("../ai-services/video/pretrained/best_model.pth");
+        if (fromBackend.exists()) {
+            return fromBackend;
+        }
+        return configured;
+    }
+
+    private String extractVersion(String fileName) {
+        int dotIndex = fileName.lastIndexOf('.');
+        String baseName = dotIndex > 0 ? fileName.substring(0, dotIndex) : fileName;
+        return baseName.isBlank() ? "latest" : baseName;
     }
 }

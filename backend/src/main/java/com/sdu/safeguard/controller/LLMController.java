@@ -1,6 +1,7 @@
 package com.sdu.safeguard.controller;
 
 import com.sdu.safeguard.dto.ChatRequest;
+import com.sdu.safeguard.dto.Result;
 import com.sdu.safeguard.dto.ScamScenario;
 import com.sdu.safeguard.service.LLMService;
 import com.sdu.safeguard.util.InputValidator;
@@ -23,6 +24,23 @@ import java.util.Map;
 public class LLMController {
 
     private final LLMService llmService;
+
+    @PostMapping("/analyze")
+    public Result<String> analyze(@RequestBody Map<String, String> request) {
+        if (request == null) {
+            return Result.badRequest("请求体不能为空");
+        }
+        String text = request.get("text");
+        if (text == null || text.trim().isEmpty()) {
+            return Result.badRequest("问题内容不能为空");
+        }
+        String validationError = InputValidator.validateAnalysisText(text);
+        if (validationError != null) {
+            return Result.badRequest(validationError);
+        }
+        String prompt = llmService.buildAssistantPrompt(text);
+        return Result.success(llmService.askAssistant(prompt));
+    }
 
     @PostMapping(value = "/scam/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter scamChatStream(@RequestBody ChatRequest request) {
@@ -70,6 +88,6 @@ public class LLMController {
             emitter.complete();
             return emitter;
         }
-        return llmService.streamCallLLM(llmService.buildAnalyzePrompt(text));
+        return llmService.streamCallLLM(llmService.buildAssistantPrompt(text));
     }
 }

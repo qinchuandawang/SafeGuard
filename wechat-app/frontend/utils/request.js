@@ -21,8 +21,8 @@ function request(options) {
     header = {},
     showLoading = true,
     loadingTitle = '加载中...',
-    timeout = 15000,
-    retries = 2,
+    timeout = 8000,
+    retries = 1,
     retryDelay = 1000,
   } = options;
 
@@ -52,9 +52,8 @@ function request(options) {
           requestQueue.delete(rid);
           if (showLoading) wx.hideLoading();
           if (res.statusCode === 401) {
-            authModule.clearAuth();
-            wx.showToast({ title: '登录已过期，请重新打开小程序', icon: 'none' });
-            reject(new Error('登录已过期'));
+            console.warn('演示模式忽略登录状态校验:', url);
+            resolve(null);
             return;
           }
           if (res.statusCode === 429) {
@@ -128,7 +127,7 @@ function request(options) {
   return makeRequest(0);
 }
 
-function uploadFile(filePath, url, formData = {}) {
+function uploadFile(filePath, url, formData = {}, fileFieldName = 'file') {
   wx.showLoading({ title: '上传中...', mask: true });
   let loadingShown = true;
 
@@ -140,7 +139,7 @@ function uploadFile(filePath, url, formData = {}) {
     const uploadTask = wx.uploadFile({
       url: BASE_URL + url,
       filePath,
-      name: 'file',
+      name: fileFieldName,
       formData,
       timeout: 120000,
       header: authHeader,
@@ -195,17 +194,35 @@ const detectionAPI = {
   detectAudio(filePath) {
     return uploadFile(filePath, '/api/detection/audio');
   },
+  detectAudioBatch(filePaths) {
+    if (!Array.isArray(filePaths) || filePaths.length === 0) {
+      return Promise.reject(new Error('没有可上传的音频文件'));
+    }
+    return Promise.all(filePaths.map((filePath) => this.detectAudio(filePath)));
+  },
   detectVideo(filePath) {
     return uploadFile(filePath, '/api/detection/video');
   },
   detectText(text) {
-    return request({ url: '/api/detection/text', method: 'POST', data: { text } });
+    return request({
+      url: '/api/detection/text',
+      method: 'POST',
+      data: { text },
+      timeout: 120000,
+      retries: 0,
+      loadingTitle: 'AI分析中...',
+    });
   },
-  detectMulti(audioPath, videoPath, text) {
+  detectTextDocument(filePath) {
+    return uploadFile(filePath, '/api/detection/text/document');
+  },
+  detectMulti(audioResult, videoResult, text) {
     return request({
       url: '/api/detection/multi',
       method: 'POST',
-      data: { text: text || '', audioResult: audioPath ? { path: audioPath } : null, videoResult: videoPath ? { path: videoPath } : null },
+      data: { text: text || '', audioResult: audioResult || null, videoResult: videoResult || null },
+      timeout: 30000,
+      retries: 0,
     });
   },
 };
@@ -221,7 +238,7 @@ const recordAPI = {
     if (userId) params.push('userId=' + userId);
     if (limit) params.push('limit=' + limit);
     if (params.length) url += '?' + params.join('&');
-    return request({ url, showLoading: false });
+    return request({ url, showLoading: false, timeout: 5000, retries: 0 });
   },
 };
 
@@ -247,7 +264,7 @@ const ragAPI = {
     return request({ url: '/api/rag/query', method: 'GET', data: { q: query }, showLoading: false });
   },
   analyze(text) {
-    return request({ url: '/api/detection/text', method: 'POST', data: { text }, showLoading: false });
+    return request({ url: '/api/llm/analyze', method: 'POST', data: { text }, showLoading: false, timeout: 60000, retries: 0 });
   },
   search(keyword) {
     return request({ url: '/api/knowledge/search', method: 'GET', data: { keyword }, showLoading: false });
@@ -260,32 +277,49 @@ const ragAPI = {
 function requestStream(url, data, callbacks) {
   const { onMessage, onDone, onError } = callbacks;
   const authModule = getAuth();
+  let buffer = '';
+  let fullContent = '';
+  let timedOut = false;
+  let completed = false;
+
   const requestTask = wx.request({
     url: BASE_URL + url,
     method: 'POST',
     data,
-    timeout: 30000,
+    timeout: 60000,
     header: {
       'Content-Type': 'application/json',
       ...authModule.getAuthHeader(),
     },
     enableChunked: true,
-    success: () => {},
-    fail: (err) => { if (onError) onError(err); },
+    success: (res) => {
+      if (completed) return;
+      clearTimeout(timeoutTimer);
+      completed = true;
+      if (res.statusCode === 200) {
+        if (onDone) onDone(fullContent);
+      } else if (onError) {
+        onError(new Error('SSE请求失败: ' + res.statusCode));
+      }
+    },
+    fail: (err) => {
+      if (completed) return;
+      clearTimeout(timeoutTimer);
+      completed = true;
+      if (onError) onError(err);
+    },
   });
 
-  let buffer = '';
-  let fullContent = '';
-  let timedOut = false;
-
   const timeoutTimer = setTimeout(() => {
+    if (completed) return;
     timedOut = true;
+    completed = true;
     requestTask.abort();
     if (onError) onError(new Error('SSE请求超时'));
-  }, 30000);
+  }, 60000);
 
   requestTask.onChunkReceived((res) => {
-    if (timedOut) return;
+    if (timedOut || completed) return;
     try {
       const rawBytes = res.data;
       const text = typeof TextDecoder !== 'undefined'
@@ -296,19 +330,35 @@ function requestStream(url, data, callbacks) {
       buffer = parts.pop() || '';
       for (const part of parts) {
         const lines = part.split('\n');
+        let eventName = 'message';
+        const dataLines = [];
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const payload = line.slice(6).trim();
-            if (payload === '[DONE]') {
-              clearTimeout(timeoutTimer);
-              if (onDone) onDone(fullContent);
-              return;
-            }
-            try {
-              const parsed = JSON.parse(payload);
-              if (parsed.content) { fullContent += parsed.content; if (onMessage) onMessage(parsed.content, fullContent); }
-            } catch (_) { fullContent += payload; if (onMessage) onMessage(payload, fullContent); }
+          if (line.startsWith('event:')) eventName = line.slice(6).trim();
+          if (line.startsWith('data:')) dataLines.push(line.slice(5).trim());
+        }
+        if (dataLines.length === 0) continue;
+        const payload = dataLines.join('\n');
+        if (eventName === 'done' || payload === '[DONE]') {
+          clearTimeout(timeoutTimer);
+          completed = true;
+          if (onDone) onDone(fullContent || payload);
+          return;
+        }
+        if (eventName === 'error') {
+          clearTimeout(timeoutTimer);
+          completed = true;
+          if (onError) onError(new Error(payload || 'SSE请求失败'));
+          return;
+        }
+        try {
+          const parsed = JSON.parse(payload);
+          if (parsed.content) {
+            fullContent += parsed.content;
+            if (onMessage) onMessage(parsed.content, fullContent);
           }
+        } catch (_) {
+          fullContent += payload;
+          if (onMessage) onMessage(payload, fullContent);
         }
       }
     } catch (err) { console.warn('[SSE] parse error:', err); }

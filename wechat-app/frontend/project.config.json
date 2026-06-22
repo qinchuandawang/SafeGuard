@@ -1,14 +1,25 @@
 {
+  "description": "诈骗克星 - AI反诈骗检测系统",
+  "miniprogramRoot": "./",
   "setting": {
-    "es6": false,
-    "postcss": false,
+    "urlCheck": false,
+    "scopeDataCheck": false,
+    "coverView": true,
+    "es6": true,
+    "postcss": true,
     "compileWorklet": false,
     "minified": false,
     "uglifyFileName": false,
     "uploadWithSourceMap": true,
     "enhance": false,
-    "packNpmManually": false,
-    "packNpmRelationList": [],
+    "nodeModules": true,
+    "packNpmManually": true,
+    "packNpmRelationList": [
+      {
+        "packageJsonPath": "./package.json",
+        "miniprogramNpmDistDir": "./"
+      }
+    ],
     "minifyWXSS": true,
     "minifyWXML": true,
     "localPlugins": false,
@@ -30,6 +41,10 @@
     "include": []
   },
   "appid": "wx9e5143f2c396f11e",
-  "editorSetting": {},
-  "libVersion": "3.16.1"
+  "projectname": "fraud-killer",
+  "editorSetting": {
+    "tabIndent": "auto",
+    "tabSize": 2
+  },
+  "libVersion": "3.16.0"
 }

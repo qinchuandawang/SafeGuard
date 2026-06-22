@@ -46,7 +46,10 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Result<Void> handleRuntimeException(RuntimeException e) {
         log.error("服务运行时异常", e);
-        return Result.error("服务处理失败，请稍后重试。");
+        String message = e.getMessage() == null || e.getMessage().isBlank()
+                ? "服务处理失败，请稍后重试。"
+                : e.getMessage();
+        return Result.error(message);
     }
 
     @ExceptionHandler(Exception.class)

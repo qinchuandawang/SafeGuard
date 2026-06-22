@@ -351,12 +351,12 @@ public class QdrantService {
         if (collectionStore == null || collectionStore.isEmpty()) return List.of();
 
         int searchK = Math.min(topK * 3, collectionStore.size());
-        return collectionStore.entrySet().parallelStream()
+        List<ScoredResult> filteredResults = collectionStore.entrySet().parallelStream()
                 .filter(entry -> {
                     if (payloadFilter == null || payloadFilter.isEmpty()) return true;
                     for (Map.Entry<String, String> f : payloadFilter.entrySet()) {
                         Object val = entry.getValue().metadata.get(f.getKey());
-                        if (val == null || !val.toString().equals(f.getValue())) return false;
+                        if (!matchesPayloadValue(val, f.getValue())) return false;
                     }
                     return true;
                 })
@@ -368,6 +368,19 @@ public class QdrantService {
                 .sorted((a, b) -> Double.compare(b.score, a.score))
                 .limit(searchK)
                 .collect(Collectors.toList());
+        if (!filteredResults.isEmpty() || payloadFilter == null || payloadFilter.isEmpty()) {
+            return filteredResults;
+        }
+        log.debug("内存向量检索过滤条件无结果，降级为全量检索: {}", payloadFilter);
+        return searchFallback(queryVector, topK, null, collectionName);
+    }
+
+    private boolean matchesPayloadValue(Object actual, String expected) {
+        if (actual == null || expected == null || expected.isBlank()) return false;
+        if (actual instanceof Collection<?> values) {
+            return values.stream().anyMatch(item -> item != null && item.toString().contains(expected));
+        }
+        return actual.toString().contains(expected);
     }
 
     private double cosineSimilarity(List<Float> v1, List<Float> v2) {

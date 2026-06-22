@@ -49,8 +49,8 @@ public class AudioDetectionAgent implements Agent {
                 .result(tr.getOutput())
                 .confidence(extractDouble(tr.getData(), "confidence"))
                 .data(tr.getData())
-                .actions(List.of("FILE_UPLOAD", "AUDIO_DETECTION", "FLASK_INFERENCE"))
-                .reasoning("音频检测模型: Wav2Vec2，通过 Python Flask 服务调用")
+                .actions(List.of("DEEPSEEK_TOOL_ROUTING", "AUDIO_DETECTION", "FLASK_INFERENCE", "LLM_REPORT"))
+                .reasoning("DeepSeek 作为中枢 Agent 调度 Wav2Vec2 音频训练模型完成推理，并将模型结果交给大模型综合研判")
                 .status("SUCCESS")
                 .build();
     }

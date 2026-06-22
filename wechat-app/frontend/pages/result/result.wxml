@@ -37,7 +37,8 @@
 
       <!-- 主置信度 -->
       <view class="main-confidence">
-        <text class="confidence-label">检测置信度</text>
+        <text class="confidence-label">{{confidenceLabel}}</text>
+        <text class="confidence-hint" wx:if="{{confidenceHint}}">{{confidenceHint}}</text>
         <view class="confidence-ring">
           <view
             class="ring-bg {{resultLevel}}"
@@ -51,12 +52,19 @@
         </view>
       </view>
 
+      <view class="video-evidence-grid" wx:if="{{detectionType === 'video' && videoEvidence.length > 0}}">
+        <view class="video-evidence-item" wx:for="{{videoEvidence}}" wx:key="label">
+          <text class="video-evidence-label">{{item.label}}</text>
+          <text class="video-evidence-value">{{item.value}}</text>
+        </view>
+      </view>
+
       <!-- 概率分布 -->
       <view class="probability-section">
         <view class="probability-item">
           <view class="probability-header">
             <view class="probability-dot" style="background: var(--success-color);"></view>
-            <text class="probability-label">真实概率</text>
+            <text class="probability-label">{{realLabel}}</text>
             <text class="probability-value" style="color: var(--success-color);">{{realText}}%</text>
           </view>
           <view class="progress-bar">
@@ -70,7 +78,7 @@
         <view class="probability-item">
           <view class="probability-header">
             <view class="probability-dot" style="background: var(--danger-color);"></view>
-            <text class="probability-label">伪造概率</text>
+            <text class="probability-label">{{fakeLabel}}</text>
             <text class="probability-value" style="color: var(--danger-color);">{{fakeText}}%</text>
           </view>
           <view class="progress-bar">
@@ -86,11 +94,35 @@
     <!-- AI分析报告 -->
     <view class="card mb-md">
       <view class="section-header">
-        <t-icon name="document" size="36rpx" color="var(--primary-color)" />
+        <t-icon name="file" size="36rpx" color="var(--primary-color)" />
         <text class="card-title">AI 分析报告</text>
       </view>
       <view class="report-content">
         <text>{{reportContent}}</text>
+      </view>
+    </view>
+
+    <!-- 批量音频明细 -->
+    <view class="card mb-md" wx:if="{{batchDetails.length > 0}}">
+      <view class="section-header">
+        <t-icon name="microphone" size="36rpx" color="var(--primary-color)" />
+        <text class="card-title">批量检测明细</text>
+      </view>
+      <view class="batch-summary" wx:if="{{batchSummary}}">
+        <text>共 {{batchSummary.total}} 个</text>
+        <text>成功 {{batchSummary.success}} 个</text>
+        <text>失败 {{batchSummary.failed}} 个</text>
+      </view>
+      <view class="batch-list">
+        <view class="batch-item" wx:for="{{batchDetails}}" wx:key="index">
+          <view class="batch-item-main">
+            <text class="batch-file-name">{{item.index}}. {{item.fileName}}</text>
+            <text class="batch-file-meta">{{item.success ? ('伪造 ' + item.fakeText + ' · 真实 ' + item.realText + ' · 置信度 ' + item.confidenceText) : item.report}}</text>
+          </view>
+          <view class="batch-level {{item.level === '高风险' ? 'danger' : (item.level === '中风险' ? 'warning' : (item.success ? 'success' : 'failed'))}}">
+            {{item.level}}
+          </view>
+        </view>
       </view>
     </view>
 
@@ -108,6 +140,23 @@
         >
           <view class="feature-dot"></view>
           <text>{{item}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- Agent 调度过程 -->
+    <view class="card mb-md" wx:if="{{agentSteps.length > 0}}">
+      <view class="section-header">
+        <t-icon name="ai" size="36rpx" color="var(--info-color)" />
+        <text class="card-title">Agent 调度过程</text>
+      </view>
+      <view class="agent-step-list">
+        <view class="agent-step-row" wx:for="{{agentSteps}}" wx:key="index">
+          <view class="agent-step-dot {{item.status}}"></view>
+          <view class="agent-step-main">
+            <text class="agent-step-title">{{item.name}}</text>
+            <text class="agent-step-desc">{{item.description}}</text>
+          </view>
         </view>
       </view>
     </view>

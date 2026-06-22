@@ -49,8 +49,8 @@ public class VideoDetectionAgent implements Agent {
                 .result(tr.getOutput())
                 .confidence(extractDouble(tr.getData(), "confidence"))
                 .data(tr.getData())
-                .actions(List.of("FILE_UPLOAD", "VIDEO_DETECTION", "FLASK_INFERENCE"))
-                .reasoning("视频检测模型: XceptionNet, 帧预处理+Flask推理")
+                .actions(List.of("DEEPSEEK_TOOL_ROUTING", "VIDEO_DETECTION", "FLASK_INFERENCE", "LLM_REPORT"))
+                .reasoning("DeepSeek 作为中枢 Agent 调度 XceptionNet 视频训练模型完成推理，并将模型结果交给大模型综合研判")
                 .status("SUCCESS")
                 .build();
     }

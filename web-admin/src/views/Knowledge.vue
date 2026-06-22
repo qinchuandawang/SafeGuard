@@ -30,14 +30,25 @@
     <div class="glass-card">
       <div class="page-header">
         <h3>反诈知识条目</h3>
-        <el-input
-          v-model="search"
-          placeholder="搜索知识条目..."
-          :prefix-icon="Search"
-          size="small"
-          class="search-input"
-          clearable
-        />
+        <div class="header-actions">
+          <el-button type="primary" size="small" @click="openCreate">新增条目</el-button>
+          <el-upload
+            :show-file-list="false"
+            :auto-upload="false"
+            accept=".txt,.pdf"
+            :on-change="handleImportFile"
+          >
+            <el-button size="small">导入文档</el-button>
+          </el-upload>
+          <el-input
+            v-model="search"
+            placeholder="搜索知识条目..."
+            :prefix-icon="Search"
+            size="small"
+            class="search-input"
+            clearable
+          />
+        </div>
       </div>
       <el-table :data="filteredItems" v-loading="loading" class="modern-table" stripe @cell-click="handleCellClick">
         <el-table-column prop="id" label="ID" width="55" sortable />
@@ -88,16 +99,49 @@
             />
           </template>
         </el-table-column>
+        <el-table-column label="操作" width="150" fixed="right">
+          <template #default="{ row }">
+            <el-button link type="primary" size="small" @click="openEdit(row)">编辑</el-button>
+            <el-button link type="danger" size="small" @click="removeItem(row)">删除</el-button>
+          </template>
+        </el-table-column>
       </el-table>
     </div>
+
+    <el-dialog v-model="dialogVisible" :title="editingItem?.id ? '编辑知识条目' : '新增知识条目'" width="680px">
+      <el-form :model="form" label-width="72px">
+        <el-form-item label="分类">
+          <el-input v-model="form.category" placeholder="如：诈骗类型 / AI诈骗 / 防骗技巧" />
+        </el-form-item>
+        <el-form-item label="问题">
+          <el-input v-model="form.question" placeholder="输入知识条目标题或问题" />
+        </el-form-item>
+        <el-form-item label="答案">
+          <el-input v-model="form.answer" type="textarea" :rows="7" placeholder="输入完整答案内容" />
+        </el-form-item>
+        <el-form-item label="标签">
+          <el-input v-model="form.tags" placeholder="多个标签可用逗号分隔" />
+        </el-form-item>
+        <el-form-item label="优先级">
+          <el-input-number v-model="form.priority" :min="1" :max="10" />
+        </el-form-item>
+        <el-form-item label="启用">
+          <el-switch v-model="form.enabled" :active-value="1" :inactive-value="0" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="saving" @click="saveItem">保存</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { Search } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
-import { getKnowledgeList, updateKnowledge } from '../api/knowledge'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { createKnowledge, deleteKnowledge, getKnowledgeList, importKnowledgeDocument, updateKnowledge } from '../api/knowledge'
 import ChartCard from '../components/ChartCard.vue'
 import * as echarts from 'echarts'
 
@@ -105,6 +149,17 @@ const items = ref([])
 const loading = ref(false)
 const search = ref('')
 const editingPriority = ref(null)
+const dialogVisible = ref(false)
+const saving = ref(false)
+const editingItem = ref(null)
+const form = ref({
+  category: '',
+  question: '',
+  answer: '',
+  tags: '',
+  priority: 5,
+  enabled: 1,
+})
 
 const filteredItems = computed(() => {
   if (!search.value) return items.value
@@ -227,11 +282,94 @@ async function toggleEnabled(row, val) {
   }
 }
 
-onMounted(async () => {
+function openCreate() {
+  editingItem.value = null
+  form.value = { category: '诈骗类型', question: '', answer: '', tags: '', priority: 5, enabled: 1 }
+  dialogVisible.value = true
+}
+
+function openEdit(row) {
+  editingItem.value = row
+  form.value = {
+    category: row.category || '',
+    question: row.question || '',
+    answer: row.answer || '',
+    tags: row.tags || '',
+    priority: row.priority || 5,
+    enabled: row.enabled === false ? 0 : (row.enabled ?? 1),
+  }
+  dialogVisible.value = true
+}
+
+async function saveItem() {
+  if (!form.value.question || !form.value.answer) {
+    ElMessage.warning('请填写问题和答案')
+    return
+  }
+  saving.value = true
+  try {
+    if (editingItem.value?.id) {
+      await updateKnowledge(editingItem.value.id, form.value)
+      ElMessage.success('知识条目已更新')
+    } else {
+      await createKnowledge(form.value)
+      ElMessage.success('知识条目已新增')
+    }
+    dialogVisible.value = false
+    await loadItems()
+  } catch (e) {
+    ElMessage.error('保存失败')
+  } finally {
+    saving.value = false
+  }
+}
+
+async function removeItem(row) {
+  try {
+    await ElMessageBox.confirm(`确定删除知识条目「${row.question || row.id}」吗？`, '删除确认', { type: 'warning' })
+    await deleteKnowledge(row.id)
+    ElMessage.success('已删除')
+    await loadItems()
+  } catch (e) {
+    if (e !== 'cancel') ElMessage.error('删除失败')
+  }
+}
+
+async function handleImportFile(file) {
+  const rawFile = file?.raw
+  if (!rawFile) return
+  const ext = rawFile.name.split('.').pop()?.toLowerCase()
+  if (!['txt', 'pdf'].includes(ext)) {
+    ElMessage.warning('仅支持 txt 或 pdf 文件')
+    return
+  }
+  const formData = new FormData()
+  formData.append('file', rawFile)
+  formData.append('category', '知识文档')
+  formData.append('tags', `文档导入,${ext}`)
+  formData.append('priority', '6')
+  formData.append('enabled', 'true')
+  try {
+    await importKnowledgeDocument(formData)
+    ElMessage.success('文档已导入知识库')
+    await loadItems()
+  } catch (e) {
+    ElMessage.error('文档导入失败')
+  }
+}
+
+async function loadItems() {
   loading.value = true
-  const itemsData = await getKnowledgeList()
-  items.value = itemsData || []
-  loading.value = false
+  try {
+    const itemsData = await getKnowledgeList()
+    items.value = itemsData || []
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(async () => {
+  await loadItems()
 })
 </script>
 
@@ -262,6 +400,7 @@ onMounted(async () => {
   color: var(--text-primary, #0f172a);
   margin: 0;
 }
+.header-actions { display: flex; gap: 12px; align-items: center; }
 .glass-card h4 {
   font-size: 14px;
   font-weight: 600;

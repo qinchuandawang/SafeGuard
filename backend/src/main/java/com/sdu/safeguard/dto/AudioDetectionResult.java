@@ -16,6 +16,15 @@ public class AudioDetectionResult {
     private Double latencyMs;           // 检测耗时
     private String modelVersion;        // 模型版本
     private String device;              // 推理设备
+    private String fileName;            // 上传文件名
+    private Long fileSizeBytes;         // 上传文件大小
+    private Integer sampleRate;         // 模型目标采样率
+    private Integer originalSampleRate; // 原始采样率
+    private Integer channels;           // 声道数
+    private Double durationSeconds;     // 原始时长
+    private Double analyzedSeconds;     // 实际分析时长
+    private Double maxSeconds;          // 最大截断时长
+    private Boolean truncated;          // 是否截断
     private String report;              // AI 生成的详细分析报告（纯文本）
     
     // 兼容旧格式

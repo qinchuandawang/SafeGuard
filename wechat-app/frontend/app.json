@@ -3,6 +3,7 @@
   "pages": [
     "pages/index/index",
     "pages/detection/detection",
+    "pages/history/history",
     "pages/result/result",
     "pages/simulate/simulate",
     "pages/knowledge/knowledge",

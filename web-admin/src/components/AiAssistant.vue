@@ -58,82 +58,30 @@ async function send() {
   await nextTick()
   scrollDown()
 
-  // 占位气泡，接收流式增量
+  // 占位气泡，普通 JSON 接口比浏览器端 SSE 解析更稳定
   const aiIndex = messages.value.length
   messages.value.push({ role: 'ai', text: '' })
 
-  let buffer = ''
-  let cancelled = false
   const resp = await request({
-    url: '/llm/analyze/stream',
+    url: '/llm/analyze',
     method: 'post',
     data: { text },
-    responseType: 'stream',
-    headers: {
-      Accept: 'text/event-stream',
-      __suppressError: true,
-    },
-    onDownloadProgress: () => {},
+    headers: { __suppressError: true },
   }).catch(err => {
-    cancelled = true
-    messages.value[aiIndex].text = 'AI 服务暂时不可用，请稍后重试。'
+    messages.value[aiIndex].text = 'AI 服务暂时不可用，请检查后端是否已加载 LLM_API_KEY。'
     thinking.value = false
     return null
   })
-  if (cancelled || !resp) {
+  if (!resp) {
     return
   }
 
-  // SSE 解析：按行读取，以 "data: " 开头的事件
-  const reader = resp.data?.body?.getReader
-    ? resp.data.body.getReader()
-    : resp.data?.getReader
-      ? resp.data.getReader()
-      : null
-
-  if (!reader) {
-    messages.value[aiIndex].text = '当前浏览器不支持流式响应'
-    thinking.value = false
-    return
-  }
-
-  const decoder = new TextDecoder('utf-8')
-  try {
-    while (true) {
-      const { value, done } = await reader.read()
-      if (done) break
-      const chunk = decoder.decode(value, { stream: true })
-      buffer += chunk
-      // SSE 事件以双换行分隔
-      const events = buffer.split('\n\n')
-      buffer = events.pop() || ''
-      for (const evt of events) {
-        const line = evt.trim()
-        if (!line.startsWith('data:')) continue
-        const payload = line.slice(5).trim()
-        if (!payload || payload === '[DONE]') continue
-        if (payload.startsWith('{') && payload.includes('"error"')) {
-          // 后端流式错误事件：{error: "..."}
-          try {
-            const obj = JSON.parse(payload)
-            if (obj.error) messages.value[aiIndex].text = obj.error
-          } catch { /* 忽略 */ }
-          continue
-        }
-        // 普通增量：直接追加到气泡
-        messages.value[aiIndex].text += payload
-        scrollDown()
-      }
-    }
-  } catch (e) {
-    if (messages.value[aiIndex].text === '') {
-      messages.value[aiIndex].text = 'AI 服务暂时不可用，请稍后重试。'
-    }
-  } finally {
-    thinking.value = false
-    await nextTick()
-    scrollDown()
-  }
+  messages.value[aiIndex].text = typeof resp === 'string' && resp.trim()
+    ? resp
+    : 'AI 服务暂时不可用，请稍后重试。'
+  thinking.value = false
+  await nextTick()
+  scrollDown()
 }
 </script>
 

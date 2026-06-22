@@ -11,9 +11,14 @@ import org.springframework.boot.web.server.WebServerFactoryCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableAsync;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.BindException;
 import java.net.ServerSocket;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @SpringBootApplication
 @EnableConfigurationProperties(VideoProperties.class)
@@ -22,7 +27,65 @@ import java.net.ServerSocket;
 public class SafeGuardApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(SafeGuardApplication.class, args);
+        SpringApplication application = new SpringApplication(SafeGuardApplication.class);
+        Map<String, Object> dotEnvDefaults = loadDotEnvDefaults();
+        if (!dotEnvDefaults.isEmpty()) {
+            application.setDefaultProperties(dotEnvDefaults);
+        }
+        application.run(args);
+    }
+
+    /**
+     * 开发/演示环境直接读取项目根目录 .env。
+     * 这样从 IDE、Maven 或脚本启动时都能拿到 LLM_API_KEY、DB_PASSWORD 等配置。
+     */
+    private static Map<String, Object> loadDotEnvDefaults() {
+        Map<String, Object> defaults = new LinkedHashMap<>();
+        File dotEnv = findDotEnv();
+        if (dotEnv == null || !dotEnv.isFile()) {
+            return defaults;
+        }
+        try (BufferedReader reader = new BufferedReader(new FileReader(dotEnv))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String trimmed = line.trim();
+                if (trimmed.isEmpty() || trimmed.startsWith("#") || !trimmed.contains("=")) {
+                    continue;
+                }
+                int idx = trimmed.indexOf('=');
+                String key = trimmed.substring(0, idx).trim();
+                String value = trimmed.substring(idx + 1).trim();
+                if (key.isEmpty() || System.getenv(key) != null || System.getProperty(key) != null) {
+                    continue;
+                }
+                defaults.put(key, stripQuotes(value));
+            }
+            System.out.println("[SafeGuard] 已加载环境配置: " + dotEnv.getAbsolutePath());
+        } catch (IOException e) {
+            System.out.println("[SafeGuard][WARN] .env 读取失败: " + e.getMessage());
+        }
+        return defaults;
+    }
+
+    private static File findDotEnv() {
+        File dir = new File(System.getProperty("user.dir")).getAbsoluteFile();
+        for (int i = 0; i < 4 && dir != null; i++) {
+            File candidate = new File(dir, ".env");
+            if (candidate.isFile()) {
+                return candidate;
+            }
+            dir = dir.getParentFile();
+        }
+        return null;
+    }
+
+    private static String stripQuotes(String value) {
+        if (value.length() >= 2
+                && ((value.startsWith("\"") && value.endsWith("\""))
+                || (value.startsWith("'") && value.endsWith("'")))) {
+            return value.substring(1, value.length() - 1);
+        }
+        return value;
     }
 
     // ========== DevTools 热重启兼容：设置 SO_REUSEADDR ==========

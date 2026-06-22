@@ -19,7 +19,22 @@ from transformers import Wav2Vec2ForSequenceClassification, Wav2Vec2Processor
 
 PROCESSOR: Optional[Wav2Vec2Processor] = None
 MODEL: Optional[Wav2Vec2ForSequenceClassification] = None
-DEVICE: str = "cuda" if torch.cuda.is_available() else "cpu"
+
+
+def _select_device() -> str:
+    """优先使用环境变量指定的设备，演示环境默认走 GPU。"""
+    requested = os.getenv("SAFEGUARD_DEVICE", "cuda").strip().lower()
+    if requested.startswith("cuda"):
+        if torch.cuda.is_available():
+            return requested
+        print("[WARN] SAFEGUARD_DEVICE=cuda，但当前 PyTorch 未检测到 CUDA，已退回 CPU")
+        return "cpu"
+    if requested == "cpu":
+        return "cpu"
+    return "cuda" if torch.cuda.is_available() else "cpu"
+
+
+DEVICE: str = _select_device()
 
 _model_lock = threading.Lock()
 _model_loaded = False
@@ -71,6 +86,23 @@ def load_audio(
         wav = wav[:max_len]
 
     return wav
+
+
+def inspect_audio(path: Path, target_sr: int = 16000, max_seconds: float = 4.0) -> dict:
+    """读取音频基础信息，用于报告解释，不参与模型判定。"""
+    if not path.exists():
+        raise FileNotFoundError(f"音频文件不存在: {path}")
+    info = sf.info(path)
+    duration = float(info.duration or 0.0)
+    analyzed_seconds = min(duration, float(max_seconds)) if duration > 0 else float(max_seconds)
+    return {
+        "original_sample_rate": int(info.samplerate or 0),
+        "channels": int(info.channels or 0),
+        "duration_seconds": round(duration, 2),
+        "analyzed_seconds": round(analyzed_seconds, 2),
+        "truncated": duration > max_seconds,
+        "target_sample_rate": target_sr,
+    }
 
 
 def _resample_linear(wav: np.ndarray, orig_sr: int, target_sr: int) -> np.ndarray:
@@ -168,6 +200,7 @@ def predict_audio(
         latency_ms, model_version 等字段的 dict。
     """
     processor, model = load_model_once(model_dir)
+    audio_info = inspect_audio(audio_path, sample_rate, max_seconds)
     wav = load_audio(audio_path, target_sr=sample_rate, max_seconds=max_seconds)
 
     inputs = processor(
@@ -197,6 +230,7 @@ def predict_audio(
         "device": DEVICE,
         "sample_rate": sample_rate,
         "max_seconds": max_seconds,
+        **audio_info,
     }
 
 

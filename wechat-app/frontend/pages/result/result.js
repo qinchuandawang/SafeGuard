@@ -16,8 +16,16 @@ Page({
     fakePercent: 95,
     fakeText: '95.0',
     reportContent: '',
+    realLabel: '真实概率',
+    fakeLabel: '伪造概率',
+    confidenceLabel: '检测置信度',
+    confidenceHint: '',
+    videoEvidence: [],
     features: [],
     adviceList: [],
+    agentSteps: [],
+    batchDetails: [],
+    batchSummary: null,
     isCollected: false,
     currentRecordId: '',
   },
@@ -75,7 +83,8 @@ Page({
     if (!data) return;
 
     const { confidence, probabilities, report, advice, type } = data;
-    const fakeProb = probabilities?.fake || data.spoofProb || 0;
+    const currentType = type || this.data.detectionType;
+    const fakeProb = probabilities?.fake || data.riskProbability || data.fakeProbability || data.spoofProb || 0;
 
     let level, icon, badge, name;
     if (fakeProb > 0.7) { level = 'danger'; icon = 'warning-filled'; badge = '存在风险'; name = '高风险内容'; }
@@ -83,7 +92,7 @@ Page({
     else { level = 'success'; icon = 'check-circle-filled'; badge = '安全'; name = '低风险内容'; }
 
     this.setData({
-      detectionType: type || this.data.detectionType,
+      detectionType: currentType,
       resultLevel: level,
       resultIcon: icon,
       resultBadge: badge,
@@ -94,9 +103,48 @@ Page({
       realText: ((probabilities?.real || (1 - fakeProb)) * 100).toFixed(1),
       fakePercent: Math.round(fakeProb * 100),
       fakeText: (fakeProb * 100).toFixed(1),
+      confidenceLabel: currentType === 'text' ? '风险判断置信度' : (currentType === 'video' ? '模型判定置信度' : '检测置信度'),
+      confidenceHint: currentType === 'video' ? 'XceptionNet 主要检测换脸/面部篡改痕迹；综合风险会叠加 AIGC 元数据证据，置信度不等于视频真实度。' : '',
+      realLabel: currentType === 'text' ? '低风险可能' : (currentType === 'video' ? '综合低风险' : '真实概率'),
+      fakeLabel: currentType === 'text' ? '高风险可能' : (currentType === 'video' ? '综合高风险' : '伪造概率'),
+      videoEvidence: currentType === 'video' ? this.buildVideoEvidence(data, probabilities, fakeProb) : [],
       reportContent: report || data.report || '无详细报告',
-      features: data.features || this.generateFeatures(type || this.data.detectionType, fakeProb),
+      features: data.features || data.suspiciousPoints || this.generateFeatures(currentType, fakeProb),
       adviceList: advice || data.advice || this.generateAdvice(fakeProb),
+      agentSteps: this.normalizeAgentSteps(data.agentSteps || data.orchestratorSteps || []),
+      batchDetails: Array.isArray(data.batchDetails) ? data.batchDetails : [],
+      batchSummary: data.batchSummary || null,
+    });
+  },
+
+  buildVideoEvidence(data, probabilities, fakeProb) {
+    const visual = typeof data.visualFakeProbability === 'number' ? data.visualFakeProbability : fakeProb;
+    const avg = typeof data.averageFakeProbability === 'number' ? data.averageFakeProbability : fakeProb;
+    const max = typeof data.maxFakeProbability === 'number' ? data.maxFakeProbability : fakeProb;
+    const ratio = typeof data.suspiciousFrameRatio === 'number' ? data.suspiciousFrameRatio : 0;
+    const items = [
+      { label: '视觉换脸风险', value: (visual * 100).toFixed(1) + '%' },
+      { label: '平均单帧风险', value: (avg * 100).toFixed(1) + '%' },
+      { label: '最高单帧风险', value: (max * 100).toFixed(1) + '%' },
+      { label: '可疑帧占比', value: (ratio * 100).toFixed(1) + '%' },
+    ];
+    if (data.aigcMetadataDetected) {
+      items.push({ label: '元数据证据', value: '命中 AIGC' });
+    }
+    return items;
+  },
+
+  normalizeAgentSteps(steps) {
+    if (!Array.isArray(steps)) return [];
+    return steps.map((item, index) => {
+      if (typeof item === 'string') {
+        return { name: `步骤 ${index + 1}`, description: item, status: 'completed' };
+      }
+      return {
+        name: item.name || item.label || `步骤 ${index + 1}`,
+        description: item.description || item.desc || '',
+        status: item.status || 'completed',
+      };
     });
   },
 
@@ -123,7 +171,7 @@ Page({
   },
 
   onBack() { wx.navigateBack(); },
-  detectAgain() { wx.navigateBack(); },
+  detectAgain() { wx.switchTab({ url: '/pages/detection/detection' }); },
 
   onCollect() {
     const isCollected = !this.data.isCollected;

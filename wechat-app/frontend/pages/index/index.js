@@ -7,6 +7,7 @@ Page({
     navBarHeight: 80,
     statusBarHeight: 20,
     greeting: '你好',
+    greetingHint: '今日安全概览已准备好',
     todayDate: '',
     stats: { detectionCount: '0', accuracy: '--', safeRate: '--' },
     dailyTip: { content: '遇到自称公检法机关要求转账的电话，请务必通过官方渠道核实身份，谨防上当受骗。' },
@@ -22,6 +23,7 @@ Page({
     threatLevel: 0,
     threatLabel: '安全',
     threatColor: '#10b981',
+    threatBgColor: 'rgba(16,185,129,0.12)',
     recentDetections: [],
     safeCount: 0,
     riskCount: 0,
@@ -58,13 +60,27 @@ Page({
   setGreeting() {
     const hour = new Date().getHours();
     let text = '你好';
-    if (hour < 6 || hour >= 22) text = '夜深了，注意休息';
-    else if (hour < 9) text = '早上好';
-    else if (hour < 12) text = '上午好';
-    else if (hour < 14) text = '中午好';
-    else if (hour < 18) text = '下午好';
-    else text = '晚上好';
-    this.setData({ greeting: text });
+    let hint = '今日安全概览已准备好';
+    if (hour < 6 || hour >= 22) {
+      text = '夜深了';
+      hint = '演示前也请注意休息';
+    } else if (hour < 9) {
+      text = '早上好';
+      hint = '开启今天的安全检测';
+    } else if (hour < 12) {
+      text = '上午好';
+      hint = '今日安全概览已准备好';
+    } else if (hour < 14) {
+      text = '中午好';
+      hint = '保持警惕，安心使用';
+    } else if (hour < 18) {
+      text = '下午好';
+      hint = '继续守护数字生活';
+    } else {
+      text = '晚上好';
+      hint = '今日安全状态一目了然';
+    }
+    this.setData({ greeting: text, greetingHint: hint });
   },
 
   setTodayDate() {
@@ -84,7 +100,16 @@ Page({
     } else {
       level = 1; label = '安全'; color = '#10b981';
     }
-    this.setData({ threatLevel: level, threatLabel: label, threatColor: color });
+    this.setData({
+      threatLevel: level,
+      threatLabel: label,
+      threatColor: color,
+      threatBgColor: level === 3
+        ? 'rgba(239,68,68,0.12)'
+        : level === 2
+          ? 'rgba(245,158,11,0.12)'
+          : 'rgba(16,185,129,0.12)',
+    });
   },
 
   loadDailyTip() {
@@ -270,6 +295,7 @@ Page({
   goToDetection() { wx.switchTab({ url: '/pages/detection/detection' }); },
   goToSimulate() { wx.switchTab({ url: '/pages/simulate/simulate' }); },
   goToKnowledge() { wx.switchTab({ url: '/pages/knowledge/knowledge' }); },
+  goToHistory() { wx.navigateTo({ url: '/pages/history/history' }); },
   callHotline() {
     wx.makePhoneCall({
       phoneNumber: '96110',
@@ -285,20 +311,22 @@ Page({
     const history = app.globalData.detectionHistory || [];
     const item = history[idx];
     if (item) {
+      const storedResult = item.detectionResult || item.record || item;
       const resultData = {
+        ...storedResult,
         type: item.type || 'text',
-        result: item.result || 'safe',
-        confidence: item.confidence || 0.7,
+        result: item.resultLevel || item.result || 'safe',
+        confidence: item.confidence || storedResult.confidence || 0.7,
         probabilities: {
-          real: (item.probabilities && item.probabilities.real) || (item.result === 'danger' || item.result === 'dangerous' ? 0.05 : 0.95),
-          fake: (item.probabilities && item.probabilities.fake) || (item.result === 'danger' || item.result === 'dangerous' ? 0.95 : 0.05)
+          real: (item.probabilities && item.probabilities.real) || (storedResult.probabilities && storedResult.probabilities.real) || (item.result === 'danger' || item.result === 'dangerous' ? 0.05 : 0.95),
+          fake: (item.probabilities && item.probabilities.fake) || (storedResult.probabilities && storedResult.probabilities.fake) || (item.result === 'danger' || item.result === 'dangerous' ? 0.95 : 0.05)
         },
-        report: item.report || '',
+        report: item.report || storedResult.report || '',
         fileName: item.fileName || '',
         riskScore: item.riskScore || 0
       };
-      const dataStr = encodeURIComponent(JSON.stringify(resultData));
-      wx.navigateTo({ url: '/pages/result/result?type=' + resultData.type + '&data=' + dataStr });
+      app.globalData.pendingDetectionResult = resultData;
+      wx.navigateTo({ url: '/pages/result/result?type=' + resultData.type });
     }
   },
 

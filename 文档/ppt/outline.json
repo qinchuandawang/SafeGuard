@@ -1,0 +1,348 @@
+{
+  "title": "SafeGuard 项目汇报",
+  "subtitle": "基于 Agent 的多模态 AI 反诈骗检测系统",
+  "deck_style": {
+    "visual_density": "medium",
+    "emoji_mode": "none",
+    "font_pair": "clean_modern_v1",
+    "header_mode": "lab-clean",
+    "header_variant": "auto",
+    "footer_mode": "source-line",
+    "footer_page_numbers": true,
+    "summary_callout_mode": "lab-box",
+    "style_seed": "safeguard-agent-report"
+  },
+  "slides": [
+    {
+      "type": "title",
+      "title": "SafeGuard 项目汇报",
+      "subtitle": "基于 Agent 的多模态 AI 反诈骗检测系统"
+    },
+    {
+      "type": "content",
+      "variant": "split",
+      "slide_intent": "message",
+      "visual_intent": "comparison",
+      "title": "项目定位：以大模型 Agent 为中枢",
+      "subtitle": "不是单一模型演示，而是完整反诈应用链路",
+      "bullets": [
+        "面向文本、音频、视频和多模态内容的风险检测。",
+        "DeepSeek 负责理解任务、调度工具、融合证据并生成中文报告。",
+        "Wav2Vec2 与 XceptionNet 作为专用检测工具参与 Agent 链路。",
+        "微信小程序、后端、Python 模型服务、数据库和管理后台形成闭环。"
+      ],
+      "highlights": [
+        "Agent 编排",
+        "多模态检测",
+        "证据融合",
+        "可演示闭环"
+      ],
+      "footer": "项目定位来自 SafeGuard 项目汇报文档与 backend/wechat-app/ai-services 代码梳理"
+    },
+    {
+      "type": "content",
+      "variant": "cards-3",
+      "slide_intent": "message",
+      "visual_intent": "comparison",
+      "title": "系统核心能力",
+      "subtitle": "围绕真实反诈场景组织功能入口",
+      "cards": [
+        {
+          "title": "检测入口",
+          "body": "文本检测支持输入和文档上传；音频检测支持单文件和批量；视频检测支持异步任务、抽帧和逐帧分析。",
+          "accent": "accent_primary"
+        },
+        {
+          "title": "交互训练",
+          "body": "AI 智能助手提供反诈咨询；模拟诈骗功能以对话训练方式提升用户识别能力。",
+          "accent": "accent_secondary"
+        },
+        {
+          "title": "结果闭环",
+          "body": "检测历史、管理后台和数据库记录让演示从上传、分析、报告到留存形成完整链路。",
+          "accent": "accent_primary"
+        }
+      ],
+      "footer": "小程序页面：detection、knowledge、simulate；后端接口：DetectionController"
+    },
+    {
+      "type": "content",
+      "variant": "timeline",
+      "slide_intent": "process",
+      "visual_intent": "timeline",
+      "title": "Agent 工作链路",
+      "subtitle": "从用户输入到中文风险报告",
+      "milestones": [
+        {
+          "label": "1",
+          "title": "任务理解",
+          "body": "小程序提交文本、文档、音频或视频，后端识别检测类型并构造任务上下文。"
+        },
+        {
+          "label": "2",
+          "title": "工具调度",
+          "body": "文本走 DeepSeek 与知识库；音频调用 Wav2Vec2；视频调用抽帧、XceptionNet 和元数据读取。"
+        },
+        {
+          "label": "3",
+          "title": "证据融合",
+          "body": "后端聚合模型概率、可疑点、逐帧结果、AIGC 元数据和知识库上下文。"
+        },
+        {
+          "label": "4",
+          "title": "报告生成",
+          "body": "DeepSeek 将模型结果转成可读中文报告，并给出风险等级、原因和处置建议。"
+        }
+      ],
+      "footer": "核心代码：LLMService、DetectionService、VideoImagePipelineService、DetectionTaskManager"
+    },
+    {
+      "type": "content",
+      "variant": "table",
+      "slide_intent": "evidence",
+      "visual_intent": "data",
+      "title": "技术栈总览",
+      "subtitle": "前端、后端、大模型、专用模型和数据层协同",
+      "headers": [
+        "层级",
+        "技术",
+        "作用"
+      ],
+      "rows": [
+        [
+          "小程序端",
+          "微信小程序、TDesign",
+          "检测入口、AI 助手、模拟诈骗、历史记录"
+        ],
+        [
+          "后端服务",
+          "Spring Boot、Java 17、MyBatis-Plus",
+          "API、任务调度、Agent 编排、报告生成"
+        ],
+        [
+          "大模型",
+          "DeepSeek V4 Pro",
+          "语义分析、问答、模拟诈骗、多模态综合研判"
+        ],
+        [
+          "音频模型",
+          "Wav2Vec2、PyTorch、Transformers",
+          "音频伪造检测和概率输出"
+        ],
+        [
+          "视频模型",
+          "XceptionNet、PyTorch、OpenCV、FFmpeg",
+          "关键帧检测、换脸风险分析、元数据读取"
+        ],
+        [
+          "数据与知识",
+          "MySQL、Qdrant、SiliconFlow",
+          "检测记录、知识库检索、向量召回"
+        ]
+      ],
+      "column_weights": [
+        0.18,
+        0.34,
+        0.48
+      ],
+      "caption": "本地演示环境支持 Windows 一键启动、CUDA GPU 推理和模型预热。"
+    },
+    {
+      "type": "content",
+      "variant": "cards-3",
+      "slide_intent": "evidence",
+      "visual_intent": "comparison",
+      "title": "项目优点",
+      "subtitle": "课程作业重点体现 Agent 应用开发能力",
+      "cards": [
+        {
+          "title": "不是接口堆叠",
+          "body": "后端通过 AgentOrchestrator、LLMService 和媒体模型服务，把任务理解、工具调用和报告生成串成链路。",
+          "accent": "accent_primary"
+        },
+        {
+          "title": "贴近真实反诈",
+          "body": "覆盖文字话术、语音克隆、伪造视频和多模态组合，比单一文本检测更接近实际诈骗流程。",
+          "accent": "accent_secondary"
+        },
+        {
+          "title": "演示可观察",
+          "body": "小程序展示进度和 Agent 状态；后端控制台输出抽帧、逐帧检测、模型调用和任务状态。",
+          "accent": "accent_primary"
+        }
+      ],
+      "summary_callout": "核心价值：专用模型给证据，大模型负责解释和编排，前端把复杂链路展示成可理解体验。"
+    },
+    {
+      "type": "content",
+      "variant": "split",
+      "slide_intent": "evidence",
+      "visual_intent": "comparison",
+      "title": "文本检测与 AI 助手设计",
+      "subtitle": "DeepSeek 承担语义分析、RAG 问答和中文解释",
+      "bullets": [
+        "文本检测支持输入框和文档上传，后端统一构造 OrchestratorRequest。",
+        "检测链路启用 TEXT_ANALYSIS、KNOWLEDGE、ReAct、CoT 和 RAG。",
+        "AI 助手通过 streamCallLLM 流式返回，前端 knowledge.js 做节流渲染。",
+        "输出重点从 JSON 字段转为普通用户能读懂的中文风险报告。"
+      ],
+      "highlights": [
+        "DetectionController.detectText",
+        "DetectionController.detectTextDocument",
+        "LLMService.streamCallLLM",
+        "wechat-app/pages/knowledge"
+      ],
+      "footer": "文本与问答能力体现 Agent 的语言理解和知识整合能力"
+    },
+    {
+      "type": "content",
+      "variant": "split",
+      "slide_intent": "evidence",
+      "visual_intent": "comparison",
+      "title": "音频检测设计：Wav2Vec2 工具化",
+      "subtitle": "专用模型输出概率，大模型生成贴合文件的报告",
+      "bullets": [
+        "ai-services/audio/src/utils.py 负责模型加载、音频预处理和 predict_audio 推理。",
+        "load_model_once 缓存模型，/health 支持预热，SAFEGUARD_DEVICE=cuda 时优先使用 GPU。",
+        "后端 DetectionService 调用音频服务，LLMService.generateAudioReport 生成中文分析。",
+        "小程序端支持批量音频检测，并展示处理进度和结果摘要。"
+      ],
+      "highlights": [
+        "Wav2Vec2",
+        "GPU 优先",
+        "批量检测",
+        "报告差异化"
+      ],
+      "footer": "核心文件：train_wav2vec2.py、utils.py、app.py、asvspoof-finetuned"
+    },
+    {
+      "type": "content",
+      "variant": "split",
+      "slide_intent": "evidence",
+      "visual_intent": "comparison",
+      "title": "视频检测设计：XceptionNet 与证据融合",
+      "subtitle": "换脸检测模型负责视觉风险，后端融合元数据证据",
+      "bullets": [
+        "后端先抽取关键帧，再做人脸裁剪或整帧降级检测。",
+        "Python 视频服务使用 XceptionNet 输出每帧伪造概率。",
+        "系统统计平均概率、最高单帧概率、可疑帧占比和逐帧明细。",
+        "如果视频元数据命中 AIGC 标记，综合风险会提高，但报告会区分视觉风险和综合风险。"
+      ],
+      "highlights": [
+        "VideoFrameExtractorService",
+        "VideoImagePipelineService",
+        "models/xception.py",
+        "pretrained/best_model.pth"
+      ],
+      "footer": "当前聚焦 AI 换脸/面部篡改检测，不等同于通用视频大模型"
+    },
+    {
+      "type": "content",
+      "variant": "table",
+      "slide_intent": "evidence",
+      "visual_intent": "data",
+      "title": "小组分工与代码贡献",
+      "subtitle": "每个人围绕一个核心链路承担工作",
+      "headers": [
+        "成员",
+        "方向",
+        "核心贡献"
+      ],
+      "rows": [
+        [
+          "彭宏缤",
+          "后端",
+          "Spring Boot API、DetectionController、LLMService、DetectionService、异步任务与 Agent 编排"
+        ],
+        [
+          "朱乘雨",
+          "前端",
+          "微信小程序检测页、AI 助手、模拟诈骗、进度卡片、TaskWatcher、管理后台页面"
+        ],
+        [
+          "刘志恒",
+          "音频训练",
+          "Wav2Vec2 训练与服务化、音频预处理、模型缓存、GPU 推理、批量检测支撑"
+        ],
+        [
+          "王家和",
+          "视频训练",
+          "XceptionNet 训练与服务化、关键帧推理、人脸/整帧检测、视频风险聚合"
+        ]
+      ],
+      "column_weights": [
+        0.16,
+        0.18,
+        0.66
+      ],
+      "caption": "分工说明结合 README、项目汇报文档和实际代码目录整理。"
+    },
+    {
+      "type": "content",
+      "variant": "matrix",
+      "slide_intent": "message",
+      "visual_intent": "comparison",
+      "title": "核心设计思路",
+      "subtitle": "围绕可演示、可解释、可扩展构建",
+      "quadrants": [
+        {
+          "title": "Agent 编排",
+          "body": "将文本、音频、视频统一抽象为任务，由后端选择 DeepSeek、知识库和专用模型。"
+        },
+        {
+          "title": "证据融合",
+          "body": "不只输出一个概率，而是保留可疑点、逐帧明细、元数据、采样信息和模型置信度。"
+        },
+        {
+          "title": "演示稳定性",
+          "body": "一键启动、独立控制台、模型预热、异步视频任务和服务降级保证现场流程可跑通。"
+        },
+        {
+          "title": "用户体验",
+          "body": "小程序展示进度、风险等级、中文报告、历史记录和模拟训练，降低普通用户理解成本。"
+        }
+      ],
+      "summary_callout": "设计目标不是追求单点模型指标，而是把模型能力落到反诈应用流程中。"
+    },
+    {
+      "type": "content",
+      "variant": "timeline",
+      "slide_intent": "process",
+      "visual_intent": "timeline",
+      "title": "现场演示建议流程",
+      "subtitle": "按核心功能从低风险到高复杂度逐步展示",
+      "milestones": [
+        {
+          "label": "A",
+          "title": "AI 助手",
+          "body": "询问一个反诈问题，展示流式中文回答和知识整合能力。"
+        },
+        {
+          "label": "B",
+          "title": "文本检测",
+          "body": "上传文档或输入诈骗话术，展示 Agent 状态、检测报告和处置建议。"
+        },
+        {
+          "label": "C",
+          "title": "音频检测",
+          "body": "选择 test_data 中音频素材，展示模型概率、批量检测和中文报告。"
+        },
+        {
+          "label": "D",
+          "title": "视频检测",
+          "body": "展示异步进度、抽帧明细、逐帧可疑度、AIGC 元数据和综合风险解释。"
+        }
+      ],
+      "footer": "推荐演示目录：D:\\Git\\SafeGuard\\test_data"
+    },
+    {
+      "type": "content",
+      "variant": "kpi-hero",
+      "slide_intent": "decision",
+      "title": "总结",
+      "value": "1",
+      "label": "个可演示的 Agent 反诈应用原型",
+      "context": "DeepSeek 负责理解与编排，Wav2Vec2 和 XceptionNet 提供专用证据，Spring Boot 与微信小程序完成业务闭环。"
+    }
+  ]
+}

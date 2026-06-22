@@ -13,6 +13,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,6 +32,7 @@ public class DetectionService {
     private RestTemplate videoRestTemplate;
     private final VideoImagePipelineService videoImagePipelineService;
     private final VideoProperties videoProperties;
+    private final VideoMetadataEvidenceService videoMetadataEvidenceService;
 
     @Value("${audio.service.url:http://localhost:5000/audio/detect}")
     private String audioServiceUrl;
@@ -80,6 +82,7 @@ public class DetectionService {
             }
         }
         if (result != null) {
+            videoMetadataEvidenceService.applyMetadataEvidence(result, new File(filePath));
             result.computeProbabilities();
         }
         return result;
@@ -152,6 +155,7 @@ public class DetectionService {
             AudioDetectionResult result = AudioDetectionResult.fromTrainingModule(
                     label, spoofProb, bonafideProb, confidence, riskLevel, latencyMs, modelVersion, device
             );
+            enrichAudioMetadata(result, data, file.getName(), file.length());
             
             log.info("音频检测成功: label={}, spoofProb={}, confidence={}", 
                     label, spoofProb, confidence);
@@ -220,12 +224,17 @@ public class DetectionService {
             Object isUncertainObj = data.get("is_uncertain");
             Object avgFakeProb = data.get("average_fake_probability");
             Object maxFakeProb = data.get("max_fake_probability");
+            Object aggregateFakeProb = data.get("aggregate_fake_probability");
             Object totalFrames = data.get("total_frames");
             Object totalFaces = data.get("total_faces");
+            Object framesWithFace = data.get("frames_with_face");
+            Object suspiciousFrameRatio = data.get("suspicious_frame_ratio");
             Object frameResults = data.get("frame_results");
 
             boolean isUncertain = isUncertainObj instanceof Boolean && (Boolean) isUncertainObj;
             double fakeProb;
+            double avgProb = avgFakeProb instanceof Number ? ((Number) avgFakeProb).doubleValue() : 0.0;
+            double maxProb = maxFakeProb instanceof Number ? ((Number) maxFakeProb).doubleValue() : avgProb;
             if (isUncertain) {
                 // 模型没有可用的人脸证据时，把概率置 0.5，置信度置 0，
                 // determination 置 uncertain，让 LLM/前端知道这是"无法判定"
@@ -233,14 +242,31 @@ public class DetectionService {
                 result.setConfidence(0.0);
                 result.setDetermination("uncertain");
             } else {
-                fakeProb = avgFakeProb instanceof Number ? ((Number) avgFakeProb).doubleValue()
-                        : (isFake instanceof Boolean && (Boolean) isFake ? 1.0 : 0.0);
-                // 置信度：模型对"判定结果"的确信度（与 fake_probability 互为补充）
-                double certainty = Math.abs(fakeProb - 0.5) * 2;
-                result.setConfidence(certainty);
-                result.setDetermination(fakeProb > 0.5 ? "fake" : "real");
+                double suspiciousRatio = suspiciousFrameRatio instanceof Number
+                        ? ((Number) suspiciousFrameRatio).doubleValue()
+                        : 0.0;
+                fakeProb = aggregateFakeProb instanceof Number
+                        ? ((Number) aggregateFakeProb).doubleValue()
+                        : aggregateVideoRisk(avgProb, maxProb, suspiciousRatio,
+                        isFake instanceof Boolean && (Boolean) isFake);
+                result.setVisualFakeProbability(fakeProb);
+                // 置信度是模型对该方向的确信程度，不等于“真实证明”。
+                double certainty = Math.max(Math.abs(avgProb - 0.5) * 2, Math.abs(maxProb - 0.5) * 1.4);
+                result.setConfidence(Math.max(0.35, Math.min(0.98, certainty)));
+                result.setDetermination(fakeProb >= 0.55 ? "fake" : "real");
             }
             result.setFakeProbability(fakeProb);
+            if (result.getVisualFakeProbability() == null) {
+                result.setVisualFakeProbability(fakeProb);
+            }
+            result.setAverageFakeProbability(avgProb);
+            result.setMaxFakeProbability(maxProb);
+            result.setSuspiciousFrameRatio(suspiciousFrameRatio instanceof Number
+                    ? ((Number) suspiciousFrameRatio).doubleValue()
+                    : null);
+            result.setTotalFrames(parseInteger(totalFrames));
+            result.setTotalFaces(parseInteger(totalFaces));
+            result.setFramesWithFace(parseInteger(framesWithFace));
 
             // 从 Flask 返回的 frame_results 重建 FrameAnalysis 列表，
             // 否则 LLM 看到 frameAnalysis=null，报告里写"分析帧数为 0"
@@ -276,6 +302,9 @@ public class DetectionService {
             log.info("视频检测成功(直连): fakeProbability={}, frames={}, faces={}, frameAnalyses={}",
                     fakeProb, totalFrames, totalFaces, analyses.size());
             return result;
+        } catch (ResourceAccessException e) {
+            log.error("视频检测服务不可访问: {}", url, e);
+            throw new RuntimeException("视频检测服务未启动或不可访问，请确认 SafeGuard-Video-Service 窗口正在运行，并检查 http://localhost:5002/api/health", e);
         } catch (Exception e) {
             log.error("调用视频检测服务失败: {}", url, e);
             throw new RuntimeException("视频检测服务调用失败: " + e.getMessage(), e);
@@ -340,6 +369,7 @@ public class DetectionService {
 
             AudioDetectionResult result = AudioDetectionResult.fromTrainingModule(
                     label, spoofProb, bonafideProb, confidence, riskLevel, latencyMs, modelVersion, device);
+            enrichAudioMetadata(result, data, multipartFile.getOriginalFilename(), multipartFile.getSize());
 
             log.info("音频检测成功(跨容器): label={}, spoofProb={}, confidence={}",
                     label, spoofProb, confidence);
@@ -348,6 +378,49 @@ public class DetectionService {
         } catch (Exception e) {
             log.error("调用音频检测服务失败: {}", url, e);
             throw new RuntimeException("音频检测服务调用失败: " + e.getMessage(), e);
+        }
+    }
+
+    private double aggregateVideoRisk(double avgProb, double maxProb, double suspiciousRatio, boolean serviceIsFake) {
+        double risk = Math.max(avgProb, maxProb * 0.82);
+        if (suspiciousRatio >= 0.25) {
+            risk = Math.max(risk, 0.62 + Math.min(0.18, suspiciousRatio * 0.25));
+        } else if (suspiciousRatio > 0) {
+            risk = Math.max(risk, 0.45 + suspiciousRatio * 0.5);
+        }
+        if (serviceIsFake) {
+            risk = Math.max(risk, 0.58);
+        }
+        return Math.max(0.0, Math.min(1.0, risk));
+    }
+
+    private void enrichAudioMetadata(AudioDetectionResult result, Map<String, Object> data,
+                                     String fileName, long fileSizeBytes) {
+        result.setFileName(fileName);
+        result.setFileSizeBytes(fileSizeBytes);
+        result.setSampleRate(parseInteger(data.get("sample_rate")));
+        result.setOriginalSampleRate(parseInteger(data.get("original_sample_rate")));
+        result.setChannels(parseInteger(data.get("channels")));
+        result.setDurationSeconds(parseDouble(data.get("duration_seconds")));
+        result.setAnalyzedSeconds(parseDouble(data.get("analyzed_seconds")));
+        result.setMaxSeconds(parseDouble(data.get("max_seconds")));
+        Object truncated = data.get("truncated");
+        if (truncated instanceof Boolean b) {
+            result.setTruncated(b);
+        } else if (truncated != null) {
+            result.setTruncated(Boolean.parseBoolean(truncated.toString()));
+        }
+    }
+
+    private Integer parseInteger(Object value) {
+        if (value == null) return null;
+        if (value instanceof Number n) {
+            return n.intValue();
+        }
+        try {
+            return Integer.parseInt(value.toString());
+        } catch (NumberFormatException e) {
+            return null;
         }
     }
 }
