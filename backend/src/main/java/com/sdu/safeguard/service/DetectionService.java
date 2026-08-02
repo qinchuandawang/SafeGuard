@@ -33,6 +33,9 @@ public class DetectionService {
     private final VideoImagePipelineService videoImagePipelineService;
     private final VideoProperties videoProperties;
     private final VideoMetadataEvidenceService videoMetadataEvidenceService;
+    private final ActiveModelRegistry activeModelRegistry;
+    private final ExternalCallGuard externalCallGuard;
+    private final InferenceCapacityService inferenceCapacityService;
 
     @Value("${audio.service.url:http://localhost:5000/audio/detect}")
     private String audioServiceUrl;
@@ -45,22 +48,31 @@ public class DetectionService {
         if (!file.exists()) {
             throw new RuntimeException("音频文件不存在，请确认文件已正确上传: " + filePath);
         }
-        AudioDetectionResult result = callAudioDetection(filePath, audioServiceUrl);
-        if (result != null) {
-            result.computeProbabilities();
-        }
-        return result;
+        String modelId = activeModelRegistry.getActiveAudioModel();
+        return inferenceCapacityService.execute("audio", modelId,
+                () -> externalCallGuard.execute("audioDetection", () -> {
+                    AudioDetectionResult result = callAudioDetection(filePath, audioServiceUrl, modelId);
+                    if (result != null) {
+                        result.computeProbabilities();
+                    }
+                    return result;
+                }));
     }
 
     /**
      * 通过 MultipartFile 直接上传到音频检测服务（跨容器安全）
      */
     public AudioDetectionResult detectAudioWithMultipart(MultipartFile multipartFile) {
-        AudioDetectionResult result = callAudioDetectionWithMultipart(multipartFile, audioServiceUrl);
-        if (result != null) {
-            result.computeProbabilities();
-        }
-        return result;
+        String modelId = activeModelRegistry.getActiveAudioModel();
+        return inferenceCapacityService.execute("audio", modelId,
+                () -> externalCallGuard.execute("audioDetection", () -> {
+                    AudioDetectionResult result = callAudioDetectionWithMultipart(
+                            multipartFile, audioServiceUrl, modelId);
+                    if (result != null) {
+                        result.computeProbabilities();
+                    }
+                    return result;
+                }));
     }
 
     public VideoDetectionResult detectVideo(String filePath) {
@@ -69,14 +81,23 @@ public class DetectionService {
 
     public VideoDetectionResult detectVideo(String filePath,
                                             BiConsumer<Integer, Map<String, Object>> progressCallback) {
+        String modelId = activeModelRegistry.getActiveVideoModel();
+        return inferenceCapacityService.execute("video", modelId,
+                () -> externalCallGuard.execute("videoDetection",
+                        () -> detectVideoInternal(filePath, progressCallback, modelId)));
+    }
+
+    private VideoDetectionResult detectVideoInternal(String filePath,
+                                                     BiConsumer<Integer, Map<String, Object>> progressCallback,
+                                                     String modelId) {
         VideoDetectionResult result;
         if (shouldUseVideoPreprocess()) {
-            result = videoImagePipelineService.detectFromVideoFile(filePath, progressCallback);
+            result = videoImagePipelineService.detectFromVideoFile(filePath, progressCallback, modelId);
         } else {
             if (progressCallback != null) {
                 progressCallback.accept(10, Map.of("message", "正在向 AI 检测服务提交视频..."));
             }
-            result = callVideoDetection(filePath, videoServiceUrl);
+            result = callVideoDetection(filePath, videoServiceUrl, modelId);
             if (progressCallback != null && result != null) {
                 progressCallback.accept(80, Map.of("message", "AI 检测完成，正在汇总结果..."));
             }
@@ -109,13 +130,14 @@ public class DetectionService {
      * }
      */
     @SuppressWarnings("unchecked")
-    private AudioDetectionResult callAudioDetection(String filePath, String url) {
+    private AudioDetectionResult callAudioDetection(String filePath, String url, String modelId) {
         File file = new File(filePath);
         if (!file.exists()) {
             throw new RuntimeException("文件不存在: " + filePath);
         }
 
-        HttpEntity<MultiValueMap<String, Object>> requestEntity = buildMultipartRequest(file);
+        HttpEntity<MultiValueMap<String, Object>> requestEntity =
+                buildMultipartRequest(file, modelId);
 
         try {
             ResponseEntity<Map> response = restTemplate.exchange(
@@ -185,13 +207,14 @@ public class DetectionService {
      * 手动解析 Map 避免 Jackson snake_case/camelCase 不匹配。
      */
     @SuppressWarnings("unchecked")
-    private VideoDetectionResult callVideoDetection(String filePath, String url) {
+    private VideoDetectionResult callVideoDetection(String filePath, String url, String modelId) {
         File file = new File(filePath);
         if (!file.exists()) {
             throw new RuntimeException("文件不存在: " + filePath);
         }
 
-        HttpEntity<MultiValueMap<String, Object>> requestEntity = buildMultipartRequest(file);
+        HttpEntity<MultiValueMap<String, Object>> requestEntity =
+                buildMultipartRequest(file, modelId);
 
         try {
             ResponseEntity<Map> response = videoRestTemplate.exchange(
@@ -311,9 +334,12 @@ public class DetectionService {
         }
     }
 
-    private HttpEntity<MultiValueMap<String, Object>> buildMultipartRequest(File file) {
+    private HttpEntity<MultiValueMap<String, Object>> buildMultipartRequest(File file, String modelId) {
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         body.add("file", new FileSystemResource(file));
+        if (modelId != null && !modelId.isBlank()) {
+            body.add("model_id", modelId);
+        }
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
@@ -324,7 +350,8 @@ public class DetectionService {
      * 附件上传到音频检测服务（跨容器安全，直接传输字节流）
      */
     @SuppressWarnings("unchecked")
-    private AudioDetectionResult callAudioDetectionWithMultipart(MultipartFile multipartFile, String url) {
+    private AudioDetectionResult callAudioDetectionWithMultipart(MultipartFile multipartFile, String url,
+                                                                 String modelId) {
         try {
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
             body.add("file", new org.springframework.core.io.ByteArrayResource(multipartFile.getBytes()) {
@@ -333,6 +360,7 @@ public class DetectionService {
                     return multipartFile.getOriginalFilename();
                 }
             });
+            body.add("model_id", modelId);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.MULTIPART_FORM_DATA);

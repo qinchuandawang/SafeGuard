@@ -19,6 +19,7 @@ from transformers import Wav2Vec2ForSequenceClassification, Wav2Vec2Processor
 
 PROCESSOR: Optional[Wav2Vec2Processor] = None
 MODEL: Optional[Wav2Vec2ForSequenceClassification] = None
+MODEL_CACHE = {}
 
 
 def _select_device() -> str:
@@ -137,11 +138,16 @@ def load_model_once(model_dir: Path) -> Tuple[Wav2Vec2Processor, Wav2Vec2ForSequ
     """
     global PROCESSOR, MODEL, _model_loaded
 
-    if _model_loaded:
+    cache_key = str(model_dir.resolve())
+    if cache_key in MODEL_CACHE:
+        PROCESSOR, MODEL = MODEL_CACHE[cache_key]
+        _model_loaded = True
         return PROCESSOR, MODEL
 
     with _model_lock:
-        if _model_loaded:
+        if cache_key in MODEL_CACHE:
+            PROCESSOR, MODEL = MODEL_CACHE[cache_key]
+            _model_loaded = True
             return PROCESSOR, MODEL
 
         if not model_dir.exists():
@@ -157,13 +163,16 @@ def load_model_once(model_dir: Path) -> Tuple[Wav2Vec2Processor, Wav2Vec2ForSequ
         torch.set_num_threads(int(os.environ.get("OMP_NUM_THREADS", "2")))
         torch.set_grad_enabled(False)
 
-        PROCESSOR = Wav2Vec2Processor.from_pretrained(str(model_dir))
-        MODEL = Wav2Vec2ForSequenceClassification.from_pretrained(
+        processor = Wav2Vec2Processor.from_pretrained(str(model_dir))
+        model = Wav2Vec2ForSequenceClassification.from_pretrained(
             str(model_dir),
             num_labels=2,
             ignore_mismatched_sizes=True,
         ).to(DEVICE)
-        MODEL.eval()
+        model.eval()
+        PROCESSOR = processor
+        MODEL = model
+        MODEL_CACHE[cache_key] = (processor, model)
         # 半精度推理（需确保 forward 返回的 logits 能被正确计算）
         # 注：Wav2Vec2 部分算子不支持 half，跳过
 
@@ -181,7 +190,7 @@ def get_device() -> str:
 
 def is_model_loaded() -> bool:
     """检查模型是否已加载（线程安全）。"""
-    return _model_loaded
+    return _model_loaded or bool(MODEL_CACHE)
 
 
 # ======================== 推理函数 ========================

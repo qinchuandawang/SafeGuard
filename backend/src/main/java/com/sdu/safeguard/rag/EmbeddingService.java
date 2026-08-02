@@ -55,10 +55,10 @@ public class EmbeddingService {
 
     public List<Float> getEmbedding(String text) {
         if (text == null || text.isBlank()) {
-            return fallbackEmbedding(text != null ? text : "");
+            return fallbackOrFail(text != null ? text : "", "输入文本为空");
         }
         if (!apiKeyAvailable) {
-            return fallbackEmbedding(text);
+            return fallbackOrFail(text, "SiliconFlow API Key 未配置");
         }
 
         List<Float> cached = embeddingCache.getIfPresent(text);
@@ -70,7 +70,7 @@ public class EmbeddingService {
         if (vector != null) {
             embeddingCache.put(text, vector);
         } else {
-            vector = fallbackEmbedding(text);
+            vector = fallbackOrFail(text, "Embedding API 调用失败");
         }
         return vector;
     }
@@ -110,6 +110,9 @@ public class EmbeddingService {
     public List<List<Float>> batchGetEmbedding(List<String> texts) {
         if (texts == null || texts.isEmpty()) return List.of();
         if (!apiKeyAvailable) {
+            if (!ragConfig.isAllowInMemoryFallback()) {
+                throw new IllegalStateException("SiliconFlow API Key 未配置，且已关闭 Embedding 内存回退");
+            }
             List<List<Float>> fallbacks = new ArrayList<>(texts.size());
             for (String text : texts) fallbacks.add(fallbackEmbedding(text != null ? text : ""));
             return fallbacks;
@@ -122,7 +125,7 @@ public class EmbeddingService {
         for (int i = 0; i < texts.size(); i++) {
             String text = texts.get(i);
             if (text == null || text.isBlank()) {
-                results.set(i, fallbackEmbedding(""));
+                results.set(i, fallbackOrFail("", "批量 Embedding 输入文本为空"));
                 continue;
             }
             List<Float> cached = embeddingCache.getIfPresent(text);
@@ -142,7 +145,7 @@ public class EmbeddingService {
                 if (vector != null) {
                     embeddingCache.put(text, vector);
                 } else {
-                    vector = fallbackEmbedding(text);
+                    vector = fallbackOrFail(text, "批量 Embedding API 调用失败");
                 }
                 results.set(uncachedIndices.get(j), vector);
             }
@@ -243,6 +246,13 @@ public class EmbeddingService {
             vec.add(norm > 0 ? (float) (features[i] / norm) : 0.0f);
         }
         return vec;
+    }
+
+    private List<Float> fallbackOrFail(String text, String reason) {
+        if (ragConfig.isAllowInMemoryFallback()) {
+            return fallbackEmbedding(text);
+        }
+        throw new IllegalStateException(reason + "，且已关闭 Embedding 内存回退");
     }
 
     private List<Float> convertToFloat(List<Double> doubles) {

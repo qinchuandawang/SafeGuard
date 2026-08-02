@@ -53,8 +53,8 @@
                 <el-button type="primary" size="large" class="login-btn" :loading="loading" @click="handleLogin">{{ loading ? '登录中...' : '登 录' }}</el-button>
               </el-form-item>
               <div class="quick-login">
-                <el-button size="large" class="quick-btn" :loading="adminQuickLoading" @click="quickAdminLogin">演示一键登录</el-button>
-                <el-button size="large" class="quick-btn user" @click="fillDemoAccount">填入演示账号</el-button>
+                <el-button v-if="demoLoginEnabled" size="large" class="quick-btn" :loading="adminQuickLoading" @click="quickAdminLogin">演示一键登录</el-button>
+                <el-button v-if="demoLoginEnabled" size="large" class="quick-btn user" @click="fillDemoAccount">填入演示账号</el-button>
               </div>
             </el-form>
           </template>
@@ -105,6 +105,7 @@ const mode = ref('login')
 const loading = ref(false)
 const regLoading = ref(false)
 const adminQuickLoading = ref(false)
+const demoLoginEnabled = import.meta.env.VITE_DEMO_LOGIN_ENABLED === 'true'
 const form = reactive({ username: '', password: '' })
 const regForm = reactive({ username: '', nickname: '', password: '', confirm: '' })
 
@@ -122,7 +123,8 @@ async function handleLogin() {
     localStorage.setItem('admin_token', data.token)
     localStorage.setItem('admin_name', data.nickname || form.username)
     ElMessage.success('登录成功')
-    router.push('/dashboard')
+    const redirect = router.currentRoute.value.query.redirect || '/dashboard'
+    router.push(redirect)
   } catch (e) { /* handled */ }
   finally { loading.value = false }
 }

@@ -1,5 +1,6 @@
 package com.sdu.safeguard.controller;
 
+import com.sdu.safeguard.config.ModelCatalogProperties;
 import com.sdu.safeguard.dto.Result;
 import com.sdu.safeguard.entity.*;
 import com.sdu.safeguard.mapper.*;
@@ -31,6 +32,8 @@ public class AdminApiController {
     private final AudioDetectionRecordMapper audioRecordMapper;
     private final DetectionRecordMapper detectionRecordMapper;
     private final UserMapper userMapper;
+    private final ModelCatalogProperties modelCatalogProperties;
+    private final ActiveModelRegistry activeModelRegistry;
     @Value("${video.model.path:../ai-services/video/pretrained/best_model.pth}")
     private String videoModelPath;
 
@@ -244,18 +247,48 @@ public class AdminApiController {
             if (videoModel != null) {
                 models.add(videoModel);
             }
+            modelCatalogProperties.getAudio().forEach(model -> models.add(toCatalogModelView(model, "audio")));
+            modelCatalogProperties.getVideo().forEach(model -> models.add(toCatalogModelView(model, "video")));
 
             Map<String, Object> activeModel = activeAudioModel != null
                     ? toAudioModelView(activeAudioModel)
-                    : videoModel;
+                    : activeModelRegistry.findActiveAudioModel()
+                    .map(model -> toCatalogModelView(model, "audio"))
+                    .orElse(videoModel);
 
             result.put("models", models);
             result.put("activeModel", activeModel);
+            result.put("activeAudioModel", activeModelRegistry.getActiveAudioModel());
+            result.put("activeVideoModel", activeModelRegistry.getActiveVideoModel());
         } catch (Exception e) {
             log.error("获取模型列表失败", e);
             return Result.error("获取模型数据失败");
         }
         return Result.success(result);
+    }
+
+    @PostMapping("/models/switch")
+    public Result<Map<String, Object>> switchModel(@RequestBody Map<String, String> body) {
+        try {
+            String category = body == null ? null : body.get("category");
+            String modelId = body == null ? null : body.get("modelId");
+            if (!"audio".equals(category) && !"video".equals(category)) {
+                return Result.badRequest("category 只能为 audio 或 video");
+            }
+            if (modelId == null || modelId.isBlank()) {
+                return Result.badRequest("modelId 不能为空");
+            }
+            activeModelRegistry.switchModel(category, modelId);
+            return Result.success(Map.of(
+                    "activeAudioModel", activeModelRegistry.getActiveAudioModel(),
+                    "activeVideoModel", activeModelRegistry.getActiveVideoModel()
+            ));
+        } catch (IllegalArgumentException e) {
+            return Result.badRequest(e.getMessage());
+        } catch (Exception e) {
+            log.error("切换模型失败", e);
+            return Result.error("切换模型失败");
+        }
     }
 
     @GetMapping("/stats/video")
@@ -336,6 +369,29 @@ public class AdminApiController {
         item.put("modelPath", modelFile.getAbsolutePath());
         item.put("description", "用于视频换脸/伪造检测的当前演示模型文件");
         item.put("source", "video_file");
+        item.put("createdAt", null);
+        item.put("updatedAt", LocalDateTime.now());
+        return item;
+    }
+
+    private Map<String, Object> toCatalogModelView(ModelCatalogProperties.ModelSpec model, String category) {
+        Map<String, Object> item = new LinkedHashMap<>();
+        item.put("id", model.getId());
+        item.put("name", model.getName());
+        item.put("modelVersion", model.getId());
+        item.put("modelType", "audio".equals(category) ? "音频" : "视频");
+        item.put("modelCategory", category);
+        item.put("family", model.getFamily());
+        item.put("accuracy", model.getAccuracy());
+        item.put("eer", model.getEer());
+        item.put("isActive", "audio".equals(category)
+                ? model.getId().equals(activeModelRegistry.getActiveAudioModel())
+                : model.getId().equals(activeModelRegistry.getActiveVideoModel()));
+        item.put("trainingDataset", model.getDataset());
+        item.put("modelPath", model.getPath());
+        item.put("description", model.getDescription());
+        item.put("enabled", model.isEnabled());
+        item.put("source", "model_catalog");
         item.put("createdAt", null);
         item.put("updatedAt", LocalDateTime.now());
         return item;

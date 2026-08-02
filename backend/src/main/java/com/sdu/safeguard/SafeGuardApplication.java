@@ -5,11 +5,12 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.tomcat.TomcatConnectorCustomizer;
-import org.springframework.boot.tomcat.servlet.TomcatServletWebServerFactory;
+import org.springframework.boot.web.embedded.tomcat.TomcatConnectorCustomizer;
+import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
 import org.springframework.boot.web.server.WebServerFactoryCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -23,6 +24,7 @@ import java.util.Map;
 @SpringBootApplication
 @EnableConfigurationProperties(VideoProperties.class)
 @EnableAsync
+@EnableScheduling
 @MapperScan("com.sdu.safeguard.mapper")
 public class SafeGuardApplication {
 

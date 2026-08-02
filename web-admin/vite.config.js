@@ -12,4 +12,16 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    chunkSizeWarningLimit: 700,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vue-core': ['vue', 'vue-router'],
+          'element-plus': ['element-plus', '@element-plus/icons-vue'],
+          echarts: ['echarts'],
+        },
+      },
+    },
+  },
 })

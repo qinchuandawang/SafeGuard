@@ -65,6 +65,22 @@ public class RAGService {
         FRAUD_KEYWORDS.put("96110", 0.95);
         FRAUD_KEYWORDS.put("反诈", 0.7);
         FRAUD_KEYWORDS.put("电信诈骗", 0.8);
+        FRAUD_KEYWORDS.put("贷款", 0.75);
+        FRAUD_KEYWORDS.put("征信", 0.75);
+        FRAUD_KEYWORDS.put("退改签", 0.75);
+        FRAUD_KEYWORDS.put("快递", 0.65);
+        FRAUD_KEYWORDS.put("中奖", 0.75);
+        FRAUD_KEYWORDS.put("会员", 0.65);
+        FRAUD_KEYWORDS.put("校园贷", 0.85);
+        FRAUD_KEYWORDS.put("钓鱼", 0.8);
+        FRAUD_KEYWORDS.put("二维码", 0.6);
+        FRAUD_KEYWORDS.put("无障碍", 0.8);
+        FRAUD_KEYWORDS.put("账号", 0.65);
+        FRAUD_KEYWORDS.put("授权", 0.6);
+        FRAUD_KEYWORDS.put("证件", 0.7);
+        FRAUD_KEYWORDS.put("合同", 0.65);
+        FRAUD_KEYWORDS.put("印章", 0.65);
+        FRAUD_KEYWORDS.put("证据", 0.6);
     }
 
     @PostConstruct
@@ -196,32 +212,17 @@ public class RAGService {
         log.debug("查询切块: {} 块, embeddingAvailable={}", queryChunks.size(), embeddingAvailable);
 
         List<RagQueryResult> allResults = new ArrayList<>();
+        Set<String> matchedKeywords = matchKeywords(queryText);
 
         for (String chunk : queryChunks) {
-            Set<String> matchedKeywords = matchKeywords(queryText);
-
-            // 如果规则过滤命中了具体类别，构建 payload filter 缩小搜索范围
-            Map<String, String> payloadFilter = null;
-            if (ruleResult.isMatched() && !ruleResult.getCategories().isEmpty()) {
-                // 取第一个匹配类别作为 filter
-                String cat = ruleResult.getCategories().get(0);
-                if (cat.equals("SCAM_TYPE") || cat.equals("IMPERSONATION")) {
-                    payloadFilter = new HashMap<>();
-                    // 取匹配的关键词作为 tag 过滤
-                    if (!ruleResult.getMatchedKeywords().isEmpty()) {
-                        String firstTag = ruleResult.getMatchedKeywords().get(0);
-                        payloadFilter.put("tags", firstTag);
-                    }
-                }
-            }
-
             List<QdrantService.ScoredResult> vectorResults;
             if (embeddingAvailable) {
                 List<Float> queryVector = embeddingService.getEmbedding(chunk);
-                vectorResults = qdrantService.search(queryVector, ragConfig.getHnswTopK(), payloadFilter);
+                // 规则命中只作为排序特征和风险证据，避免不完整标签导致召回被硬过滤为 0。
+                vectorResults = qdrantService.search(queryVector, ragConfig.getHnswTopK());
             } else {
                 List<Float> neighborVector = embeddingService.getEmbedding(chunk);
-                vectorResults = qdrantService.search(neighborVector, ragConfig.getHnswTopK(), payloadFilter);
+                vectorResults = qdrantService.search(neighborVector, ragConfig.getHnswTopK());
             }
 
             for (QdrantService.ScoredResult vr : vectorResults) {
@@ -241,6 +242,33 @@ public class RAGService {
                         .reRankScore(vr.score)
                         .tags(convertTags(meta.get("tags")))
                         .metadata(meta)
+                        .build());
+            }
+        }
+
+        // 关键词检索补充向量候选之外的知识块，避免相关内容因未进入向量 Top-K 而永久丢失。
+        if (!matchedKeywords.isEmpty()) {
+            for (Map<String, Object> metadata : qdrantService.getAllMetadata()) {
+                String content = String.valueOf(metadata.getOrDefault("content", ""));
+                double keywordScore = computeKeywordScore(content, matchedKeywords);
+                if (keywordScore <= 0) continue;
+
+                String chunkId = String.valueOf(metadata.getOrDefault("chunkId", UUID.randomUUID()));
+                boolean exists = allResults.stream().anyMatch(result ->
+                        chunkId.equals(String.valueOf(result.getMetadata().getOrDefault("chunkId", ""))));
+                if (exists) continue;
+
+                allResults.add(RagQueryResult.builder()
+                        .chunkId(chunkId)
+                        .content(content)
+                        .category((String) metadata.getOrDefault("category", ""))
+                        .source((String) metadata.getOrDefault("source", ""))
+                        .score(keywordScore)
+                        .vectorScore(0.0)
+                        .keywordScore(keywordScore)
+                        .reRankScore(-1.0)
+                        .tags(convertTags(metadata.get("tags")))
+                        .metadata(metadata)
                         .build());
             }
         }

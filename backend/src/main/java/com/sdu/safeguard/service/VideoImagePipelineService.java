@@ -45,11 +45,17 @@ public class VideoImagePipelineService {
     }
 
     public VideoDetectionResult detectFromVideoFile(String videoPath) {
-        return detectFromVideoFile(videoPath, null);
+        return detectFromVideoFile(videoPath, null, null);
     }
 
     public VideoDetectionResult detectFromVideoFile(String videoPath,
                                                      BiConsumer<Integer, Map<String, Object>> progressCallback) {
+        return detectFromVideoFile(videoPath, progressCallback, null);
+    }
+
+    public VideoDetectionResult detectFromVideoFile(String videoPath,
+                                                     BiConsumer<Integer, Map<String, Object>> progressCallback,
+                                                     String modelId) {
         File videoFile = new File(videoPath);
         File workDir = new File(TEMP_ROOT, "pipeline_" + UUID.randomUUID());
         try {
@@ -106,7 +112,7 @@ public class VideoImagePipelineService {
                     }
 
                     try {
-                        VideoImageInferenceResponse inf = callImageInference(toSend);
+                        VideoImageInferenceResponse inf = callImageInference(toSend, modelId);
                         double p = clamp01(inf.resolveFakeProbability());
                         String riskLabel = p >= 0.75 ? "高可疑" : (p >= 0.5 ? "可疑" : "低可疑");
                         VideoDetectionResult.FrameAnalysis fa = new VideoDetectionResult.FrameAnalysis();
@@ -183,7 +189,7 @@ public class VideoImagePipelineService {
         } catch (RuntimeException e) {
             if (shouldFallbackToDirectVideo(e)) {
                 log.warn("视频逐帧检测不可用，回退到整视频检测: {}", e.getMessage());
-                return fallbackToDirectVideo(videoFile);
+                return fallbackToDirectVideo(videoFile, modelId);
             }
             throw e;
         } catch (Exception e) {
@@ -201,9 +207,12 @@ public class VideoImagePipelineService {
         return videoProperties.getService().getUrl();
     }
 
-    private VideoImageInferenceResponse callImageInference(File file) {
+    private VideoImageInferenceResponse callImageInference(File file, String modelId) {
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         body.add(videoProperties.getPreprocess().getMultipartField(), new FileSystemResource(file));
+        if (modelId != null && !modelId.isBlank()) {
+            body.add("model_id", modelId);
+        }
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
@@ -291,9 +300,12 @@ public class VideoImagePipelineService {
                 || message.contains("I/O error on POST request");
     }
 
-    private VideoDetectionResult fallbackToDirectVideo(File videoFile) {
+    private VideoDetectionResult fallbackToDirectVideo(File videoFile, String modelId) {
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         body.add("file", new FileSystemResource(videoFile));
+        if (modelId != null && !modelId.isBlank()) {
+            body.add("model_id", modelId);
+        }
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);

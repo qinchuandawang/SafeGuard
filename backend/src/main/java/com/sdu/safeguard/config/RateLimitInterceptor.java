@@ -7,10 +7,15 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -18,6 +23,13 @@ import java.util.Map;
 public class RateLimitInterceptor implements HandlerInterceptor {
 
     private final Cache<String, Bucket> buckets;
+    private final ObjectProvider<StringRedisTemplate> redisTemplateProvider;
+
+    @Value("${infra.redis.enabled:false}")
+    private boolean redisEnabled;
+
+    @Value("${app.http.trust-forwarded-headers:false}")
+    private boolean trustForwardedHeaders;
 
     private static final int DEFAULT_CAPACITY = 60;
     private static final Duration DEFAULT_PERIOD = Duration.ofMinutes(1);
@@ -31,8 +43,10 @@ public class RateLimitInterceptor implements HandlerInterceptor {
             "/api/rag/", 30
     );
 
-    public RateLimitInterceptor(@Qualifier("rateLimitBuckets") Cache<String, Bucket> buckets) {
+    public RateLimitInterceptor(@Qualifier("rateLimitBuckets") Cache<String, Bucket> buckets,
+                                ObjectProvider<StringRedisTemplate> redisTemplateProvider) {
         this.buckets = buckets;
+        this.redisTemplateProvider = redisTemplateProvider;
     }
 
     @Override
@@ -64,7 +78,17 @@ public class RateLimitInterceptor implements HandlerInterceptor {
             capacity = 5;
         }
 
-        String bucketKey = clientIp + ":" + path;
+        String bucketKey = clientIp + ":" + normalizeRoute(path);
+        if (redisEnabled) {
+            Boolean redisAllowed = tryRedisLimit(bucketKey, capacity);
+            if (Boolean.TRUE.equals(redisAllowed)) {
+                return true;
+            }
+            if (Boolean.FALSE.equals(redisAllowed)) {
+                reject(response, clientIp, path, capacity);
+                return false;
+            }
+        }
         final int cap = capacity;
         Bucket bucket = buckets.get(bucketKey, k ->
                 Bucket.builder()
@@ -75,11 +99,34 @@ public class RateLimitInterceptor implements HandlerInterceptor {
             return true;
         }
 
+        reject(response, clientIp, path, capacity);
+        return false;
+    }
+
+    private Boolean tryRedisLimit(String bucketKey, int capacity) {
+        StringRedisTemplate redisTemplate = redisTemplateProvider.getIfAvailable();
+        if (redisTemplate == null) {
+            return null;
+        }
+        try {
+            DefaultRedisScript<Long> script = new DefaultRedisScript<>(
+                    "local n=redis.call('INCR',KEYS[1]); if n==1 then redis.call('PEXPIRE',KEYS[1],ARGV[2]); end; " +
+                            "if n<=tonumber(ARGV[1]) then return 1 else return 0 end", Long.class);
+            Long allowed = redisTemplate.execute(script,
+                    List.of("safeguard:rate-limit:" + bucketKey), String.valueOf(capacity), "60000");
+            return Long.valueOf(1L).equals(allowed);
+        } catch (Exception exception) {
+            log.debug("Redis 限流不可用，降级到本机令牌桶: {}", exception.getMessage());
+            return null;
+        }
+    }
+
+    private void reject(HttpServletResponse response, String clientIp, String path, int capacity) throws Exception {
         log.warn("请求频率过高: ip={}, path={}, limit={}/min", clientIp, path, capacity);
         response.setStatus(429);
+        response.setHeader("Retry-After", "60");
         response.setContentType("application/json;charset=UTF-8");
         response.getWriter().write("{\"code\":429,\"message\":\"请求过于频繁，请稍后再试\",\"data\":null}");
-        return false;
     }
 
     private boolean isPublicPath(String path) {
@@ -96,10 +143,18 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     }
 
     private String getClientIp(HttpServletRequest request) {
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null || ip.isBlank()) ip = request.getHeader("X-Real-IP");
+        String ip = trustForwardedHeaders ? request.getHeader("X-Forwarded-For") : null;
+        if (trustForwardedHeaders && (ip == null || ip.isBlank())) ip = request.getHeader("X-Real-IP");
         if (ip == null || ip.isBlank()) ip = request.getRemoteAddr();
         if (ip != null && ip.contains(",")) ip = ip.split(",")[0].trim();
         return ip;
+    }
+
+    private String normalizeRoute(String path) {
+        if (path == null) return "unknown";
+        return path
+                .replaceAll("/[0-9a-fA-F]{8}-[0-9a-fA-F-]{27,36}(?=/|$)", "/{id}")
+                .replaceAll("/[0-9a-fA-F]{32,64}(?=/|$)", "/{id}")
+                .replaceAll("/\\d+(?=/|$)", "/{id}");
     }
 }

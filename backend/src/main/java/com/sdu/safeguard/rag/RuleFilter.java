@@ -1,7 +1,7 @@
 package com.sdu.safeguard.rag;
 
-import tools.jackson.core.type.TypeReference;
-import tools.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sdu.safeguard.config.RAGConfig;
 import jakarta.annotation.PostConstruct;
 import lombok.Data;

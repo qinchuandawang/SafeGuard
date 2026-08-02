@@ -36,7 +36,10 @@
     <div class="glass-card" style="margin-bottom:24px">
       <div class="page-header">
         <h3>当前活跃模型</h3>
-        <el-tag type="success" effect="dark" size="small" v-if="activeModel">运行中</el-tag>
+        <div class="active-tags" v-if="activeAudioModel || activeVideoModel">
+          <el-tag type="success" effect="dark" size="small" v-if="activeAudioModel">音频：{{ activeAudioModel }}</el-tag>
+          <el-tag type="success" effect="dark" size="small" v-if="activeVideoModel">视频：{{ activeVideoModel }}</el-tag>
+        </div>
       </div>
       <div v-if="activeModel" class="model-active-card">
         <div class="model-header">
@@ -64,6 +67,48 @@
         </el-descriptions>
       </div>
       <el-empty v-else description="暂无活跃模型" :image-size="80" />
+    </div>
+
+    <!-- 可切换模型目录 -->
+    <div class="glass-card switch-card">
+      <div class="page-header">
+        <h3>模型热切换</h3>
+        <el-tag type="info" effect="plain" size="small">Function Calling 调度使用当前模型</el-tag>
+      </div>
+      <div class="switch-grid">
+        <div class="switch-panel">
+          <div class="switch-title">
+            <span>音频检测模型</span>
+            <el-tag size="small" type="success" effect="light">{{ activeAudioModel || '-' }}</el-tag>
+          </div>
+          <el-radio-group v-model="activeAudioModel" class="model-radio-group" @change="modelId => handleSwitch('audio', modelId)">
+            <el-radio-button
+              v-for="model in audioCatalogModels"
+              :key="model.id"
+              :label="model.id"
+              :disabled="switching"
+            >
+              {{ model.name }}
+            </el-radio-button>
+          </el-radio-group>
+        </div>
+        <div class="switch-panel">
+          <div class="switch-title">
+            <span>视频检测模型</span>
+            <el-tag size="small" type="warning" effect="light">{{ activeVideoModel || '-' }}</el-tag>
+          </div>
+          <el-radio-group v-model="activeVideoModel" class="model-radio-group" @change="modelId => handleSwitch('video', modelId)">
+            <el-radio-button
+              v-for="model in videoCatalogModels"
+              :key="model.id"
+              :label="model.id"
+              :disabled="switching"
+            >
+              {{ model.name }}
+            </el-radio-button>
+          </el-radio-group>
+        </div>
+      </div>
     </div>
 
     <!-- 所有模型 -->
@@ -106,15 +151,21 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { Cpu } from '@element-plus/icons-vue'
-import { getManagedModels } from '../api/models'
+import { ElMessage } from 'element-plus'
+import { getManagedModels, switchManagedModel } from '../api/models'
 import ChartCard from '../components/ChartCard.vue'
 import * as echarts from 'echarts'
 
 const activeModel = ref(null)
+const activeAudioModel = ref('')
+const activeVideoModel = ref('')
 const models = ref([])
 const loading = ref(false)
+const switching = ref(false)
 
 const activeCount = computed(() => models.value.filter(m => m.isActive).length)
+const audioCatalogModels = computed(() => models.value.filter(m => m.modelCategory === 'audio' && m.source === 'model_catalog'))
+const videoCatalogModels = computed(() => models.value.filter(m => m.modelCategory === 'video' && m.source === 'model_catalog'))
 
 const typeColors = ['#0ea5e9', '#06b6d4', '#14b8a6', '#22d3ee']
 const typeStats = computed(() => {
@@ -159,15 +210,42 @@ const modelTypes = computed(() => {
   return types.size
 })
 
-onMounted(async () => {
+async function loadModels() {
   loading.value = true
   try {
     const data = await getManagedModels()
     activeModel.value = data?.activeModel || null
+    activeAudioModel.value = data?.activeAudioModel || ''
+    activeVideoModel.value = data?.activeVideoModel || ''
     models.value = data?.models || []
   } catch (e) { console.error(e) }
   finally { loading.value = false }
-})
+}
+
+async function handleSwitch(category, modelId) {
+  const previousAudio = findActiveModelId('audio') || activeAudioModel.value
+  const previousVideo = findActiveModelId('video') || activeVideoModel.value
+  switching.value = true
+  try {
+    const data = await switchManagedModel(category, modelId)
+    activeAudioModel.value = data?.activeAudioModel || activeAudioModel.value
+    activeVideoModel.value = data?.activeVideoModel || activeVideoModel.value
+    await loadModels()
+    ElMessage.success('模型已切换')
+  } catch (e) {
+    activeAudioModel.value = previousAudio
+    activeVideoModel.value = previousVideo
+    console.error(e)
+  } finally {
+    switching.value = false
+  }
+}
+
+function findActiveModelId(category) {
+  return models.value.find(model => model.modelCategory === category && model.isActive)?.id
+}
+
+onMounted(loadModels)
 </script>
 
 <style scoped>
@@ -189,6 +267,7 @@ onMounted(async () => {
   margin-bottom: 20px;
 }
 .page-header h3 { font-size: 16px; font-weight: 600; color: var(--text-primary, #1a1a2e); }
+.active-tags { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 
 .model-active-card { margin-bottom: 8px; }
 .model-header {
@@ -222,6 +301,38 @@ onMounted(async () => {
 .dataset-text { font-size: 13px; color: var(--text-secondary, #6b7280); }
 .status-tag { border-radius: 6px; }
 
+.switch-card { margin-bottom: 24px; }
+.switch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.switch-panel {
+  border: 1px solid rgba(14,165,233,0.08);
+  border-radius: 8px;
+  padding: 16px;
+  background: rgba(255,255,255,0.36);
+}
+.switch-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary, #0f172a);
+}
+.model-radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.model-radio-group :deep(.el-radio-button__inner) {
+  border-radius: 6px !important;
+  border-left: var(--el-border) !important;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Vizzes */
 .viz-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; animation: pageIn 0.4s ease; }
 .viz-card h4 { font-size: 14px; font-weight: 600; color: var(--text-primary, #0f172a); margin-bottom: 16px; }
@@ -239,7 +350,7 @@ onMounted(async () => {
 .donut-legend { display: flex; flex-direction: column; gap: 8px; }
 .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary, #64748b); }
 .legend-item .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-@media (max-width: 900px) { .viz-row { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .viz-row, .switch-grid { grid-template-columns: 1fr; } }
 
 /* Mini stats row */
 .mini-stats {

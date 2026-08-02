@@ -3,6 +3,8 @@ package com.sdu.safeguard.config;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import io.github.bucket4j.Bucket;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -12,65 +14,77 @@ import java.util.concurrent.TimeUnit;
 @Configuration
 public class CacheConfig {
 
+    private final MeterRegistry meterRegistry;
+
+    public CacheConfig(MeterRegistry meterRegistry) {
+        this.meterRegistry = meterRegistry;
+    }
+
     @Bean("rateLimitBuckets")
     public Cache<String, Bucket> rateLimitBuckets() {
-        return Caffeine.newBuilder()
+        return monitor("rate-limit", Caffeine.newBuilder()
                 .expireAfterAccess(1, TimeUnit.HOURS)
                 .maximumSize(10_000)
                 .recordStats()
-                .build();
+                .build());
     }
 
     @Bean("shortTermMemoryCache")
     public Cache<String, Object> shortTermMemoryCache() {
-        return Caffeine.newBuilder()
+        return monitor("short-term-memory", Caffeine.newBuilder()
                 .expireAfterWrite(30, TimeUnit.MINUTES)
                 .maximumSize(5_000)
                 .recordStats()
-                .build();
+                .build());
     }
 
     @Bean("llmResponseCache")
     public Cache<String, String> llmResponseCache() {
-        return Caffeine.newBuilder()
+        return monitor("llm-response", Caffeine.newBuilder()
                 .expireAfterWrite(10, TimeUnit.MINUTES)
                 .maximumSize(2_000)
                 .recordStats()
-                .build();
+                .build());
     }
 
     @Bean("embeddingCache")
     public Cache<String, List<Float>> embeddingCache() {
-        return Caffeine.newBuilder()
+        return monitor("embedding", Caffeine.newBuilder()
                 .expireAfterWrite(30, TimeUnit.MINUTES)
                 .maximumSize(5_000)
                 .recordStats()
-                .build();
+                .build());
     }
 
     @Bean("serviceHealthCache")
     public Cache<String, Boolean> serviceHealthCache() {
-        return Caffeine.newBuilder()
+        return monitor("service-health", Caffeine.newBuilder()
                 .expireAfterWrite(30, TimeUnit.SECONDS)
                 .maximumSize(50)
-                .build();
+                .recordStats()
+                .build());
     }
 
     @Bean("knowledgeContextCache")
     public Cache<String, String> knowledgeContextCache() {
-        return Caffeine.newBuilder()
+        return monitor("knowledge-context", Caffeine.newBuilder()
                 .expireAfterWrite(30, TimeUnit.MINUTES)
                 .maximumSize(1_000)
                 .recordStats()
-                .build();
+                .build());
     }
 
     @Bean("ragResultCache")
     public Cache<String, List<com.sdu.safeguard.dto.RagQueryResult>> ragResultCache() {
-        return Caffeine.newBuilder()
+        return monitor("rag-result", Caffeine.newBuilder()
                 .expireAfterWrite(5, TimeUnit.MINUTES)
                 .maximumSize(200)
                 .recordStats()
-                .build();
+                .build());
+    }
+
+    private <K, V> Cache<K, V> monitor(String cacheName, Cache<K, V> cache) {
+        CaffeineCacheMetrics.monitor(meterRegistry, cache, cacheName);
+        return cache;
     }
 }

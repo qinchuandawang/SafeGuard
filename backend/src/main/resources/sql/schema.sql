@@ -154,19 +154,76 @@ CREATE TABLE IF NOT EXISTS `async_task` (
     `task_id` VARCHAR(64) NOT NULL COMMENT '任务唯一ID',
     `type` VARCHAR(50) NOT NULL COMMENT '任务类型：video/audio/text',
     `user_id` BIGINT DEFAULT NULL COMMENT '用户ID',
-    `status` VARCHAR(20) NOT NULL DEFAULT 'processing' COMMENT '状态：processing/completed/failed',
+    `status` VARCHAR(20) NOT NULL DEFAULT 'queued' COMMENT '状态：queued/processing/completed/failed',
     `progress` INT DEFAULT 0 COMMENT '进度(0-100)',
     `result_json` TEXT DEFAULT NULL COMMENT '结果JSON',
     `error_message` TEXT DEFAULT NULL COMMENT '错误信息',
     `file_path` VARCHAR(500) DEFAULT NULL COMMENT '关联文件路径',
+    `file_hash` CHAR(64) DEFAULT NULL COMMENT '上传文件SHA-256',
+    `idempotency_key` VARCHAR(128) DEFAULT NULL COMMENT '请求幂等键',
+    `model_id` VARCHAR(100) DEFAULT NULL COMMENT '任务固化模型ID',
+    `object_key` VARCHAR(500) DEFAULT NULL COMMENT '对象存储Key',
+    `storage_tier` VARCHAR(20) NOT NULL DEFAULT 'hot' COMMENT '任务结构化数据层级：hot/cold，媒体对象存储由object_key标识',
+    `version` INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本',
     `deleted` INT DEFAULT 0 COMMENT '逻辑删除',
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `completed_at` DATETIME DEFAULT NULL COMMENT '完成时间',
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (`id`),
     UNIQUE INDEX `idx_task_id` (`task_id`),
+    UNIQUE INDEX `uk_idempotency_key` (`idempotency_key`),
     INDEX `idx_user_id` (`user_id`),
     INDEX `idx_status` (`status`),
     INDEX `idx_created_at` (`created_at`),
     INDEX `idx_deleted` (`deleted`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='异步任务表';
+
+-- ===============================================
+-- 表7：mq_transaction_record - RocketMQ 事务消息本地事务记录
+-- ===============================================
+CREATE TABLE IF NOT EXISTS `mq_transaction_record` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `message_id` VARCHAR(64) NOT NULL COMMENT '业务消息ID',
+    `task_id` VARCHAR(64) NOT NULL COMMENT '任务ID',
+    `event_type` VARCHAR(64) NOT NULL COMMENT '事件类型',
+    `transaction_status` VARCHAR(20) NOT NULL COMMENT '本地事务状态',
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    PRIMARY KEY (`id`),
+    UNIQUE INDEX `uk_mq_transaction_message` (`message_id`),
+    INDEX `idx_task_event` (`task_id`, `event_type`),
+    INDEX `idx_mq_transaction_created` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='RocketMQ事务消息本地事务记录';
+
+CREATE TABLE IF NOT EXISTS `consumed_message` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `consumer_group` VARCHAR(128) NOT NULL,
+    `message_id` VARCHAR(64) NOT NULL,
+    `task_id` VARCHAR(64) DEFAULT NULL,
+    `status` VARCHAR(20) NOT NULL DEFAULT 'PROCESSING',
+    `last_error` VARCHAR(1000) DEFAULT NULL,
+    `consumed_at` DATETIME DEFAULT NULL,
+    `deleted` TINYINT(1) NOT NULL DEFAULT 0,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE INDEX `uk_consumer_message` (`consumer_group`, `message_id`),
+    INDEX `idx_consumed_task` (`task_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='MQ消费幂等表';
+
+CREATE TABLE IF NOT EXISTS `detection_record_archive` LIKE `detection_record`;
+
+CREATE TABLE IF NOT EXISTS `llm_usage_record` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `request_id` VARCHAR(64) NOT NULL,
+    `scene` VARCHAR(64) NOT NULL,
+    `model` VARCHAR(100) DEFAULT NULL,
+    `prompt_tokens` INT NOT NULL DEFAULT 0,
+    `completion_tokens` INT NOT NULL DEFAULT 0,
+    `total_tokens` INT NOT NULL DEFAULT 0,
+    `cache_hit` TINYINT(1) NOT NULL DEFAULT 0,
+    `status` VARCHAR(32) NOT NULL,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE INDEX `uk_llm_usage_request` (`request_id`),
+    INDEX `idx_llm_usage_created_scene` (`created_at`, `scene`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='大模型 Token 用量账本';

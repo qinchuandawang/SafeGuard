@@ -52,8 +52,14 @@ function request(options) {
           requestQueue.delete(rid);
           if (showLoading) wx.hideLoading();
           if (res.statusCode === 401) {
-            console.warn('演示模式忽略登录状态校验:', url);
-            resolve(null);
+            authModule.clearAuth();
+            wx.showToast({ title: '登录已失效，请重新登录', icon: 'none' });
+            reject(Object.assign(new Error('登录已失效'), { statusCode: 401 }));
+            return;
+          }
+          if (res.statusCode === 403) {
+            wx.showToast({ title: '没有执行此操作的权限', icon: 'none' });
+            reject(Object.assign(new Error('没有权限'), { statusCode: 403 }));
             return;
           }
           if (res.statusCode === 429) {
@@ -146,7 +152,14 @@ function uploadFile(filePath, url, formData = {}, fileFieldName = 'file') {
       success: (res) => {
         finished = true;
         if (loadingShown) { wx.hideLoading(); loadingShown = false; }
-        if (res.statusCode === 200) {
+        if (res.statusCode === 401) {
+          authModule.clearAuth();
+          wx.showToast({ title: '登录已失效，请重新登录', icon: 'none' });
+          reject(Object.assign(new Error('登录已失效'), { statusCode: 401 }));
+        } else if (res.statusCode === 403) {
+          wx.showToast({ title: '没有执行此操作的权限', icon: 'none' });
+          reject(Object.assign(new Error('没有权限'), { statusCode: 403 }));
+        } else if (res.statusCode === 200) {
           try {
             // wx.uploadFile 在 Windows 下可能按 GBK 解码 UTF-8 响应导致中文乱码
             // 尝试用 escape/decodeURIComponent 重新解码（Latin1→UTF-8 修复）

@@ -1,0 +1,38 @@
+[
+  {
+    "name": "ASVspoof2019 LA",
+    "category": "audio",
+    "target": "audio/asvspoof2019_la",
+    "url": "https://datashare.ed.ac.uk/handle/10283/3336",
+    "purpose": "音频语音合成与转换攻击检测训练/评测。",
+    "requires_auth": true,
+    "kaggle_ref": null
+  },
+  {
+    "name": "ASVspoof2021 LA/DF",
+    "category": "audio",
+    "target": "audio/asvspoof2021",
+    "url": "https://www.asvspoof.org/index2021.html",
+    "purpose": "更贴近真实语音克隆和深度伪造的音频评测。",
+    "requires_auth": true,
+    "kaggle_ref": null
+  },
+  {
+    "name": "FaceForensics++",
+    "category": "video",
+    "target": "video/faceforensicspp",
+    "url": "https://github.com/ondyari/FaceForensics",
+    "purpose": "DeepFake、Face2Face、FaceSwap 等视频换脸检测训练。",
+    "requires_auth": true,
+    "kaggle_ref": null
+  },
+  {
+    "name": "DFDC",
+    "category": "video",
+    "target": "video/dfdc",
+    "url": "https://www.kaggle.com/c/deepfake-detection-challenge/data",
+    "purpose": "大规模真实世界 Deepfake 视频检测评测。",
+    "requires_auth": true,
+    "kaggle_ref": "c/deepfake-detection-challenge"
+  }
+]

@@ -1,4 +1,17 @@
 spring:
+  ai:
+    openai:
+      api-key: test_key
+      base-url: https://api.sophnet.com
+      chat:
+        options:
+          model: DeepSeek-V4-Flash
+    model:
+      audio:
+        speech: none
+        transcription: none
+      embedding: none
+      image: none
   datasource:
     url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=MYSQL;NON_KEYWORDS=USER
     username: sa
@@ -80,3 +93,26 @@ video:
 
 server:
   port: 0
+
+infra:
+  redis:
+    enabled: false
+  sentinel:
+    enabled: false
+  rocketmq:
+    enabled: false
+
+task:
+  recovery:
+    enabled: false
+  inference-capacity:
+    wait-time-ms: 0
+    models:
+      wav2vec2-asvspoof:
+        category: audio
+        permits: 2
+        lease-ms: 60000
+      xception-ffpp:
+        category: video
+        permits: 1
+        lease-ms: 300000

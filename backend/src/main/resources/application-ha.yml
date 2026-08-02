@@ -1,0 +1,21 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:mysql://mysql-primary:3306/safeguard?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&characterEncoding=UTF-8}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root123}
+  data:
+    redis:
+      password: ${REDIS_PASSWORD:safeguardRedis123}
+      sentinel:
+        master: ${REDIS_SENTINEL_MASTER:safeguard-master}
+        nodes: ${REDIS_SENTINEL_NODES:sentinel-1:26379,sentinel-2:26379,sentinel-3:26379}
+        password: ${REDIS_PASSWORD:safeguardRedis123}
+
+# 从库只预留给报表、历史查询和归档扫描；任务、幂等、模型切换和 MQ 本地事务记录必须走主库。
+app:
+  datasource:
+    replica:
+      enabled: ${DB_REPLICA_ENABLED:true}
+      url: ${DB_REPLICA_URL:jdbc:mysql://mysql-replica:3306/safeguard?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&characterEncoding=UTF-8}
+      username: ${DB_REPLICA_USERNAME:root}
+      password: ${DB_PASSWORD:root123}

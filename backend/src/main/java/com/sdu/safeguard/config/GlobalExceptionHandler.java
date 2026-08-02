@@ -1,6 +1,10 @@
 package com.sdu.safeguard.config;
 
 import com.sdu.safeguard.dto.Result;
+import com.sdu.safeguard.service.ExternalDependencyBlockedException;
+import com.sdu.safeguard.service.InferenceCapacityExceededException;
+import com.sdu.safeguard.service.TokenBudgetExceededException;
+import com.sdu.safeguard.service.TaskQueueFullException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -42,14 +46,39 @@ public class GlobalExceptionHandler {
         return Result.error(e.getMessage() != null ? e.getMessage() : "参数不合法");
     }
 
+    @ExceptionHandler(ExternalDependencyBlockedException.class)
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    public Result<Void> handleExternalDependencyBlocked(ExternalDependencyBlockedException e) {
+        log.warn("Sentinel 拒绝外部依赖调用: {}", e.getMessage());
+        return Result.error("AI 检测服务当前繁忙或正在恢复，请稍后重试。");
+    }
+
+    @ExceptionHandler(InferenceCapacityExceededException.class)
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    public Result<Void> handleInferenceCapacityExceeded(InferenceCapacityExceededException e) {
+        log.warn("AI 推理容量准入失败: {}", e.getMessage());
+        return Result.error("AI 推理资源繁忙，请稍后重试。");
+    }
+
+    @ExceptionHandler(TaskQueueFullException.class)
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    public Result<Void> handleTaskQueueFull(TaskQueueFullException e) {
+        log.warn("推理任务排队容量已满: {}", e.getMessage());
+        return Result.error(e.getMessage());
+    }
+
+    @ExceptionHandler(TokenBudgetExceededException.class)
+    @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
+    public Result<Void> handleTokenBudgetExceeded(TokenBudgetExceededException e) {
+        log.warn("LLM Token 预算拒绝: {}", e.getMessage());
+        return Result.error(e.getMessage());
+    }
+
     @ExceptionHandler(RuntimeException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Result<Void> handleRuntimeException(RuntimeException e) {
         log.error("服务运行时异常", e);
-        String message = e.getMessage() == null || e.getMessage().isBlank()
-                ? "服务处理失败，请稍后重试。"
-                : e.getMessage();
-        return Result.error(message);
+        return Result.error("服务处理失败，请稍后重试。");
     }
 
     @ExceptionHandler(Exception.class)

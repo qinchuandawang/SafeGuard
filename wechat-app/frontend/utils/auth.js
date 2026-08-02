@@ -52,6 +52,7 @@ function clearAuth() {
   try {
     wx.removeStorageSync(AUTH_KEY);
     wx.removeStorageSync(USER_KEY);
+    wx.removeStorageSync(TOKEN_EXPIRY_KEY);
   } catch (e) {
     console.error('清除登录信息失败:', e);
   }

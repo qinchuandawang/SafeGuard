@@ -45,6 +45,22 @@ temp/
 
 # 训练数据集（不包含模型）
 ai-services/audio/data/
+datasets/credentials/
+datasets/**/downloads/
+datasets/**/*.zip
+datasets/**/*.tar
+datasets/**/*.tar.gz
+datasets/**/*.7z
+datasets/**/*.flac
+datasets/**/*.wav
+datasets/**/*.mp3
+datasets/**/*.mp4
+datasets/**/*.avi
+datasets/**/*.mov
+datasets/**/*.mkv
+datasets/**/*.webm
+datasets/**/*.part
+datasets/**/*.tmp
 
 # 训练输出产物
 ai-services/audio/outputs/**/*.bin
@@ -91,3 +107,5 @@ yarn-error.log
 # 缓存
 .mcp-cache/
 .workbuddy/
+# JMeter 压测产物
+performance/jmeter/results/

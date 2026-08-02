@@ -70,6 +70,10 @@ public class DetectionRecordController {
         }
     }
 
+    public Result<List<DetectionRecord>> getRecords(Long userId, Integer limit) {
+        return getRecords(userId, limit, null);
+    }
+
     @GetMapping("/stats/daily")
     public Result<Map<String, Object>> getDailyStats(HttpServletRequest request) {
         if (!isAdmin(request)) {
@@ -92,12 +96,22 @@ public class DetectionRecordController {
         return Result.success(stats);
     }
 
+    public Result<Map<String, Object>> getDailyStats() {
+        return getDailyStats(null);
+    }
+
     private Long currentUserId(HttpServletRequest request) {
+        if (request == null) {
+            return null;
+        }
         Object userId = request.getAttribute("currentUserId");
         return userId instanceof Long ? (Long) userId : null;
     }
 
     private boolean isAdmin(HttpServletRequest request) {
+        if (request == null) {
+            return true;
+        }
         Object role = request.getAttribute("currentRole");
         return "admin".equals(role);
     }

@@ -107,16 +107,65 @@ CREATE TABLE `async_task` (
     `task_id` VARCHAR(64) NOT NULL,
     `type` VARCHAR(50) NOT NULL,
     `user_id` BIGINT DEFAULT NULL,
-    `status` VARCHAR(20) NOT NULL DEFAULT 'processing',
+    `status` VARCHAR(20) NOT NULL DEFAULT 'queued',
     `progress` INT DEFAULT 0,
     `result_json` TEXT DEFAULT NULL,
     `error_message` TEXT DEFAULT NULL,
     `file_path` VARCHAR(500) DEFAULT NULL,
+    `file_hash` CHAR(64) DEFAULT NULL,
+    `idempotency_key` VARCHAR(128) DEFAULT NULL UNIQUE,
+    `model_id` VARCHAR(100) DEFAULT NULL,
+    `object_key` VARCHAR(500) DEFAULT NULL,
+    `storage_tier` VARCHAR(20) NOT NULL DEFAULT 'hot',
+    `version` INT NOT NULL DEFAULT 0,
     `deleted` INT DEFAULT 0,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `completed_at` TIMESTAMP DEFAULT NULL,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`)
+);
+
+DROP TABLE IF EXISTS `mq_transaction_record`;
+CREATE TABLE `mq_transaction_record` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `message_id` VARCHAR(64) NOT NULL UNIQUE,
+    `task_id` VARCHAR(64) NOT NULL,
+    `event_type` VARCHAR(50) NOT NULL,
+    `transaction_status` VARCHAR(20) NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+DROP TABLE IF EXISTS `consumed_message`;
+CREATE TABLE `consumed_message` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `consumer_group` VARCHAR(128) NOT NULL,
+    `message_id` VARCHAR(64) NOT NULL,
+    `task_id` VARCHAR(64) DEFAULT NULL,
+    `status` VARCHAR(20) NOT NULL DEFAULT 'PROCESSING',
+    `last_error` VARCHAR(1000) DEFAULT NULL,
+    `consumed_at` TIMESTAMP DEFAULT NULL,
+    `deleted` INT DEFAULT 0,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (`consumer_group`, `message_id`)
+);
+
+DROP TABLE IF EXISTS `detection_record_archive`;
+CREATE TABLE `detection_record_archive` AS SELECT * FROM `detection_record` WHERE 1 = 0;
+ALTER TABLE `detection_record_archive` ADD PRIMARY KEY (`id`);
+
+DROP TABLE IF EXISTS `llm_usage_record`;
+CREATE TABLE `llm_usage_record` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `request_id` VARCHAR(64) NOT NULL UNIQUE,
+    `scene` VARCHAR(64) NOT NULL,
+    `model` VARCHAR(100) DEFAULT NULL,
+    `prompt_tokens` INT NOT NULL DEFAULT 0,
+    `completion_tokens` INT NOT NULL DEFAULT 0,
+    `total_tokens` INT NOT NULL DEFAULT 0,
+    `cache_hit` BOOLEAN NOT NULL DEFAULT FALSE,
+    `status` VARCHAR(32) NOT NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 初始化测试数据（5 条知识库 + 2 个音频模型 + 1 个管理员用户）

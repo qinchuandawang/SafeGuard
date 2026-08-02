@@ -1,7 +1,46 @@
 server:
   port: 8080
+  tomcat:
+    threads:
+      max: ${TOMCAT_MAX_THREADS:300}
+      min-spare: ${TOMCAT_MIN_SPARE_THREADS:20}
+    accept-count: ${TOMCAT_ACCEPT_COUNT:500}
+    max-connections: ${TOMCAT_MAX_CONNECTIONS:10000}
+    connection-timeout: ${TOMCAT_CONNECTION_TIMEOUT:10s}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  tracing:
+    enabled: ${TRACING_ENABLED:false}
+    sampling:
+      probability: ${TRACING_SAMPLING_PROBABILITY:0.1}
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}
 
 spring:
+  ai:
+    model:
+      audio:
+        speech: none
+        transcription: none
+      embedding: none
+      image: none
+    openai:
+      api-key: ${LLM_API_KEY:}
+      base-url: ${LLM_BASE_URL:https://api.sophnet.com}
+      chat:
+        options:
+          model: ${LLM_MODEL:DeepSeek-V4-Pro}
+          temperature: 0.3
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 2s
   servlet:
     multipart:
       max-file-size: 50MB
@@ -28,6 +67,12 @@ spring:
       continue-on-error: true
 
 app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
+  http:
+    trust-forwarded-headers: ${TRUST_FORWARDED_HEADERS:false}
+  auth:
+    demo-identity-enabled: ${DEMO_IDENTITY_ENABLED:true}
   admin:
     # true: 仅允许系统没有管理员账号时开放公开注册；false: 完全关闭公开注册。
     allow-bootstrap-register: ${ADMIN_BOOTSTRAP_REGISTER:true}
@@ -87,6 +132,18 @@ llm:
   temperature: 0.7
   max-tokens: 2048
   enable-thinking: false
+  cost-control:
+    enabled: ${LLM_COST_CONTROL_ENABLED:true}
+    daily-token-budget: ${LLM_DAILY_TOKEN_BUDGET:1000000}
+    max-prompt-tokens: ${LLM_MAX_PROMPT_TOKENS:8000}
+    response-cache-enabled: ${LLM_RESPONSE_CACHE_ENABLED:true}
+    response-cache-ttl-seconds: ${LLM_RESPONSE_CACHE_TTL_SECONDS:600}
+    prompt-version: ${LLM_PROMPT_VERSION:v1}
+    cacheable-scenes:
+      - text-analysis
+      - audio-report
+      - video-report
+      - multimodal
 
 # SiliconFlow API 配置
 siliconflow:
@@ -113,6 +170,7 @@ rag:
   keyword-boost-factor: 1.2
   dedup-threshold: 0.92
   allow-in-memory-fallback: true
+  auto-manage-container: ${QDRANT_AUTO_MANAGE_CONTAINER:false}
   rules-path: config/rules.json
 
 # 记忆系统配置
@@ -125,3 +183,188 @@ memory:
   memory-retrieval-top-k: 10
   memory-collection: user_memories
   memory-embedding-dim: 1024
+
+infra:
+  redis:
+    enabled: ${REDIS_ENABLED:false}
+    task-ttl-seconds: 1800
+  # 生产环境可配置独立 noeviction Redis；留空时与普通缓存 Redis 共用。
+  coordination-redis:
+    host: ${COORDINATION_REDIS_HOST:}
+    port: ${COORDINATION_REDIS_PORT:6379}
+    password: ${COORDINATION_REDIS_PASSWORD:}
+    database: ${COORDINATION_REDIS_DATABASE:0}
+  redisson:
+    # 看门狗自动续期，避免归档时间超过固定租约后锁提前失效。
+    lock-watchdog-timeout-ms: ${REDISSON_LOCK_WATCHDOG_TIMEOUT_MS:120000}
+  sentinel:
+    enabled: ${SENTINEL_ENABLED:true}
+    project-name: ${SENTINEL_PROJECT_NAME:SafeGuard}
+    dashboard: ${SENTINEL_DASHBOARD:localhost:8858}
+    api-port: ${SENTINEL_API_PORT:8719}
+    retry:
+      max-attempts: ${SENTINEL_RETRY_MAX_ATTEMPTS:2}
+      backoff-ms: ${SENTINEL_RETRY_BACKOFF_MS:300}
+    resources:
+      audioDetection:
+        max-concurrent: ${SENTINEL_AUDIO_MAX_CONCURRENT:8}
+        slow-call-threshold-ms: ${SENTINEL_AUDIO_SLOW_CALL_MS:15000}
+        slow-call-ratio-threshold: 0.5
+        exception-ratio-threshold: 0.5
+        minimum-request-amount: 5
+        stat-interval-ms: 30000
+        open-duration-seconds: 20
+      videoDetection:
+        max-concurrent: ${SENTINEL_VIDEO_MAX_CONCURRENT:4}
+        slow-call-threshold-ms: ${SENTINEL_VIDEO_SLOW_CALL_MS:45000}
+        slow-call-ratio-threshold: 0.5
+        exception-ratio-threshold: 0.5
+        minimum-request-amount: 5
+        stat-interval-ms: 60000
+        open-duration-seconds: 30
+  rocketmq:
+    enabled: ${ROCKETMQ_ENABLED:false}
+    name-server: ${ROCKETMQ_NAME_SERVER:localhost:9876}
+    producer-group: safeguard-task-event-tx-producer
+    work-producer-group: ${ROCKETMQ_WORK_PRODUCER_GROUP:safeguard-inference-work-producer}
+    consumer-group: safeguard-task-event-audit
+    topic: safeguard-task-events
+    task-tag: TaskEvent
+    work-topic: ${ROCKETMQ_WORK_TOPIC:safeguard-inference-work}
+    work-tag: ${ROCKETMQ_WORK_TAG:VideoInference}
+    work-consumer-group: ${ROCKETMQ_WORK_CONSUMER_GROUP:safeguard-inference-worker}
+    send-timeout-ms: 3000
+    retry-times: 2
+    transaction:
+      record-retention-days: ${ROCKETMQ_TX_RECORD_RETENTION_DAYS:7}
+      cleanup-batch-size: ${ROCKETMQ_TX_CLEANUP_BATCH_SIZE:1000}
+      cleanup-cron: ${ROCKETMQ_TX_CLEANUP_CRON:0 30 3 * * ?}
+    consumer:
+      max-reconsume-times: 5
+
+task:
+  queue:
+    # 包含 queued 与 processing，超过后提交接口返回 HTTP 503，避免无边界堆积。
+    max-video-queued: ${TASK_MAX_VIDEO_QUEUED:20}
+  idempotency:
+    ttl-seconds: 600
+    wait-time-ms: ${IDEMPOTENCY_WAIT_TIME_MS:2000}
+  inference-capacity:
+    enabled: ${INFERENCE_CAPACITY_ENABLED:true}
+    wait-time-ms: ${INFERENCE_CAPACITY_WAIT_MS:1000}
+    default-audio-permits: ${INFERENCE_AUDIO_DEFAULT_PERMITS:8}
+    default-video-permits: ${INFERENCE_VIDEO_DEFAULT_PERMITS:4}
+    default-audio-lease-ms: ${INFERENCE_AUDIO_DEFAULT_LEASE_MS:60000}
+    default-video-lease-ms: ${INFERENCE_VIDEO_DEFAULT_LEASE_MS:300000}
+    models:
+      wav2vec2-asvspoof:
+        category: audio
+        permits: ${INFERENCE_WAV2VEC2_PERMITS:8}
+        lease-ms: ${INFERENCE_WAV2VEC2_LEASE_MS:60000}
+      wav2vec2-base-demo:
+        category: audio
+        permits: ${INFERENCE_WAV2VEC2_DEMO_PERMITS:8}
+        lease-ms: ${INFERENCE_WAV2VEC2_DEMO_LEASE_MS:60000}
+      aasist-asvspoof:
+        category: audio
+        permits: ${INFERENCE_AASIST_PERMITS:6}
+        lease-ms: ${INFERENCE_AASIST_LEASE_MS:60000}
+      xception-ffpp:
+        category: video
+        permits: ${INFERENCE_XCEPTION_PERMITS:4}
+        lease-ms: ${INFERENCE_XCEPTION_LEASE_MS:300000}
+      efficientnet-dfdc:
+        category: video
+        permits: ${INFERENCE_EFFICIENTNET_PERMITS:4}
+        lease-ms: ${INFERENCE_EFFICIENTNET_LEASE_MS:300000}
+      mesonet-ffpp:
+        category: video
+        permits: ${INFERENCE_MESONET_PERMITS:6}
+        lease-ms: ${INFERENCE_MESONET_LEASE_MS:300000}
+  recovery:
+    enabled: ${TASK_RECOVERY_ENABLED:true}
+    fixed-delay-ms: ${TASK_RECOVERY_FIXED_DELAY_MS:30000}
+    queued-timeout-seconds: ${TASK_RECOVERY_QUEUED_TIMEOUT_SECONDS:60}
+    processing-timeout-seconds: ${TASK_RECOVERY_PROCESSING_TIMEOUT_SECONDS:900}
+    batch-size: ${TASK_RECOVERY_BATCH_SIZE:20}
+
+archive:
+  detection:
+    hot-days: ${ARCHIVE_HOT_DAYS:30}
+    batch-size: ${ARCHIVE_BATCH_SIZE:500}
+
+storage:
+  minio:
+    enabled: ${MINIO_ENABLED:false}
+    endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+    access-key: ${MINIO_ACCESS_KEY:safeguard}
+    secret-key: ${MINIO_SECRET_KEY:safeguard123}
+    bucket: ${MINIO_BUCKET:safeguard-media}
+
+model-catalog:
+  default-audio-model: ${ACTIVE_AUDIO_MODEL:wav2vec2-asvspoof}
+  default-video-model: ${ACTIVE_VIDEO_MODEL:xception-ffpp}
+  audio:
+    - id: wav2vec2-asvspoof
+      name: Wav2Vec2 ASVspoof 微调模型
+      family: wav2vec2
+      dataset: ASVspoof2019 LA
+      path: pretrained/asvspoof-finetuned
+      enabled: true
+      description: 当前主力音频伪造检测模型，适合中文演示和通用语音克隆风险识别。
+    - id: wav2vec2-base-demo
+      name: Wav2Vec2 Base 演示模型
+      family: wav2vec2
+      dataset: LibriSpeech 预训练
+      path: pretrained/wav2vec2-base
+      enabled: false
+      description: 权重体积较小，适合本地无微调权重时兜底演示。
+    - id: aasist-asvspoof
+      name: AASIST 图注意力反欺骗模型
+      family: aasist
+      dataset: ASVspoof2021 LA/DF
+      path: pretrained/aasist-asvspoof
+      enabled: false
+      description: 候选生产模型，强调图注意力声学伪影建模，可与 Wav2Vec2 做灰度对比。
+  video:
+    - id: xception-ffpp
+      name: XceptionNet FaceForensics++ 模型
+      family: xception
+      dataset: FaceForensics++
+      path: pretrained/best_model.pth
+      enabled: true
+      description: 当前主力视频换脸检测模型，适合逐帧人脸伪造识别。
+    - id: efficientnet-dfdc
+      name: EfficientNet DFDC 候选模型
+      family: efficientnet
+      dataset: DFDC
+      path: pretrained/efficientnet_dfdc.pth
+      enabled: false
+      description: 候选高精度模型，适合压缩视频和公开视频源检测。
+    - id: mesonet-ffpp
+      name: MesoNet 轻量模型
+      family: mesonet
+      dataset: FaceForensics++
+      path: pretrained/mesonet_ffpp.pth
+      enabled: false
+      description: 轻量低延迟模型，适合高并发场景下的快速预筛。
+
+dataset-catalog:
+  audio:
+    - name: ASVspoof2019 LA
+      url: https://datashare.ed.ac.uk/handle/10283/3336
+      target: data/asvspoof2019
+      purpose: 语音合成与转换攻击检测训练集。
+    - name: ASVspoof2021 LA/DF
+      url: https://www.asvspoof.org/index2021.html
+      target: data/asvspoof2021
+      purpose: 更贴近真实语音克隆和深度伪造场景的评测集。
+  video:
+    - name: FaceForensics++
+      url: https://github.com/ondyari/FaceForensics
+      target: data/faceforensicspp
+      purpose: DeepFake、Face2Face、FaceSwap 等视频换脸检测训练集。
+    - name: DFDC
+      url: https://www.kaggle.com/c/deepfake-detection-challenge/data
+      target: data/dfdc
+      purpose: 大规模真实世界深度伪造视频评测集。

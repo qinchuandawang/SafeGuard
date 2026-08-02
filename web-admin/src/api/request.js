@@ -33,7 +33,14 @@ request.interceptors.response.use(
   },
   (err) => {
     if (err.response?.status === 401) {
-      ElMessage.warning('当前为演示模式，已忽略登录状态校验')
+      localStorage.removeItem('admin_token')
+      localStorage.removeItem('admin_name')
+      if (window.location.pathname !== '/login') {
+        ElMessage.warning('登录已失效，请重新登录')
+        router.replace({ path: '/login', query: { redirect: window.location.pathname } })
+      }
+    } else if (err.response?.status === 403) {
+      ElMessage.error('当前账号没有执行此操作的权限')
     } else if (!shouldSuppress(err.config)) {
       ElMessage.error(err.message || '网络错误')
     }

@@ -47,6 +47,12 @@ public class ToolRegistry {
         return List.copyOf(tools.keySet());
     }
 
+    public List<Tool> getTools(String contextType) {
+        return tools.values().stream()
+                .filter(t -> shouldInclude(t, contextType))
+                .toList();
+    }
+
     /**
      * 构建工具描述块的 Markdown 文本，注入 LLM Prompt。
      * @param contextType 上下文类型: "text" 仅文本工具, "audio" 包含音频工具, "video" 包含视频工具, null 为全部

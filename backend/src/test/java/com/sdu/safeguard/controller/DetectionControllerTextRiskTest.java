@@ -1,8 +1,11 @@
 package com.sdu.safeguard.controller;
 
+import com.sdu.safeguard.agent.AgentOrchestrator;
 import com.sdu.safeguard.service.DetectionService;
 import com.sdu.safeguard.service.DetectionTaskManager;
 import com.sdu.safeguard.service.LLMService;
+import com.sdu.safeguard.service.ActiveModelRegistry;
+import com.sdu.safeguard.service.ObjectStorageService;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -24,7 +27,10 @@ class DetectionControllerTextRiskTest {
     private final DetectionController controller = new DetectionController(
             mock(DetectionService.class),
             mock(LLMService.class),
-            mock(DetectionTaskManager.class)
+            mock(DetectionTaskManager.class),
+            mock(AgentOrchestrator.class),
+            mock(ActiveModelRegistry.class),
+            mock(ObjectStorageService.class)
     );
 
     @SuppressWarnings("unchecked")

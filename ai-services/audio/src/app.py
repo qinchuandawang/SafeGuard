@@ -31,6 +31,11 @@ app = Flask(__name__)
 
 # ---- 配置 ---- #
 MODEL_DIR = Path(os.getenv("MODEL_DIR", "pretrained/asvspoof-finetuned"))
+MODEL_CATALOG = {
+    "wav2vec2-asvspoof": Path(os.getenv("AUDIO_MODEL_WAV2VEC2_ASVSPOOF", "pretrained/asvspoof-finetuned")),
+    "wav2vec2-base-demo": Path(os.getenv("AUDIO_MODEL_WAV2VEC2_BASE", "pretrained/wav2vec2-base")),
+    "aasist-asvspoof": Path(os.getenv("AUDIO_MODEL_AASIST", "pretrained/aasist-asvspoof")),
+}
 FALLBACK_MODEL = os.getenv("FALLBACK_MODEL", "true").lower() == "true"
 FALLBACK_MODEL_DIR = Path("pretrained/wav2vec2-base")
 SAMPLE_RATE = int(os.getenv("SAMPLE_RATE", "16000"))
@@ -45,8 +50,18 @@ app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_MB * 1024 * 1024
 SUPPORTED_EXTENSIONS = {".wav", ".flac", ".mp3", ".m4a", ".ogg"}
 
 
-def _resolve_model_dir() -> Path:
+def _resolve_model_dir(model_id: str = "") -> Path:
     """确定实际使用的模型目录。"""
+    if model_id:
+        candidate = MODEL_CATALOG.get(model_id)
+        if not candidate:
+            raise ValueError(f"未知音频模型: {model_id}")
+        if model_id == "aasist-asvspoof":
+            raise ValueError("AASIST 适配器尚未安装，禁止回退到其他模型冒充执行")
+        if candidate.exists() and (candidate / "model.safetensors").exists():
+            return candidate
+        raise FileNotFoundError(f"音频模型权重未就绪: model_id={model_id}, path={candidate}")
+
     if MODEL_DIR.exists():
         return MODEL_DIR
 
@@ -72,6 +87,7 @@ def index():
         {
             "routes": ["GET /health", "POST /audio/detect"],
             "model_dir": str(MODEL_DIR),
+            "models": {k: str(v) for k, v in MODEL_CATALOG.items()},
             "device": get_device(),
             "loaded": is_model_loaded(),
         },
@@ -82,11 +98,12 @@ def index():
 def health():
     request_id = str(uuid.uuid4())
     try:
-        model_dir = _resolve_model_dir()
+        model_id = request.args.get("model_id") or request.form.get("model_id", "")
+        model_dir = _resolve_model_dir(model_id)
         load_model_once(model_dir)
         return make_response(
             0, "ok",
-            {"device": get_device(), "model_dir": str(model_dir)},
+            {"device": get_device(), "model_id": model_id or "default", "model_dir": str(model_dir)},
             request_id=request_id,
         )
     except Exception as e:
@@ -125,10 +142,12 @@ def audio_detect():
         f.save(save_path)
 
         # 确定模型目录并加载
-        model_dir = _resolve_model_dir()
+        model_id = request.form.get("model_id", "")
+        model_dir = _resolve_model_dir(model_id)
 
         # 执行检测
         result = predict_audio(save_path, model_dir, SAMPLE_RATE, MAX_SECONDS)
+        result["model_id"] = model_id or "default"
         return make_response(0, "success", result, request_id=request_id)
 
     except FileNotFoundError as e:

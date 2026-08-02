@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
+  <hashTree>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="SafeGuard - LLM 精确缓存" enabled="true">
+      <stringProp name="TestPlan.comments">使用唯一 run_id 形成冷 Key，先预热一次，再并发请求同一多模态报告。</stringProp>
+      <boolProp name="TestPlan.functional_mode">false</boolProp><boolProp name="TestPlan.serialize_threadgroups">true</boolProp>
+      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="用户变量" enabled="true">
+        <collectionProp name="Arguments.arguments">
+          <elementProp name="protocol" elementType="Argument"><stringProp name="Argument.name">protocol</stringProp><stringProp name="Argument.value">${__P(protocol,http)}</stringProp></elementProp>
+          <elementProp name="host" elementType="Argument"><stringProp name="Argument.name">host</stringProp><stringProp name="Argument.value">${__P(host,127.0.0.1)}</stringProp></elementProp>
+          <elementProp name="port" elementType="Argument"><stringProp name="Argument.name">port</stringProp><stringProp name="Argument.value">${__P(port,8080)}</stringProp></elementProp>
+          <elementProp name="run_id" elementType="Argument"><stringProp name="Argument.name">run_id</stringProp><stringProp name="Argument.value">${__P(run_id,cache-run)}</stringProp></elementProp>
+          <elementProp name="result_dir" elementType="Argument"><stringProp name="Argument.name">result_dir</stringProp><stringProp name="Argument.value">${__P(result_dir,performance/jmeter/results)}</stringProp></elementProp>
+        </collectionProp>
+      </elementProp>
+    </TestPlan>
+    <hashTree>
+      <ConfigTestElement guiclass="HttpDefaultsGui" testclass="ConfigTestElement" testname="HTTP 默认配置" enabled="true">
+        <elementProp name="HTTPsampler.Arguments" elementType="Arguments"><collectionProp name="Arguments.arguments"/></elementProp>
+        <stringProp name="HTTPSampler.domain">${host}</stringProp><stringProp name="HTTPSampler.port">${port}</stringProp><stringProp name="HTTPSampler.protocol">${protocol}</stringProp>
+        <stringProp name="HTTPSampler.connect_timeout">${__P(timeout_ms,10000)}</stringProp><stringProp name="HTTPSampler.response_timeout">${__P(llm_timeout_ms,60000)}</stringProp>
+      </ConfigTestElement>
+      <hashTree/>
+      <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="JSON 请求头" enabled="true">
+        <collectionProp name="HeaderManager.headers">
+          <elementProp name="Content-Type" elementType="Header"><stringProp name="Header.name">Content-Type</stringProp><stringProp name="Header.value">application/json</stringProp></elementProp>
+          <elementProp name="Authorization" elementType="Header"><stringProp name="Header.name">Authorization</stringProp><stringProp name="Header.value">${__P(authorization,)}</stringProp></elementProp>
+          <elementProp name="X-Forwarded-For" elementType="Header"><stringProp name="Header.name">X-Forwarded-For</stringProp><stringProp name="Header.value">${__P(client_ip_prefix,10.73.1.)}${__threadNum}</stringProp></elementProp>
+        </collectionProp>
+      </HeaderManager>
+      <hashTree/>
+      <SetupThreadGroup guiclass="SetupThreadGroupGui" testclass="SetupThreadGroup" testname="冷 Key 预热" enabled="true">
+        <stringProp name="ThreadGroup.on_sample_error">stoptest</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController"><boolProp name="LoopController.continue_forever">false</boolProp><stringProp name="LoopController.loops">1</stringProp></elementProp>
+        <stringProp name="ThreadGroup.num_threads">1</stringProp><stringProp name="ThreadGroup.ramp_time">0</stringProp><boolProp name="ThreadGroup.scheduler">false</boolProp>
+      </SetupThreadGroup>
+      <hashTree>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="初始化缓存统计" enabled="true">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="script"><![CDATA[
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.atomic.AtomicLong
+props.put('cache.hit.times', new ConcurrentLinkedQueue<Long>())
+props.put('cache.errors', new AtomicLong())
+          ]]></stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="cache-warmup - 首次 LLM 调用" enabled="true">
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="" elementType="HTTPArgument"><boolProp name="HTTPArgument.always_encode">false</boolProp><stringProp name="Argument.value">{&quot;text&quot;:&quot;性能评测 ${run_id}：有人冒充客服要求共享屏幕并提供验证码，请进行风险分析。&quot;,&quot;audioResult&quot;:null,&quot;videoResult&quot;:null}</stringProp><stringProp name="Argument.metadata">=</stringProp></elementProp>
+            </collectionProp>
+          </elementProp>
+          <stringProp name="HTTPSampler.path">/api/detection/multi</stringProp><stringProp name="HTTPSampler.method">POST</stringProp>
+          <boolProp name="HTTPSampler.postBodyRaw">true</boolProp><boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+        </HTTPSamplerProxy>
+        <hashTree>
+          <JSR223Assertion guiclass="TestBeanGUI" testclass="JSR223Assertion" testname="断言预热为真实 LLM 响应" enabled="true">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="script"><![CDATA[
+import groovy.json.JsonSlurper
+def fallbacks = ['AI服务暂时不可用', '当前访问量较大', '网络连接超时']
+try {
+    def body = new JsonSlurper().parseText(prev.responseDataAsString)
+    def report = body.data?.report?.toString() ?: ''
+    if (prev.responseCode != '200' || body.code != 200 || !report || fallbacks.any { report.contains(it) }) {
+        AssertionResult.setFailure(true)
+        AssertionResult.setFailureMessage('预热未获得可缓存的真实 LLM 响应: ' + prev.responseDataAsString)
+    }
+} catch (Exception e) {
+    AssertionResult.setFailure(true); AssertionResult.setFailureMessage(e.message)
+}
+            ]]></stringProp>
+          </JSR223Assertion>
+          <hashTree/>
+        </hashTree>
+      </hashTree>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="缓存命中并发请求" enabled="true">
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="循环" enabled="true">
+          <boolProp name="LoopController.continue_forever">false</boolProp><stringProp name="LoopController.loops">${__P(loops,5)}</stringProp>
+        </elementProp>
+        <stringProp name="ThreadGroup.num_threads">${__P(threads,20)}</stringProp><stringProp name="ThreadGroup.ramp_time">${__P(ramp_seconds,2)}</stringProp><boolProp name="ThreadGroup.scheduler">false</boolProp>
+      </ThreadGroup>
+      <hashTree>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="cache-hit - 重复多模态报告" enabled="true">
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="" elementType="HTTPArgument"><boolProp name="HTTPArgument.always_encode">false</boolProp><stringProp name="Argument.value">{&quot;text&quot;:&quot;性能评测 ${run_id}：有人冒充客服要求共享屏幕并提供验证码，请进行风险分析。&quot;,&quot;audioResult&quot;:null,&quot;videoResult&quot;:null}</stringProp><stringProp name="Argument.metadata">=</stringProp></elementProp>
+            </collectionProp>
+          </elementProp>
+          <stringProp name="HTTPSampler.path">/api/detection/multi</stringProp><stringProp name="HTTPSampler.method">POST</stringProp>
+          <boolProp name="HTTPSampler.postBodyRaw">true</boolProp><boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+        </HTTPSamplerProxy>
+        <hashTree>
+          <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="记录缓存命中耗时" enabled="true">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="script"><![CDATA[
+props.get('cache.hit.times').add(prev.time as Long)
+            ]]></stringProp>
+          </JSR223PostProcessor>
+          <hashTree/>
+          <JSR223Assertion guiclass="TestBeanGUI" testclass="JSR223Assertion" testname="断言缓存响应" enabled="true">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="script"><![CDATA[
+import groovy.json.JsonSlurper
+try {
+    def body = new JsonSlurper().parseText(prev.responseDataAsString)
+    if (prev.responseCode != '200' || body.code != 200 || !body.data?.report) {
+        AssertionResult.setFailure(true)
+        AssertionResult.setFailureMessage('缓存请求失败: ' + prev.responseDataAsString)
+        props.get('cache.errors').incrementAndGet()
+    }
+} catch (Exception e) {
+    AssertionResult.setFailure(true); AssertionResult.setFailureMessage(e.message)
+}
+            ]]></stringProp>
+          </JSR223Assertion>
+          <hashTree/>
+        </hashTree>
+      </hashTree>
+      <PostThreadGroup guiclass="PostThreadGroupGui" testclass="PostThreadGroup" testname="输出缓存统计" enabled="true">
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController"><boolProp name="LoopController.continue_forever">false</boolProp><stringProp name="LoopController.loops">1</stringProp></elementProp>
+        <stringProp name="ThreadGroup.num_threads">1</stringProp><stringProp name="ThreadGroup.ramp_time">0</stringProp><boolProp name="ThreadGroup.scheduler">false</boolProp>
+      </PostThreadGroup>
+      <hashTree>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="写入 cache-summary.json" enabled="true">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="script"><![CDATA[
+import groovy.json.JsonOutput
+def times = props.get('cache.hit.times').toList().sort()
+def count = times.size()
+def p95 = count == 0 ? null : times[Math.min(count - 1, Math.ceil(count * 0.95).intValue() - 1)]
+def summary = [runId: vars.get('run_id'), samples: count,
+               averageMs: count == 0 ? null : times.sum() / count,
+               p95Ms: p95, errors: props.get('cache.errors').get()]
+def dir = new File(vars.get('result_dir')); dir.mkdirs()
+new File(dir, 'cache-summary.json').setText(JsonOutput.prettyPrint(JsonOutput.toJson(summary)), 'UTF-8')
+SampleResult.setResponseData(JsonOutput.toJson(summary), 'UTF-8')
+SampleResult.setSuccessful(summary.errors == 0 && count > 0)
+          ]]></stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+      </hashTree>
+    </hashTree>
+  </hashTree>
+</jmeterTestPlan>

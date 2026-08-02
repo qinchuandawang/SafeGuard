@@ -1,0 +1,13 @@
+# JMeter 命令行通过 -Jkey=value 覆盖这些参数，本文件仅作为参数清单。
+protocol=http
+host=127.0.0.1
+port=8080
+authorization=
+client_ip_prefix=10.71.1.
+video_file=test_data/video/f6699295ad7d66734aa1d1d63004f7fb.mp4
+threads=50
+loops=4
+ramp_seconds=5
+timeout_ms=10000
+run_id=replace-with-a-unique-run-id
+result_dir=performance/jmeter/results

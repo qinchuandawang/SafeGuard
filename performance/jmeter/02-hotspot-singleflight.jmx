@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
+  <hashTree>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="SafeGuard - 热点素材请求合并" enabled="true">
+      <stringProp name="TestPlan.comments">所有线程共享同一视频和幂等键，验证唯一 taskId、新建一次和其余请求复用。</stringProp>
+      <boolProp name="TestPlan.functional_mode">false</boolProp>
+      <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
+      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="用户变量" enabled="true">
+        <collectionProp name="Arguments.arguments">
+          <elementProp name="protocol" elementType="Argument"><stringProp name="Argument.name">protocol</stringProp><stringProp name="Argument.value">${__P(protocol,http)}</stringProp></elementProp>
+          <elementProp name="host" elementType="Argument"><stringProp name="Argument.name">host</stringProp><stringProp name="Argument.value">${__P(host,127.0.0.1)}</stringProp></elementProp>
+          <elementProp name="port" elementType="Argument"><stringProp name="Argument.name">port</stringProp><stringProp name="Argument.value">${__P(port,8080)}</stringProp></elementProp>
+          <elementProp name="video_file" elementType="Argument"><stringProp name="Argument.name">video_file</stringProp><stringProp name="Argument.value">${__P(video_file,test_data/video/f6699295ad7d66734aa1d1d63004f7fb.mp4)}</stringProp></elementProp>
+          <elementProp name="run_id" elementType="Argument"><stringProp name="Argument.name">run_id</stringProp><stringProp name="Argument.value">${__P(run_id,hotspot-run)}</stringProp></elementProp>
+          <elementProp name="result_dir" elementType="Argument"><stringProp name="Argument.name">result_dir</stringProp><stringProp name="Argument.value">${__P(result_dir,performance/jmeter/results)}</stringProp></elementProp>
+        </collectionProp>
+      </elementProp>
+    </TestPlan>
+    <hashTree>
+      <ConfigTestElement guiclass="HttpDefaultsGui" testclass="ConfigTestElement" testname="HTTP 默认配置" enabled="true">
+        <elementProp name="HTTPsampler.Arguments" elementType="Arguments"><collectionProp name="Arguments.arguments"/></elementProp>
+        <stringProp name="HTTPSampler.domain">${host}</stringProp>
+        <stringProp name="HTTPSampler.port">${port}</stringProp>
+        <stringProp name="HTTPSampler.protocol">${protocol}</stringProp>
+        <stringProp name="HTTPSampler.connect_timeout">${__P(timeout_ms,10000)}</stringProp>
+        <stringProp name="HTTPSampler.response_timeout">${__P(timeout_ms,10000)}</stringProp>
+      </ConfigTestElement>
+      <hashTree/>
+      <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="公共请求头" enabled="true">
+        <collectionProp name="HeaderManager.headers">
+          <elementProp name="Authorization" elementType="Header"><stringProp name="Header.name">Authorization</stringProp><stringProp name="Header.value">${__P(authorization,)}</stringProp></elementProp>
+          <elementProp name="X-Forwarded-For" elementType="Header"><stringProp name="Header.name">X-Forwarded-For</stringProp><stringProp name="Header.value">${__P(client_ip_prefix,10.72.1.)}${__threadNum}</stringProp></elementProp>
+        </collectionProp>
+      </HeaderManager>
+      <hashTree/>
+      <SetupThreadGroup guiclass="SetupThreadGroupGui" testclass="SetupThreadGroup" testname="初始化统计" enabled="true">
+        <stringProp name="ThreadGroup.on_sample_error">stoptest</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController"><boolProp name="LoopController.continue_forever">false</boolProp><stringProp name="LoopController.loops">1</stringProp></elementProp>
+        <stringProp name="ThreadGroup.num_threads">1</stringProp><stringProp name="ThreadGroup.ramp_time">0</stringProp><boolProp name="ThreadGroup.scheduler">false</boolProp>
+      </SetupThreadGroup>
+      <hashTree>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="重置热点统计" enabled="true">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="script"><![CDATA[
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicLong
+props.put('hotspot.ids', ConcurrentHashMap.newKeySet())
+props.put('hotspot.created', new AtomicLong())
+props.put('hotspot.reused', new AtomicLong())
+props.put('hotspot.errors', new AtomicLong())
+          ]]></stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+      </hashTree>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="相同素材瞬时并发" enabled="true">
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="循环" enabled="true">
+          <boolProp name="LoopController.continue_forever">false</boolProp><stringProp name="LoopController.loops">1</stringProp>
+        </elementProp>
+        <stringProp name="ThreadGroup.num_threads">${__P(threads,200)}</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">${__P(ramp_seconds,1)}</stringProp>
+        <boolProp name="ThreadGroup.scheduler">false</boolProp>
+      </ThreadGroup>
+      <hashTree>
+        <SyncTimer guiclass="TestBeanGUI" testclass="SyncTimer" testname="同时释放请求" enabled="true">
+          <stringProp name="groupSize">${__P(sync_size,200)}</stringProp>
+          <stringProp name="timeoutInMs">${__P(sync_timeout_ms,15000)}</stringProp>
+        </SyncTimer>
+        <hashTree/>
+        <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="共享幂等键" enabled="true">
+          <collectionProp name="HeaderManager.headers">
+            <elementProp name="Idempotency-Key" elementType="Header"><stringProp name="Header.name">Idempotency-Key</stringProp><stringProp name="Header.value">perf-hotspot-${run_id}</stringProp></elementProp>
+          </collectionProp>
+        </HeaderManager>
+        <hashTree/>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="POST /api/detection/video - 热点素材" enabled="true">
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments"><collectionProp name="Arguments.arguments"/></elementProp>
+          <elementProp name="HTTPsampler.Files" elementType="HTTPFileArgs">
+            <collectionProp name="HTTPFileArgs.files">
+              <elementProp name="file" elementType="HTTPFileArg"><stringProp name="File.path">${video_file}</stringProp><stringProp name="File.paramname">file</stringProp><stringProp name="File.mimetype">video/mp4</stringProp></elementProp>
+            </collectionProp>
+          </elementProp>
+          <stringProp name="HTTPSampler.path">/api/detection/video</stringProp><stringProp name="HTTPSampler.method">POST</stringProp>
+          <boolProp name="HTTPSampler.follow_redirects">true</boolProp><boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+          <boolProp name="HTTPSampler.DO_MULTIPART_POST">true</boolProp><boolProp name="HTTPSampler.BROWSER_COMPATIBLE_MULTIPART">false</boolProp>
+        </HTTPSamplerProxy>
+        <hashTree>
+          <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="统计新建、复用和唯一任务" enabled="true">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="script"><![CDATA[
+import groovy.json.JsonSlurper
+try {
+    def body = new JsonSlurper().parseText(prev.responseDataAsString)
+    if (prev.responseCode == '200' && body.code == 200 && body.data?.taskId) {
+        props.get('hotspot.ids').add(body.data.taskId.toString())
+        if (body.data.reused == true) props.get('hotspot.reused').incrementAndGet()
+        else props.get('hotspot.created').incrementAndGet()
+    } else {
+        props.get('hotspot.errors').incrementAndGet()
+    }
+} catch (Exception ignored) {
+    props.get('hotspot.errors').incrementAndGet()
+}
+            ]]></stringProp>
+          </JSR223PostProcessor>
+          <hashTree/>
+          <JSR223Assertion guiclass="TestBeanGUI" testclass="JSR223Assertion" testname="断言 HTTP 与业务码" enabled="true">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="script"><![CDATA[
+import groovy.json.JsonSlurper
+try {
+    def body = new JsonSlurper().parseText(prev.responseDataAsString)
+    if (prev.responseCode != '200' || body.code != 200 || !body.data?.taskId) {
+        AssertionResult.setFailure(true)
+        AssertionResult.setFailureMessage('热点请求失败: ' + prev.responseDataAsString)
+    }
+} catch (Exception e) {
+    AssertionResult.setFailure(true)
+    AssertionResult.setFailureMessage('响应解析失败: ' + e.message)
+}
+            ]]></stringProp>
+          </JSR223Assertion>
+          <hashTree/>
+        </hashTree>
+      </hashTree>
+      <PostThreadGroup guiclass="PostThreadGroupGui" testclass="PostThreadGroup" testname="输出热点统计" enabled="true">
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController"><boolProp name="LoopController.continue_forever">false</boolProp><stringProp name="LoopController.loops">1</stringProp></elementProp>
+        <stringProp name="ThreadGroup.num_threads">1</stringProp><stringProp name="ThreadGroup.ramp_time">0</stringProp><boolProp name="ThreadGroup.scheduler">false</boolProp>
+      </PostThreadGroup>
+      <hashTree>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="写入 hotspot-summary.json" enabled="true">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="script"><![CDATA[
+import groovy.json.JsonOutput
+def ids = props.get('hotspot.ids')
+def summary = [
+    runId: vars.get('run_id'),
+    uniqueTaskIds: ids.size(),
+    taskIds: ids.toList(),
+    created: props.get('hotspot.created').get(),
+    reused: props.get('hotspot.reused').get(),
+    errors: props.get('hotspot.errors').get()
+]
+def dir = new File(vars.get('result_dir'))
+dir.mkdirs()
+new File(dir, 'hotspot-summary.json').setText(JsonOutput.prettyPrint(JsonOutput.toJson(summary)), 'UTF-8')
+def expected = Integer.parseInt('${__P(threads,200)}')
+def passed = summary.uniqueTaskIds == 1 && summary.created == 1 && summary.reused == expected - 1 && summary.errors == 0
+SampleResult.setResponseData(JsonOutput.toJson(summary), 'UTF-8')
+SampleResult.setSuccessful(passed)
+if (!passed) SampleResult.setResponseMessage('热点合并验收失败，请检查汇总 JSON')
+          ]]></stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+      </hashTree>
+    </hashTree>
+  </hashTree>
+</jmeterTestPlan>

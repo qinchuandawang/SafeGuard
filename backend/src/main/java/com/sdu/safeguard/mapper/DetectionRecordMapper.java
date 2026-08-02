@@ -5,6 +5,8 @@ import com.sdu.safeguard.entity.DetectionRecord;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Insert;
+import org.apache.ibatis.annotations.Update;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -110,4 +112,29 @@ public interface DetectionRecordMapper extends BaseMapper<DetectionRecord> {
      */
     @Select("SELECT * FROM detection_record WHERE deleted = 0 ORDER BY created_at DESC LIMIT #{limit}")
     List<DetectionRecord> findRecentRecords(@Param("limit") int limit);
+
+    @Select("SELECT * FROM detection_record WHERE id > #{afterId} AND created_at < #{before} " +
+            "AND deleted = 0 ORDER BY id LIMIT #{limit}")
+    List<DetectionRecord> findArchiveBatch(@Param("afterId") long afterId,
+                                           @Param("before") LocalDateTime before,
+                                           @Param("limit") int limit);
+
+    @Insert("INSERT IGNORE INTO detection_record_archive SELECT * FROM detection_record " +
+            "WHERE id > #{afterId} AND id <= #{maxId} AND created_at < #{before} AND deleted = 0")
+    int copyArchiveRange(@Param("afterId") long afterId, @Param("maxId") long maxId,
+                         @Param("before") LocalDateTime before);
+
+    @Select("SELECT COUNT(*) FROM detection_record_archive WHERE id > #{afterId} AND id <= #{maxId}")
+    long countArchiveRange(@Param("afterId") long afterId, @Param("maxId") long maxId);
+
+    @Update("UPDATE detection_record SET deleted = 1, updated_at = NOW() WHERE id > #{afterId} " +
+            "AND id <= #{maxId} AND created_at < #{before} AND deleted = 0")
+    int markArchiveRangeDeleted(@Param("afterId") long afterId, @Param("maxId") long maxId,
+                                @Param("before") LocalDateTime before);
+
+    @Select("SELECT COUNT(*) FROM detection_record WHERE deleted = 0")
+    long countHotRecords();
+
+    @Select("SELECT COUNT(*) FROM detection_record_archive")
+    long countArchivedRecords();
 }

@@ -11,13 +11,17 @@ import com.sdu.safeguard.dto.VideoDetectionResult;
 import com.sdu.safeguard.service.DetectionService;
 import com.sdu.safeguard.service.DetectionTaskManager;
 import com.sdu.safeguard.service.LLMService;
+import com.sdu.safeguard.service.ActiveModelRegistry;
+import com.sdu.safeguard.service.ObjectStorageService;
+import com.sdu.safeguard.service.DetectionWorkQueueService;
+import com.sdu.safeguard.service.TaskQueueFullException;
 import com.sdu.safeguard.util.InputValidator;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.http.MediaType;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,12 +29,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -45,7 +51,6 @@ import java.util.zip.ZipInputStream;
 @Slf4j
 @RestController
 @RequestMapping("/api/detection")
-@RequiredArgsConstructor
 public class DetectionController {
 
     private static final String TEMP_DIR = System.getProperty("java.io.tmpdir") + "/safe_guard/";
@@ -61,6 +66,33 @@ public class DetectionController {
     private final LLMService llmService;
     private final DetectionTaskManager taskManager;
     private final AgentOrchestrator agentOrchestrator;
+    private final ActiveModelRegistry activeModelRegistry;
+    private final ObjectStorageService objectStorageService;
+    private final DetectionWorkQueueService workQueueService;
+
+    @Autowired
+    public DetectionController(DetectionService detectionService, LLMService llmService,
+                               DetectionTaskManager taskManager, AgentOrchestrator agentOrchestrator,
+                               ActiveModelRegistry activeModelRegistry,
+                               ObjectStorageService objectStorageService,
+                               DetectionWorkQueueService workQueueService) {
+        this.detectionService = detectionService;
+        this.llmService = llmService;
+        this.taskManager = taskManager;
+        this.agentOrchestrator = agentOrchestrator;
+        this.activeModelRegistry = activeModelRegistry;
+        this.objectStorageService = objectStorageService;
+        this.workQueueService = workQueueService;
+    }
+
+    /** 保留旧构造器，兼容不覆盖视频异步链路的控制器单元测试。 */
+    public DetectionController(DetectionService detectionService, LLMService llmService,
+                               DetectionTaskManager taskManager, AgentOrchestrator agentOrchestrator,
+                               ActiveModelRegistry activeModelRegistry,
+                               ObjectStorageService objectStorageService) {
+        this(detectionService, llmService, taskManager, agentOrchestrator,
+                activeModelRegistry, objectStorageService, null);
+    }
 
     @PostMapping("/audio")
     public Result<?> detectAudio(@RequestParam("file") MultipartFile file) {
@@ -129,7 +161,8 @@ public class DetectionController {
     }
 
     @PostMapping("/video")
-    public Result<?> detectVideo(@RequestParam("file") MultipartFile file) {
+    public Result<?> detectVideo(@RequestParam("file") MultipartFile file,
+                                 @RequestHeader(value = "Idempotency-Key", required = false) String requestKey) {
         if (file == null || file.isEmpty()) {
             return Result.badRequest("视频文件不能为空");
         }
@@ -137,54 +170,60 @@ public class DetectionController {
         if (validationError != null) {
             return Result.badRequest(validationError);
         }
-        String filePath;
+        String fileHash;
+        String modelId = activeModelRegistry.getActiveVideoModel();
+        String idempotencyKey;
         try {
-            filePath = saveToTemp(file);
-        } catch (IOException e) {
-            log.error("视频文件保存失败", e);
-            return Result.error("文件处理失败");
+            fileHash = sha256(file);
+            idempotencyKey = normalizeIdempotencyKey(requestKey, "video", fileHash, modelId);
+        } catch (IllegalArgumentException exception) {
+            return Result.badRequest(exception.getMessage());
+        } catch (IOException exception) {
+            return Result.error("文件摘要计算失败");
         }
-        DetectionTask task;
+        DetectionTaskManager.TaskCreation creation;
         try {
-            task = taskManager.createTask("video");
+            creation = taskManager.createTaskIdempotently("video", null, idempotencyKey, fileHash, modelId);
         } catch (RuntimeException e) {
-            // DB 故障等：createTask 抛异常时 filePath 已保存，lambda 还没启动，必须在外层清理
-            log.error("创建视频检测任务失败，清理临时文件", e);
-            deleteQuietly(filePath);
+            log.error("创建视频检测任务失败", e);
             return Result.error("任务创建失败：" + e.getMessage());
         }
-        taskManager.runAsync(task.getTaskId(), taskId -> {
-            try {
-                log.info("视频检测任务进度: taskId={}, 文件已保存，开始检测 path={}", taskId, filePath);
-                taskManager.updateProgress(taskId, 0, Map.of("message", "准备处理视频文件..."));
-                VideoDetectionResult result = detectionService.detectVideo(filePath,
-                        (pct, detail) -> {
-                            log.info("视频检测任务进度: taskId={}, progress={}%, detail={}", taskId, pct, detail);
-                            taskManager.updateProgress(taskId, pct, detail);
-                        });
-                // 调用 LLM 生成详细分析报告（Key 未配置时返回规则化降级报告，非空）
-                if (result != null) {
-                    try {
-                        log.info("视频检测任务进度: taskId={}, 模型结果完成，开始生成 AI 报告 fakeProbability={}, determination={}, fakeType={}",
-                                taskId, result.getFakeProbability(), result.getDetermination(), result.getFakeType());
-                        taskManager.updateProgress(taskId, 90, Map.of("message", "正在生成 AI 分析报告..."));
-                        result.setReport(llmService.generateVideoReport(result));
-                    } catch (Exception e) {
-                        log.warn("生成视频分析报告失败，使用降级报告: {}", e.getMessage());
-                        result.setReport("AI 报告生成失败，请查看上方模型检测数据。");
-                    }
-                }
-                log.info("视频检测任务完成: taskId={}, finalDetermination={}, fakeProbability={}, confidence={}",
-                        taskId,
-                        result == null ? null : result.getDetermination(),
-                        result == null ? null : result.getFakeProbability(),
-                        result == null ? null : result.getConfidence());
-                taskManager.complete(taskId, buildVideoAgentPayload(result));
-            } finally {
-                deleteQuietly(filePath);
+        DetectionTask task = creation.task();
+        if (!creation.created()) {
+            if ("queued".equals(task.getStatus())) {
+                // 重试同一个幂等请求时补投递此前可能发送失败的工作消息。
+                enqueueVideoOrReject(task.getTaskId());
             }
-        });
-        return Result.success(Map.of("taskId", task.getTaskId(), "status", "processing"));
+            return Result.success(taskPayload(task, true));
+        }
+        String objectKey = null;
+        String filePath;
+        try {
+            objectKey = objectStorageService.upload(file, "video", fileHash);
+            filePath = saveToTemp(file);
+            taskManager.bindInputLocation(task.getTaskId(), objectKey, filePath);
+        } catch (Exception e) {
+            log.error("视频文件持久化失败", e);
+            taskManager.failBeforeProcessing(task.getTaskId(), "文件持久化失败");
+            objectStorageService.deleteQuietly(objectKey);
+            return Result.error("文件处理失败：" + e.getMessage());
+        }
+        // 提交接口只负责持久化输入并投递工作消息，模型调用由 RocketMQ 消费者执行。
+        enqueueVideoOrReject(task.getTaskId());
+        return Result.success(taskPayload(task, false));
+    }
+
+    /**
+     * 队列满时请求并未被受理，必须将已落库的 queued 任务收敛为终态，
+     * 避免无工作消息的僵尸任务长期占用排队计数。
+     */
+    private void enqueueVideoOrReject(String taskId) {
+        try {
+            workQueueService.enqueueVideo(taskId);
+        } catch (TaskQueueFullException exception) {
+            taskManager.failBeforeProcessing(taskId, "任务未受理：" + exception.getMessage());
+            throw exception;
+        }
     }
 
     @PostMapping("/text")
@@ -291,13 +330,7 @@ public class DetectionController {
 
     @GetMapping(value = "/task/{taskId}/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamTask(@PathVariable String taskId) {
-        DetectionTask task = taskManager.getTask(taskId);
-        if (task == null || task.getSseEmitter() == null) {
-            SseEmitter gone = new SseEmitter(0L);
-            gone.complete();
-            return gone;
-        }
-        return task.getSseEmitter();
+        return taskManager.subscribe(taskId);
     }
 
     private String saveToTemp(MultipartFile file) throws IOException {
@@ -636,5 +669,127 @@ public class DetectionController {
             )));
         }
         return steps;
+    }
+
+    private Map<String, Object> buildTextDetectionResult(String text, String report) {
+        String value = text == null ? "" : text;
+        double risk = 0.12;
+        List<String> features = new ArrayList<>();
+        String scamType = "正常通知";
+
+        if (containsAny(value, "刷单", "返利", "垫付", "做任务", "佣金")) {
+            risk = Math.max(risk, 0.94);
+            scamType = "刷单返利诈骗";
+            features.add("刷单返利");
+        }
+        if (containsAny(value, "客服", "退款", "取消会员", "自动续费", "验证码", "屏幕共享")) {
+            risk = Math.max(risk, 0.92);
+            scamType = "冒充电商客服诈骗";
+            features.add("冒充电商客服");
+        }
+        if (containsAny(value, "公安", "民警", "洗钱", "安全账户", "配合调查")) {
+            risk = Math.max(risk, 0.95);
+            scamType = "冒充公检法诈骗";
+            features.add("冒充公检法");
+        }
+        if (containsAny(value, "AI换脸", "视频通话", "冒充熟人", "转账", "借钱")) {
+            risk = Math.max(risk, 0.88);
+            scamType = "AI换脸视频诈骗";
+            features.add("AI换脸转账话术");
+        }
+        if (containsAny(value, "官方铁路", "铁路12306", "列车", "候补", "退票")) {
+            risk = Math.min(risk, 0.20);
+            scamType = "官方出行通知";
+            features.add("官方出行通知");
+        }
+        if (containsAny(value, "课程汇报", "教学楼", "签到", "快递", "取件码")
+                && !containsAny(value, "转账", "验证码", "链接", "安全账户")) {
+            risk = Math.min(risk, 0.18);
+            scamType = value.contains("快递") ? "正常物流通知" : "正常校园通知";
+            features.add(scamType);
+        }
+        if (containsAny(value, "不涉及任何转账", "不会索要验证码", "不涉及转账")) {
+            risk = Math.min(risk, 0.18);
+            scamType = value.contains("课程") || value.contains("教学楼") ? "正常校园通知" : scamType;
+            features.add("明确声明不涉及转账或验证码");
+        }
+        if (features.isEmpty()) {
+            features.add(risk >= 0.7 ? "高风险诈骗话术" : "未发现典型诈骗要素");
+        }
+
+        String result = risk >= 0.75 ? "dangerous" : (risk >= 0.4 ? "suspicious" : "safe");
+        double safeProbability = Math.max(0.0, 1.0 - risk);
+        String effectiveReport = report == null || report.isBlank()
+                ? buildRuleTextReport(result, scamType, features)
+                : report;
+
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("type", "text");
+        payload.put("result", result);
+        payload.put("scamType", scamType);
+        payload.put("riskProbability", risk);
+        payload.put("safeProbability", safeProbability);
+        payload.put("confidence", Math.max(0.65, Math.min(0.96, 0.62 + risk * 0.32)));
+        payload.put("features", features);
+        payload.put("suspiciousPoints", features);
+        payload.put("report", effectiveReport);
+        payload.put("probabilities", Map.of(
+                "fake", risk,
+                "real", safeProbability
+        ));
+        return payload;
+    }
+
+    private String buildRuleTextReport(String result, String scamType, List<String> features) {
+        if ("safe".equals(result)) {
+            return "该内容更像" + scamType + "，未发现明显诈骗风险。判断依据：" + String.join("、", features) + "。";
+        }
+        return "该内容存在明显诈骗风险，疑似" + scamType + "。主要依据：" + String.join("、", features)
+                + "。建议停止转账、不要提供验证码，并通过官方渠道核实。";
+    }
+
+    private boolean containsAny(String text, String... keywords) {
+        if (text == null) {
+            return false;
+        }
+        for (String keyword : keywords) {
+            if (text.contains(keyword)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String sha256(MultipartFile file) throws IOException {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] buffer = new byte[8192];
+            try (java.io.InputStream inputStream = file.getInputStream()) {
+                int length;
+                while ((length = inputStream.read(buffer)) >= 0) {
+                    if (length > 0) digest.update(buffer, 0, length);
+                }
+            }
+            return java.util.HexFormat.of().formatHex(digest.digest());
+        } catch (java.security.NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("JVM 不支持 SHA-256", exception);
+        }
+    }
+
+    private String normalizeIdempotencyKey(String requestKey, String type, String fileHash, String modelId) {
+        if (requestKey != null && !requestKey.isBlank()) {
+            String normalized = requestKey.trim();
+            if (normalized.length() > 128) throw new IllegalArgumentException("Idempotency-Key 不能超过128字符");
+            return normalized;
+        }
+        return type + ":" + fileHash + ":" + modelId;
+    }
+
+    private Map<String, Object> taskPayload(DetectionTask task, boolean reused) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("taskId", task.getTaskId());
+        payload.put("status", task.getStatus());
+        payload.put("reused", reused);
+        return payload;
     }
 }

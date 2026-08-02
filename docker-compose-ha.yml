@@ -1,0 +1,92 @@
+services:
+  mysql-primary:
+    image: mysql:8.0
+    container_name: safeguard-mysql-primary
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root123}
+      MYSQL_DATABASE: safeguard
+    command: ["mysqld", "--default-authentication-plugin=mysql_native_password"]
+    volumes:
+      - mysql_primary_data:/var/lib/mysql
+      - ./infrastructure/mysql/primary.cnf:/etc/mysql/conf.d/replication.cnf:ro
+      - ./infrastructure/mysql/primary-init.sql:/docker-entrypoint-initdb.d/01-replication.sql:ro
+      - ./backend/src/main/resources/sql/schema.sql:/docker-entrypoint-initdb.d/02-schema.sql:ro
+    ports: ["3307:3306"]
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  mysql-replica:
+    image: mysql:8.0
+    container_name: safeguard-mysql-replica
+    restart: unless-stopped
+    depends_on:
+      mysql-primary:
+        condition: service_healthy
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root123}
+      MYSQL_DATABASE: safeguard
+    command: ["mysqld", "--default-authentication-plugin=mysql_native_password"]
+    volumes:
+      - mysql_replica_data:/var/lib/mysql
+      - ./infrastructure/mysql/replica.cnf:/etc/mysql/conf.d/replication.cnf:ro
+      - ./infrastructure/mysql/replica-init.sql:/docker-entrypoint-initdb.d/01-replication.sql:ro
+    ports: ["3308:3306"]
+
+  redis-master:
+    image: redis:7-alpine
+    container_name: safeguard-redis-master
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:-safeguardRedis123}", "--masterauth", "${REDIS_PASSWORD:-safeguardRedis123}"]
+    volumes: ["redis_master_data:/data"]
+    ports: ["6379:6379"]
+
+  redis-replica-1:
+    image: redis:7-alpine
+    container_name: safeguard-redis-replica-1
+    restart: unless-stopped
+    depends_on: [redis-master]
+    command: ["redis-server", "--replicaof", "redis-master", "6379", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:-safeguardRedis123}", "--masterauth", "${REDIS_PASSWORD:-safeguardRedis123}"]
+    volumes: ["redis_replica_1_data:/data"]
+
+  redis-replica-2:
+    image: redis:7-alpine
+    container_name: safeguard-redis-replica-2
+    restart: unless-stopped
+    depends_on: [redis-master]
+    command: ["redis-server", "--replicaof", "redis-master", "6379", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:-safeguardRedis123}", "--masterauth", "${REDIS_PASSWORD:-safeguardRedis123}"]
+    volumes: ["redis_replica_2_data:/data"]
+
+  sentinel-1:
+    image: redis:7-alpine
+    container_name: safeguard-sentinel-1
+    depends_on: [redis-master, redis-replica-1, redis-replica-2]
+    command: ["sh", "-c", "cp /etc/redis/sentinel.conf /tmp/sentinel.conf && echo 'sentinel auth-pass safeguard-master ${REDIS_PASSWORD:-safeguardRedis123}' >> /tmp/sentinel.conf && exec redis-server /tmp/sentinel.conf --sentinel"]
+    volumes: ["./infrastructure/redis/sentinel.conf:/etc/redis/sentinel.conf:ro"]
+    ports: ["26379:26379"]
+
+  sentinel-2:
+    image: redis:7-alpine
+    container_name: safeguard-sentinel-2
+    depends_on: [redis-master, redis-replica-1, redis-replica-2]
+    command: ["sh", "-c", "cp /etc/redis/sentinel.conf /tmp/sentinel.conf && echo 'sentinel auth-pass safeguard-master ${REDIS_PASSWORD:-safeguardRedis123}' >> /tmp/sentinel.conf && exec redis-server /tmp/sentinel.conf --sentinel"]
+    volumes: ["./infrastructure/redis/sentinel.conf:/etc/redis/sentinel.conf:ro"]
+    ports: ["26380:26379"]
+
+  sentinel-3:
+    image: redis:7-alpine
+    container_name: safeguard-sentinel-3
+    depends_on: [redis-master, redis-replica-1, redis-replica-2]
+    command: ["sh", "-c", "cp /etc/redis/sentinel.conf /tmp/sentinel.conf && echo 'sentinel auth-pass safeguard-master ${REDIS_PASSWORD:-safeguardRedis123}' >> /tmp/sentinel.conf && exec redis-server /tmp/sentinel.conf --sentinel"]
+    volumes: ["./infrastructure/redis/sentinel.conf:/etc/redis/sentinel.conf:ro"]
+    ports: ["26381:26379"]
+
+volumes:
+  mysql_primary_data:
+  mysql_replica_data:
+  redis_master_data:
+  redis_replica_1_data:
+  redis_replica_2_data:

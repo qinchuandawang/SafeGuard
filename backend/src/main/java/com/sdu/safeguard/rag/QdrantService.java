@@ -177,7 +177,8 @@ public class QdrantService {
                 payload.put(CONTENT_FIELD, str(m.get("content")));
                 payload.put(CATEGORY_FIELD, str(m.get("category")));
                 payload.put(SOURCE_FIELD, str(m.get("source")));
-                payload.put(TAGS_FIELD, str(m.get("tags")));
+                // 标签以数组写入 Qdrant，才能使用 match 对单个标签做精确匹配。
+                payload.put(TAGS_FIELD, normalizeTags(m.get("tags")));
 
                 Map<String, Object> point = new LinkedHashMap<>();
                 // Qdrant 1.7+ 严格要求 point ID 为 unsigned integer 或 UUID
@@ -425,6 +426,27 @@ public class QdrantService {
             log.warn("Qdrant 获取全部数据失败: {}", e.getMessage());
             return List.of();
         }
+    }
+
+    private List<String> normalizeTags(Object value) {
+        if (value instanceof Collection<?> collection) {
+            return collection.stream()
+                    .filter(Objects::nonNull)
+                    .map(Object::toString)
+                    .filter(tag -> !tag.isBlank())
+                    .toList();
+        }
+        if (value == null || value.toString().isBlank()) {
+            return List.of();
+        }
+        String text = value.toString().trim();
+        if (text.startsWith("[") && text.endsWith("]")) {
+            text = text.substring(1, text.length() - 1);
+        }
+        return Arrays.stream(text.split(","))
+                .map(String::trim)
+                .filter(tag -> !tag.isBlank())
+                .toList();
     }
 
     private String str(Object obj) {

@@ -47,10 +47,17 @@ public class QdrantContainerManager {
     @Value("${rag.allow-in-memory-fallback:false}")
     private boolean allowInMemoryFallback;
 
+    @Value("${rag.auto-manage-container:false}")
+    private boolean autoManageContainer;
+
     private boolean startedByMe = false;
 
     @PostConstruct
     public void init() {
+        if (!autoManageContainer) {
+            log.info("Qdrant 容器自动管理已关闭，基础设施生命周期由部署平台负责");
+            return;
+        }
         if (!isLocalhost(qdrantHost)) {
             log.info("Qdrant 指向远程 {}:{}, 跳过自动容器管理", qdrantHost, qdrantPort);
             return;

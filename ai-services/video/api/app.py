@@ -41,7 +41,12 @@ def select_device():
 
 
 DEVICE = select_device()
-MODEL_PATH = 'pretrained/best_model.pth'
+MODEL_PATH = os.environ.get('MODEL_PATH', 'pretrained/best_model.pth')
+MODEL_CATALOG = {
+    'xception-ffpp': os.environ.get('VIDEO_MODEL_XCEPTION_FFPP', 'pretrained/best_model.pth'),
+    'efficientnet-dfdc': os.environ.get('VIDEO_MODEL_EFFICIENTNET_DFDC', 'pretrained/efficientnet_dfdc.pth'),
+    'mesonet-ffpp': os.environ.get('VIDEO_MODEL_MESONET_FFPP', 'pretrained/mesonet_ffpp.pth'),
+}
 IMAGE_SIZE = (299, 299)
 MAX_UPLOAD_MB = int(os.environ.get('MAX_UPLOAD_MB', '100'))
 ALLOWED_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.bmp', '.webp'}
@@ -80,17 +85,30 @@ def validate_upload(file, allowed_extensions):
 # ====================================
 
 # 模型引用，惰性加载
-_model_instance = None
+_model_instances = {}
 _model_lock = threading.RLock()
+
+def resolve_model_path(model_id=None):
+    """根据模型 ID 解析权重路径，不允许静默回退冒充其他模型。"""
+    if model_id:
+        candidate = MODEL_CATALOG.get(model_id)
+        if not candidate:
+            raise ValueError(f"未知视频模型: {model_id}")
+        if model_id != 'xception-ffpp':
+            raise ValueError(f"视频模型适配器尚未安装: {model_id}")
+        if candidate and os.path.exists(candidate):
+            return candidate
+        raise FileNotFoundError(f"视频模型权重未就绪: model_id={model_id}, path={candidate}")
+    return MODEL_PATH
+
 
 def load_model(model_path):
     """惰性加载模型，仅在首次请求时加载"""
-    global _model_instance
-    if _model_instance is not None:
-        return _model_instance
+    if model_path in _model_instances:
+        return _model_instances[model_path]
     with _model_lock:
-        if _model_instance is not None:
-            return _model_instance
+        if model_path in _model_instances:
+            return _model_instances[model_path]
         print(f"[首次加载] 模型: {model_path}, 设备: {DEVICE}")
 
         if not os.path.exists(model_path):
@@ -104,13 +122,13 @@ def load_model(model_path):
         print(f"模型加载成功：{model_path}")
         model.to(DEVICE)
         model.eval()
-        _model_instance = model
+        _model_instances[model_path] = model
         return model
 
 
-def get_model():
+def get_model(model_id=None):
     """获取模型实例（首次调用时惰性加载）"""
-    return load_model(MODEL_PATH)
+    return load_model(resolve_model_path(model_id))
 
 
 # 数据变换
@@ -129,7 +147,7 @@ def detect_faces_in_image(image_path):
     return faces, locations
 
 
-def predict_image(image):
+def predict_image(image, model_id=None):
     """预测单张图片。
 
     演示场景优先保证判定稳定性，CUDA 上也使用 float32，避免半精度把低概率压得过低。
@@ -139,7 +157,7 @@ def predict_image(image):
 
     with _model_lock:
         with torch.no_grad():
-            outputs = get_model()(image_tensor)
+            outputs = get_model(model_id)(image_tensor)
             probs = F.softmax(outputs, dim=1)
             fake_prob = probs[0][1].item()
     
@@ -150,7 +168,7 @@ def predict_image(image):
     }
 
 
-def predict_video(video_path, max_frames=None):
+def predict_video(video_path, max_frames=None, model_id=None):
     """预测视频"""
     if max_frames is None:
         # 与后端 application.yml video.preprocess.max-frames=24 保持一致
@@ -186,7 +204,7 @@ def predict_video(video_path, max_frames=None):
                 # 与图片接口保持一致：无人脸时降级为全图检测，
                 # 否则 total_faces=0 直接判定 is_fake=False，会把"完全没人脸的视频"判为真实
                 full_image = Image.open(str(frame_file)).convert('RGB')
-                full_pred = predict_image(full_image)
+                full_pred = predict_image(full_image, model_id)
                 full_pred['face_location'] = None
                 full_pred['fallback'] = True
                 full_pred['fallback_reason'] = '未检测到独立人脸，使用全图检测'
@@ -195,7 +213,7 @@ def predict_video(video_path, max_frames=None):
                 frames_with_face += 1
                 for i, face in enumerate(faces):
                     face_pil = Image.fromarray(cv2.cvtColor(face, cv2.COLOR_BGR2RGB))
-                    prediction = predict_image(face_pil)
+                    prediction = predict_image(face_pil, model_id)
                     prediction['face_location'] = locations[i]
                     frame_result['faces'].append(prediction)
             
@@ -243,6 +261,8 @@ def predict_video(video_path, max_frames=None):
             'is_fake': (not is_uncertain) and (aggregate_fake_probability >= 0.55),
             'is_uncertain': is_uncertain,
             'uncertain_reason': '所有帧均未检测到人脸' if is_uncertain else None,
+            'model_id': model_id or 'xception-ffpp',
+            'model_path': resolve_model_path(model_id),
         }
     finally:
         # 确保临时目录始终被清理
@@ -254,12 +274,16 @@ def predict_video(video_path, max_frames=None):
 def health_check():
     """健康检查，同时预热模型，避免演示时第一次检测才暴露模型问题"""
     try:
-        get_model()
+        model_id = request.args.get('model_id')
+        model_path = resolve_model_path(model_id)
+        get_model(model_id)
         return success_response({
             'status': 'healthy',
             'device': str(DEVICE),
             'model_loaded': True,
-            'model_path': MODEL_PATH
+            'model_id': model_id or 'xception-ffpp',
+            'model_path': model_path,
+            'models': MODEL_CATALOG
         })
     except Exception as exc:
         return error_response(
@@ -319,7 +343,8 @@ def detect_image():
             # 无人脸时降级为全图检测，而不是直接返回错误
             # 使得视频管道即使无可见人脸也能继续运行
             full_image = Image.open(temp_path).convert('RGB')
-            full_pred = predict_image(full_image)
+            model_id = request.form.get('model_id')
+            full_pred = predict_image(full_image, model_id)
             result = {
                 'is_fake': full_pred['is_fake'],
                 'fake_probability': full_pred['fake_probability'],
@@ -337,7 +362,8 @@ def detect_image():
         face_results = []
         for i, face in enumerate(faces):
             face_pil = Image.fromarray(cv2.cvtColor(face, cv2.COLOR_BGR2RGB))
-            prediction = predict_image(face_pil)
+            model_id = request.form.get('model_id')
+            prediction = predict_image(face_pil, model_id)
             prediction['face_location'] = locations[i]
             face_results.append(prediction)
         
@@ -412,7 +438,8 @@ def detect_video():
     
     try:
         # 检测视频
-        result = predict_video(temp_path)
+        model_id = request.form.get('model_id')
+        result = predict_video(temp_path, model_id=model_id)
 
         return success_response(result)
 

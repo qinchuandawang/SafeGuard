@@ -4,15 +4,17 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import tools.jackson.core.json.JsonWriteFeature;
-import tools.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.core.json.JsonWriteFeature;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Arrays;
 
 @Configuration
 @RequiredArgsConstructor
@@ -20,10 +22,16 @@ public class WebConfig implements WebMvcConfigurer {
 
     private final RateLimitInterceptor rateLimitInterceptor;
 
+    @Value("${app.cors.allowed-origins:http://localhost:5173,http://127.0.0.1:5173}")
+    private String allowedOrigins;
+
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**")
-                .allowedOriginPatterns("*")
+                .allowedOrigins(Arrays.stream(allowedOrigins.split(","))
+                        .map(String::trim)
+                        .filter(origin -> !origin.isBlank())
+                        .toArray(String[]::new))
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true);
@@ -42,7 +50,7 @@ public class WebConfig implements WebMvcConfigurer {
      *    JSON 响应体只含 ASCII, 客户端无论按什么编码解码都能得到正确字符串(JSON.parse 会自动反转义)。
      * 2) 强制 defaultCharset = UTF-8: 确保响应 Content-Type 包含 charset=UTF-8, 遵循 RFC 7159。
      *
-     * 这里用 configureMessageConverters 替换默认 JacksonJsonHttpMessageConverter,
+     * 这里用 configureMessageConverters 替换默认 MappingJackson2HttpMessageConverter,
      * Spring 会按 supportedMediaTypes 匹配 application/json。
      */
     @Override
@@ -50,7 +58,7 @@ public class WebConfig implements WebMvcConfigurer {
         JsonMapper mapper = JsonMapper.builder()
                 .enable(JsonWriteFeature.ESCAPE_NON_ASCII)
                 .build();
-        JacksonJsonHttpMessageConverter jacksonConverter = new JacksonJsonHttpMessageConverter(mapper);
+        MappingJackson2HttpMessageConverter jacksonConverter = new MappingJackson2HttpMessageConverter(mapper);
         jacksonConverter.setDefaultCharset(StandardCharsets.UTF_8);
         jacksonConverter.setSupportedMediaTypes(List.of(
                 MediaType.APPLICATION_JSON,

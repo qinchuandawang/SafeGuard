@@ -13,6 +13,9 @@ import com.github.benmanes.caffeine.cache.Cache;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Async;
@@ -23,15 +26,18 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.ResponseExtractor;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-import tools.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.time.Duration;
 
 @Slf4j
 @Service
@@ -53,13 +59,23 @@ public class LLMService {
     private final ObjectMapper objectMapper;
     @Qualifier("knowledgeContextCache")
     private final Cache<String, String> knowledgeContextCache;
+    @Qualifier("llmResponseCache")
+    private final Cache<String, String> llmResponseCache;
+    private final TokenCostService tokenCostService;
+    private final ObjectProvider<StringRedisTemplate> redisTemplateProvider;
+
+    @Value("${infra.redis.enabled:false}")
+    private boolean redisEnabled;
+
+    @Value("${llm.cost-control.response-cache-ttl-seconds:600}")
+    private long responseCacheTtlSeconds;
 
     public String analyzeText(String text) {
-        return callLLM(buildAnalyzePrompt(text));
+        return callLLM(buildAnalyzePrompt(text), "text-analysis");
     }
 
     public String askAssistant(String prompt) {
-        return callLLM(prompt);
+        return callLLM(prompt, "assistant");
     }
 
     public String buildAssistantPrompt(String text) {
@@ -144,7 +160,7 @@ public class LLMService {
             result.computeProbabilities();
             return result;
         }
-        String raw = callLLM(buildAnalyzePrompt(text));
+        String raw = callLLM(buildAnalyzePrompt(text), "text-analysis");
         result.setReport(raw);
 
         // LLM 返回的可能不是合法 JSON 字符串，先尝试去掉 markdown 包裹
@@ -167,7 +183,7 @@ public class LLMService {
 
         try {
             // 用 JsonNode 树模型宽容解析：字段类型不匹配（如 advice 是字符串而非数组）不抛错
-            tools.jackson.databind.JsonNode root = objectMapper.readTree(json);
+            com.fasterxml.jackson.databind.JsonNode root = objectMapper.readTree(json);
 
             TextDetectionResult parsed = new TextDetectionResult();
             parsed.setType("text");
@@ -190,7 +206,7 @@ public class LLMService {
             parsed.setReasoningSteps(extractStringList(root, "reasoningSteps"));
             // advice 可能是数组或字符串
             if (root.has("advice")) {
-                tools.jackson.databind.JsonNode adv = root.get("advice");
+                com.fasterxml.jackson.databind.JsonNode adv = root.get("advice");
                 if (adv.isArray()) {
                     parsed.setAdvice(extractStringList(root, "advice"));
                 } else if (adv.isTextual()) {
@@ -226,12 +242,12 @@ public class LLMService {
     /**
      * 宽容提取 JSON 数组字段。数组元素若是字符串直接取；若是其他类型转字符串。
      */
-    private java.util.List<String> extractStringList(tools.jackson.databind.JsonNode root, String fieldName) {
+    private java.util.List<String> extractStringList(com.fasterxml.jackson.databind.JsonNode root, String fieldName) {
         java.util.List<String> list = new java.util.ArrayList<>();
         if (!root.has(fieldName)) return list;
-        tools.jackson.databind.JsonNode node = root.get(fieldName);
+        com.fasterxml.jackson.databind.JsonNode node = root.get(fieldName);
         if (node.isArray()) {
-            for (tools.jackson.databind.JsonNode item : node) {
+            for (com.fasterxml.jackson.databind.JsonNode item : node) {
                 if (item.isTextual()) list.add(item.asText());
                 else list.add(item.toString().replaceAll("^\"|\"$", ""));
             }
@@ -289,7 +305,7 @@ public class LLMService {
                 audio.getAnalyzedSeconds() == null ? "未返回" : String.format("%.2f", audio.getAnalyzedSeconds()),
                 Boolean.TRUE.equals(audio.getTruncated()) ? "是" : "否",
                 thresholdNote);
-        return callLLM(prompt);
+        return callLLM(prompt, "audio-report");
     }
 
     /**
@@ -408,7 +424,7 @@ public class LLMService {
                         + "\n- 逐帧伪造概率：" + frameSummary
                         + "\n- 最可疑帧：" + suspiciousFrames,
                 visualDetermination, fakeProb * 100, visualFakeProb * 100, confidence * 100, frameCount);
-        return callLLM(prompt);
+        return callLLM(prompt, "video-report");
     }
 
     private String buildVideoFrameSummary(VideoDetectionResult video) {
@@ -565,7 +581,7 @@ public class LLMService {
                 "knowledge", knowledge,
                 "audio", audioResult != null ? audioResult : new AudioDetectionResult(),
                 "video", videoResult != null ? videoResult : new VideoDetectionResult()
-        )));
+        )), "multimodal");
     }
 
     public String scamSimulation(String userMessage, List<Message> history, ScamScenario scenario) {
@@ -576,13 +592,13 @@ public class LLMService {
                 "knowledge", knowledge,
                 "conversationHistory", buildConversationHistory(history),
                 "userMessage", effectiveMessage
-        )));
+        )), "simulation");
     }
 
     public SimulationResponse scamSimulationStructured(String userMessage, List<Message> history, ScamScenario scenario) {
         String raw = scamSimulation(userMessage, history, scenario);
         try {
-            tools.jackson.databind.JsonNode root = objectMapper.readTree(sanitizeJsonLike(raw));
+            com.fasterxml.jackson.databind.JsonNode root = objectMapper.readTree(sanitizeJsonLike(raw));
             SimulationResponse response = new SimulationResponse();
             response.setContent(readText(root, "content", raw));
             response.setQuickReplies(readStringList(root, "quickReplies"));
@@ -632,7 +648,7 @@ public class LLMService {
         return cleaned;
     }
 
-    private String readText(tools.jackson.databind.JsonNode root, String field, String fallback) {
+    private String readText(com.fasterxml.jackson.databind.JsonNode root, String field, String fallback) {
         if (root != null && root.has(field) && root.get(field).isTextual()) {
             String value = root.get(field).asText();
             return value == null || value.isBlank() ? fallback : value.trim();
@@ -640,7 +656,7 @@ public class LLMService {
         return fallback == null ? "" : fallback;
     }
 
-    private List<String> readStringList(tools.jackson.databind.JsonNode root, String field) {
+    private List<String> readStringList(com.fasterxml.jackson.databind.JsonNode root, String field) {
         if (root == null || !root.has(field) || !root.get(field).isArray()) {
             return new java.util.ArrayList<>();
         }
@@ -740,7 +756,20 @@ public class LLMService {
         return result;
     }
 
-    private String callLLM(String prompt) {
+    private String callLLM(String prompt, String scene) {
+        String cacheKey = responseCacheKey(prompt, scene);
+        if (tokenCostService.isCacheable(scene)) {
+            String cached = getCachedResponse(cacheKey);
+            if (cached != null) {
+                TokenCostService.Reservation cacheReservation = tokenCostService.reserve(
+                        scene, llmConfig.getModel(), "", 0);
+                tokenCostService.complete(cacheReservation, 0, 0, true, "success");
+                return cached;
+            }
+        }
+        int maxCompletionTokens = llmConfig.getMaxTokens() == null ? 0 : llmConfig.getMaxTokens();
+        TokenCostService.Reservation reservation = tokenCostService.reserve(
+                scene, llmConfig.getModel(), prompt, maxCompletionTokens);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(llmConfig.getApiKey());
@@ -754,8 +783,16 @@ public class LLMService {
                     requestEntity,
                     Object.class
             );
-            return extractContent(response.getBody());
+            Object responseBody = response.getBody();
+            String content = extractContent(responseBody);
+            int[] usage = extractUsage(responseBody);
+            tokenCostService.complete(reservation, usage[0], usage[1], false, "success");
+            if (tokenCostService.isCacheable(scene) && !isFallback(content)) {
+                putCachedResponse(cacheKey, content);
+            }
+            return content;
         } catch (HttpClientErrorException e) {
+            tokenCostService.cancel(reservation, "client_error");
             if (e.getStatusCode().value() == 429) {
                 log.error("LLM API 限流(429)，重试耗尽");
                 return FALLBACK_RATE_LIMIT;
@@ -767,14 +804,73 @@ public class LLMService {
             log.error("LLM API 错误({}): {}", e.getStatusCode(), e.getMessage());
             return FALLBACK_GENERAL;
         } catch (HttpServerErrorException e) {
+            tokenCostService.cancel(reservation, "server_error");
             log.error("LLM API 服务端错误({})，重试耗尽", e.getStatusCode());
             return FALLBACK_SERVER_ERROR;
         } catch (ResourceAccessException e) {
+            tokenCostService.cancel(reservation, "timeout");
             log.error("LLM API 连接超时，重试耗尽: {}", e.getMessage());
             return FALLBACK_TIMEOUT;
         } catch (Exception e) {
+            tokenCostService.cancel(reservation, "error");
             log.error("LLM API 未知错误", e);
             return FALLBACK_GENERAL;
+        }
+    }
+
+    private int[] extractUsage(Object responseBody) {
+        if (!(responseBody instanceof Map<?, ?> body) || !(body.get("usage") instanceof Map<?, ?> usage)) {
+            return new int[]{-1, -1};
+        }
+        return new int[]{numberValue(usage.get("prompt_tokens")), numberValue(usage.get("completion_tokens"))};
+    }
+
+    private int numberValue(Object value) {
+        return value instanceof Number number ? number.intValue() : -1;
+    }
+
+    private boolean isFallback(String content) {
+        return FALLBACK_GENERAL.equals(content) || FALLBACK_RATE_LIMIT.equals(content)
+                || FALLBACK_TIMEOUT.equals(content) || FALLBACK_SERVER_ERROR.equals(content);
+    }
+
+    private String responseCacheKey(String prompt, String scene) {
+        String source = llmConfig.getModel() + "|" + tokenCostService.promptVersion() + "|"
+                + scene + "|" + llmConfig.getTemperature() + "|" + llmConfig.getMaxTokens() + "|" + prompt;
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256")
+                    .digest(source.getBytes(StandardCharsets.UTF_8));
+            return java.util.HexFormat.of().formatHex(digest);
+        } catch (Exception e) {
+            throw new IllegalStateException("生成 LLM 缓存键失败", e);
+        }
+    }
+
+    private String getCachedResponse(String cacheKey) {
+        String local = llmResponseCache.getIfPresent(cacheKey);
+        if (local != null || !redisEnabled) return local;
+        try {
+            StringRedisTemplate redisTemplate = redisTemplateProvider.getIfAvailable();
+            String shared = redisTemplate == null ? null
+                    : redisTemplate.opsForValue().get("safeguard:cache:llm:" + cacheKey);
+            if (shared != null) llmResponseCache.put(cacheKey, shared);
+            return shared;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private void putCachedResponse(String cacheKey, String content) {
+        llmResponseCache.put(cacheKey, content);
+        if (!redisEnabled) return;
+        try {
+            StringRedisTemplate redisTemplate = redisTemplateProvider.getIfAvailable();
+            if (redisTemplate != null) {
+                redisTemplate.opsForValue().set("safeguard:cache:llm:" + cacheKey,
+                        content, Duration.ofSeconds(responseCacheTtlSeconds));
+            }
+        } catch (Exception e) {
+            log.debug("写入共享 LLM 响应缓存失败: {}", e.getMessage());
         }
     }
 
@@ -805,6 +901,15 @@ public class LLMService {
 
     @Async("streamExecutor")
     public void executeStreamCall(String prompt, SseEmitter emitter) {
+        int maxCompletionTokens = llmConfig.getMaxTokens() == null ? 0 : llmConfig.getMaxTokens();
+        TokenCostService.Reservation reservation;
+        try {
+            reservation = tokenCostService.reserve("stream", llmConfig.getModel(), prompt, maxCompletionTokens);
+        } catch (TokenBudgetExceededException e) {
+            sendErrorAndComplete(emitter, e.getMessage());
+            return;
+        }
+        AtomicBoolean accounted = new AtomicBoolean();
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -839,14 +944,22 @@ public class LLMService {
                             }
                             emitter.send(SseEmitter.event().name("done")
                                     .data(fullContent.toString()));
+                            tokenCostService.complete(reservation, null,
+                                    tokenCostService.estimateTokens(fullContent.toString()), false, "success");
+                            accounted.set(true);
                             emitter.complete();
                         } catch (IOException e) {
+                            tokenCostService.cancel(reservation, "client_disconnected");
+                            accounted.set(true);
                             log.error("SSE 流读取异常", e);
                             sendErrorAndComplete(emitter, null);
                         }
                         return null;
                     });
         } catch (Exception e) {
+            if (accounted.compareAndSet(false, true)) {
+                tokenCostService.cancel(reservation, "error");
+            }
             log.error("LLM 流式调用失败", e);
             sendErrorAndComplete(emitter, FALLBACK_GENERAL);
         }

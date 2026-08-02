@@ -1,9 +1,10 @@
 # SafeGuard 一键部署配置
 # ============================================
 # 用法：
-#   docker compose up -d                         # 核心服务（MySQL + Qdrant + 后端）
+#   docker compose up -d                         # 核心服务（MySQL + Qdrant + Redis + RocketMQ + 后端）
 #   docker compose --profile ai up -d            # 核心 + AI 检测服务
 #   docker compose --profile web up -d           # 核心 + 管理后台 SPA
+#   docker compose --profile observability up -d # 核心 + Zipkin 深度链路排障
 #   docker compose --profile ai --profile web up -d  # 全部服务
 # ============================================
 #
@@ -60,6 +61,113 @@ services:
       retries: 10
       start_period: 30s
 
+  # Redis：任务状态快照、热点缓存、分布式扩展支撑
+  redis:
+    image: redis:7-alpine
+    container_name: safeguard-redis
+    restart: unless-stopped
+    mem_limit: 128m
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "96mb", "--maxmemory-policy", "allkeys-lru"]
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # MinIO：原始音视频对象存储，数据库仅保存对象 Key
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    container_name: safeguard-minio
+    restart: unless-stopped
+    mem_limit: 256m
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-safeguard}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-safeguard123}
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # Sentinel Dashboard：流控、熔断规则和实时资源监控的主要治理入口
+  sentinel-dashboard:
+    image: bladex/sentinel-dashboard:1.8.8
+    container_name: safeguard-sentinel-dashboard
+    restart: unless-stopped
+    mem_limit: 256m
+    environment:
+      JAVA_OPTS: "-Xms128m -Xmx128m -Dserver.port=8858"
+    ports:
+      - "8858:8858"
+
+  # Zipkin：可选的跨服务链路排障工具，不作为主治理控制台
+  zipkin:
+    profiles: ["observability"]
+    image: openzipkin/zipkin:3
+    container_name: safeguard-zipkin
+    restart: unless-stopped
+    mem_limit: 256m
+    ports:
+      - "9411:9411"
+
+  # RocketMQ NameServer：消息路由元数据
+  rocketmq-namesrv:
+    image: apache/rocketmq:5.3.2
+    container_name: safeguard-rocketmq-namesrv
+    restart: unless-stopped
+    mem_limit: 256m
+    command: ["sh", "mqnamesrv"]
+    environment:
+      JAVA_OPT_EXT: "-Xms128m -Xmx128m"
+    ports:
+      - "9876:9876"
+    volumes:
+      - rocketmq_namesrv_logs:/home/rocketmq/logs
+    healthcheck:
+      test: ["CMD-SHELL", "sh mqadmin clusterList -n localhost:9876 >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  # RocketMQ Broker：检测任务事件总线
+  rocketmq-broker:
+    image: apache/rocketmq:5.3.2
+    container_name: safeguard-rocketmq-broker
+    restart: unless-stopped
+    mem_limit: 512m
+    depends_on:
+      rocketmq-namesrv:
+        condition: service_healthy
+    command: ["sh", "mqbroker", "-c", "/home/rocketmq/conf/broker.conf"]
+    environment:
+      JAVA_OPT_EXT: "-Xms256m -Xmx256m"
+      NAMESRV_ADDR: rocketmq-namesrv:9876
+    ports:
+      - "10909:10909"
+      - "10911:10911"
+      - "10912:10912"
+    volumes:
+      - ./rocketmq/broker.conf:/home/rocketmq/conf/broker.conf
+      - rocketmq_broker_logs:/home/rocketmq/logs
+      - rocketmq_broker_store:/home/rocketmq/store
+    healthcheck:
+      test: ["CMD-SHELL", "sh mqadmin brokerStatus -n rocketmq-namesrv:9876 -b localhost:10911 >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
   # Spring Boot 后端
   backend:
     build:
@@ -73,6 +181,14 @@ services:
         condition: service_healthy
       qdrant:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      rocketmq-broker:
+        condition: service_healthy
+      sentinel-dashboard:
+        condition: service_started
     environment:
       SPRING_PROFILES_ACTIVE: prod
       DB_URL: jdbc:mysql://db:3306/safeguard?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
@@ -85,6 +201,21 @@ services:
       WECHAT_SECRET: ${WECHAT_SECRET:-}
       QDRANT_HOST: qdrant
       QDRANT_PORT: 6333
+      REDIS_ENABLED: ${REDIS_ENABLED:-true}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      MINIO_ENABLED: ${MINIO_ENABLED:-true}
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-safeguard}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-safeguard123}
+      MINIO_BUCKET: ${MINIO_BUCKET:-safeguard-media}
+      ROCKETMQ_ENABLED: ${ROCKETMQ_ENABLED:-true}
+      ROCKETMQ_NAME_SERVER: rocketmq-namesrv:9876
+      SENTINEL_ENABLED: ${SENTINEL_ENABLED:-true}
+      SENTINEL_DASHBOARD: sentinel-dashboard:8858
+      SENTINEL_API_PORT: 8719
+      TRACING_ENABLED: ${TRACING_ENABLED:-false}
+      ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
       ADMIN_BOOTSTRAP_REGISTER: ${ADMIN_BOOTSTRAP_REGISTER:-false}
       SQL_INIT_MODE: ${SQL_INIT_MODE:-never}
       VIDEO_PREPROCESS_ENABLED: ${VIDEO_PREPROCESS_ENABLED:-false}
@@ -114,6 +245,9 @@ services:
     environment:
       - OMP_NUM_THREADS=2
       - MKL_NUM_THREADS=2
+      - AUDIO_MODEL_WAV2VEC2_ASVSPOOF=pretrained/asvspoof-finetuned
+      - AUDIO_MODEL_WAV2VEC2_BASE=pretrained/wav2vec2-base
+      - AUDIO_MODEL_AASIST=pretrained/aasist-asvspoof
 
   # 视频检测服务 (Flask + XceptionNet)
   video-detection:
@@ -129,6 +263,10 @@ services:
     volumes:
       - ./ai-services/video/pretrained:/app/pretrained
       - video_data:/app/data
+    environment:
+      - VIDEO_MODEL_XCEPTION_FFPP=pretrained/best_model.pth
+      - VIDEO_MODEL_EFFICIENTNET_DFDC=pretrained/efficientnet_dfdc.pth
+      - VIDEO_MODEL_MESONET_FFPP=pretrained/mesonet_ffpp.pth
 
   # ==========================================
   # Web 管理后台（--profile web）
@@ -154,3 +292,8 @@ volumes:
   audio_data:
   video_data:
   qdrant_data:
+  redis_data:
+  minio_data:
+  rocketmq_namesrv_logs:
+  rocketmq_broker_logs:
+  rocketmq_broker_store:

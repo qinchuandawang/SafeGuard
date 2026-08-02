@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
+  <hashTree>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="SafeGuard - 异步视频任务提交" enabled="true">
+      <stringProp name="TestPlan.comments">使用唯一幂等键测试任务提交接口，不等待模型推理完成。</stringProp>
+      <boolProp name="TestPlan.functional_mode">false</boolProp>
+      <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
+      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="用户变量" enabled="true">
+        <collectionProp name="Arguments.arguments">
+          <elementProp name="protocol" elementType="Argument"><stringProp name="Argument.name">protocol</stringProp><stringProp name="Argument.value">${__P(protocol,http)}</stringProp></elementProp>
+          <elementProp name="host" elementType="Argument"><stringProp name="Argument.name">host</stringProp><stringProp name="Argument.value">${__P(host,127.0.0.1)}</stringProp></elementProp>
+          <elementProp name="port" elementType="Argument"><stringProp name="Argument.name">port</stringProp><stringProp name="Argument.value">${__P(port,8080)}</stringProp></elementProp>
+          <elementProp name="video_file" elementType="Argument"><stringProp name="Argument.name">video_file</stringProp><stringProp name="Argument.value">${__P(video_file,test_data/video/f6699295ad7d66734aa1d1d63004f7fb.mp4)}</stringProp></elementProp>
+          <elementProp name="run_id" elementType="Argument"><stringProp name="Argument.name">run_id</stringProp><stringProp name="Argument.value">${__P(run_id,submit-run)}</stringProp></elementProp>
+        </collectionProp>
+      </elementProp>
+    </TestPlan>
+    <hashTree>
+      <ConfigTestElement guiclass="HttpDefaultsGui" testclass="ConfigTestElement" testname="HTTP 默认配置" enabled="true">
+        <elementProp name="HTTPsampler.Arguments" elementType="Arguments"><collectionProp name="Arguments.arguments"/></elementProp>
+        <stringProp name="HTTPSampler.domain">${host}</stringProp>
+        <stringProp name="HTTPSampler.port">${port}</stringProp>
+        <stringProp name="HTTPSampler.protocol">${protocol}</stringProp>
+        <stringProp name="HTTPSampler.connect_timeout">${__P(timeout_ms,10000)}</stringProp>
+        <stringProp name="HTTPSampler.response_timeout">${__P(timeout_ms,10000)}</stringProp>
+      </ConfigTestElement>
+      <hashTree/>
+      <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="公共请求头" enabled="true">
+        <collectionProp name="HeaderManager.headers">
+          <elementProp name="Authorization" elementType="Header"><stringProp name="Header.name">Authorization</stringProp><stringProp name="Header.value">${__P(authorization,)}</stringProp></elementProp>
+          <elementProp name="X-Forwarded-For" elementType="Header"><stringProp name="Header.name">X-Forwarded-For</stringProp><stringProp name="Header.value">${__P(client_ip_prefix,10.71.1.)}${__threadNum}</stringProp></elementProp>
+        </collectionProp>
+      </HeaderManager>
+      <hashTree/>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="唯一任务并发提交" enabled="true">
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="循环" enabled="true">
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+          <stringProp name="LoopController.loops">${__P(loops,4)}</stringProp>
+        </elementProp>
+        <stringProp name="ThreadGroup.num_threads">${__P(threads,50)}</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">${__P(ramp_seconds,5)}</stringProp>
+        <boolProp name="ThreadGroup.scheduler">false</boolProp>
+      </ThreadGroup>
+      <hashTree>
+        <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="唯一幂等键" enabled="true">
+          <collectionProp name="HeaderManager.headers">
+            <elementProp name="Idempotency-Key" elementType="Header"><stringProp name="Header.name">Idempotency-Key</stringProp><stringProp name="Header.value">${run_id}-${__threadNum}-${__counter(TRUE,request_seq)}</stringProp></elementProp>
+          </collectionProp>
+        </HeaderManager>
+        <hashTree/>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="POST /api/detection/video - 创建异步任务" enabled="true">
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments"><collectionProp name="Arguments.arguments"/></elementProp>
+          <elementProp name="HTTPsampler.Files" elementType="HTTPFileArgs">
+            <collectionProp name="HTTPFileArgs.files">
+              <elementProp name="file" elementType="HTTPFileArg">
+                <stringProp name="File.path">${video_file}</stringProp>
+                <stringProp name="File.paramname">file</stringProp>
+                <stringProp name="File.mimetype">video/mp4</stringProp>
+              </elementProp>
+            </collectionProp>
+          </elementProp>
+          <stringProp name="HTTPSampler.path">/api/detection/video</stringProp>
+          <stringProp name="HTTPSampler.method">POST</stringProp>
+          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+          <boolProp name="HTTPSampler.DO_MULTIPART_POST">true</boolProp>
+          <boolProp name="HTTPSampler.BROWSER_COMPATIBLE_MULTIPART">false</boolProp>
+        </HTTPSamplerProxy>
+        <hashTree>
+          <JSR223Assertion guiclass="TestBeanGUI" testclass="JSR223Assertion" testname="断言 HTTP 与业务码" enabled="true">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="script"><![CDATA[
+import groovy.json.JsonSlurper
+if (prev.responseCode != '200') {
+    AssertionResult.setFailure(true)
+    AssertionResult.setFailureMessage('HTTP 状态异常: ' + prev.responseCode)
+    return
+}
+try {
+    def body = new JsonSlurper().parseText(prev.responseDataAsString)
+    if (body.code != 200 || !body.data?.taskId || body.data?.reused == true) {
+        AssertionResult.setFailure(true)
+        AssertionResult.setFailureMessage('任务未成功新建: ' + prev.responseDataAsString)
+    }
+} catch (Exception e) {
+    AssertionResult.setFailure(true)
+    AssertionResult.setFailureMessage('响应不是合法 JSON: ' + e.message)
+}
+            ]]></stringProp>
+          </JSR223Assertion>
+          <hashTree/>
+          <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="记录任务提交结果" enabled="true">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="parameters"></stringProp>
+            <stringProp name="filename"></stringProp>
+            <stringProp name="script"><![CDATA[
+import groovy.json.JsonSlurper
+
+def resultDir = org.apache.jmeter.util.JMeterUtils.getProperty('result_dir')
+if (!resultDir) {
+    return
+}
+def recordFile = new File(resultDir, 'task-records.tsv')
+def taskId = ''
+try {
+    def body = new JsonSlurper().parseText(prev.responseDataAsString)
+    taskId = body.data?.taskId ?: ''
+} catch (Exception ignored) {
+}
+def line = [
+    prev.timeStamp,
+    prev.time,
+    prev.responseCode,
+    prev.isSuccessful(),
+    taskId,
+    prev.getThreadName()
+].join('\t') + System.lineSeparator()
+synchronized (org.apache.jmeter.util.JMeterUtils.class) {
+    if (!recordFile.exists()) {
+        recordFile.parentFile.mkdirs()
+        recordFile << "timestamp\telapsed\tresponseCode\tsuccess\ttaskId\tthreadName" + System.lineSeparator()
+    }
+    recordFile << line
+}
+            ]]></stringProp>
+          </JSR223PostProcessor>
+          <hashTree/>
+        </hashTree>
+      </hashTree>
+    </hashTree>
+  </hashTree>
+</jmeterTestPlan>

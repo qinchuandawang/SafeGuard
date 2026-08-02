@@ -10,7 +10,7 @@ import Profile from '../views/Profile.vue'
 import NotFound from '../views/NotFound.vue'
 
 const routes = [
-  { path: '/login', component: Login },
+  { path: '/login', component: Login, meta: { public: true } },
   {
     path: '/',
     component: Layout,
@@ -33,6 +33,15 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
+  const token = localStorage.getItem('admin_token')
+  if (!to.meta.public && !token) {
+    next({ path: '/login', query: { redirect: to.fullPath } })
+    return
+  }
+  if (to.path === '/login' && token) {
+    next('/dashboard')
+    return
+  }
   next()
 })
 
