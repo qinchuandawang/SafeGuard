@@ -10,8 +10,11 @@
 | 文本检测 | 支持文本框输入和文档上传，调用大模型分析诈骗话术、风险等级和处置建议 |
 | 音频检测 | 已就绪 Wav2Vec2 ASVspoof 模型；预留 AASIST 等适配器目录，只有实现与权重齐备后才允许激活 |
 | 视频检测 | 已就绪 XceptionNet 模型；预留 EfficientNet、MesoNet 适配器目录，禁止静默回退冒充执行 |
-| 多模态检测 | 由大模型作为中枢 Agent 融合文本、音频、视频结果并输出综合判断 |
+| 多模态检测 | Java 接收原始音视频和文本并创建异步任务，LangGraph 并行执行文本、音频、视频节点，统一融合证据并支持人工审核；Spring AI + DeepSeek 负责文本检测与最终解释 |
 | Function Calling | 后端通过 Spring AI `ChatClient + ToolCallback` 让模型原生选择并调用工具，不再手写协议或解析 `Action:` 文本 |
+| LLM Gateway | Java `LLMService` 统一承接 DeepSeek 文本检测、Function Calling、CoT 与报告生成，共享 Token 预算、按场景缓存、重试和 Prompt 版本治理 |
+| 分布式记忆 | Redis List 保存带滑动 TTL 的短期会话上下文，Caffeine 作为本地副本与故障回退，Qdrant 保存重要长期风险特征 |
+| AI 工作流 | Python 侧使用 LangGraph 编排文本、音频、视频并行检测、动态融合和人工审核恢复；备用模型仅保留扩展路由，Java 仍维护业务任务状态 |
 | 高并发任务链路 | 检测任务状态写入 Redis 快照，并通过 RocketMQ 发布任务事件，支撑可靠投递、异步消费和失败补偿 |
 | 热点推理保护 | Redisson 可过期信号量按模型预占集群推理槽位，视频任务按文件哈希与模型版本合并，防止热点素材重复推理压垮模型服务 |
 | Token 成本治理 | 调用前按场景预占每日 Token 预算，调用后按供应商 usage 对账并持久化；确定性场景使用带模型和 Prompt 版本的精确缓存 |

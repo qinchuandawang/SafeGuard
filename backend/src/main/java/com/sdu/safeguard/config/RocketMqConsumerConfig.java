@@ -19,6 +19,7 @@ import com.sdu.safeguard.mapper.AsyncTaskMapper;
 import com.sdu.safeguard.service.DetectionTaskManager;
 import com.sdu.safeguard.service.InferenceCapacityExceededException;
 import com.sdu.safeguard.service.VideoTaskExecutionService;
+import com.sdu.safeguard.service.MultimodalTaskExecutionService;
 
 @Slf4j
 @Configuration
@@ -36,6 +37,7 @@ public class RocketMqConsumerConfig {
             AsyncTaskMapper asyncTaskMapper,
             DetectionTaskManager taskManager,
             VideoTaskExecutionService executionService,
+            MultimodalTaskExecutionService multimodalExecutionService,
             MeterRegistry meterRegistry) throws Exception {
         DefaultMQPushConsumer consumer = new DefaultMQPushConsumer(consumerGroup);
         consumer.setNamesrvAddr(nameServer);
@@ -59,7 +61,13 @@ public class RocketMqConsumerConfig {
                         continue;
                     }
                     if (taskManager.markQueuedForProcessing(task)) {
-                        executionService.execute(task);
+                        if ("multimodal".equals(task.getType())) {
+                            multimodalExecutionService.execute(task);
+                        } else if ("video".equals(task.getType())) {
+                            executionService.execute(task);
+                        } else {
+                            throw new IllegalStateException("不支持的推理工作类型: " + task.getType());
+                        }
                         meterRegistry.counter("safeguard.inference.work.completed").increment();
                     }
                 } catch (InferenceCapacityExceededException capacityException) {

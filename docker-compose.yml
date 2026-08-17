@@ -204,6 +204,8 @@ services:
       REDIS_ENABLED: ${REDIS_ENABLED:-true}
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      MEMORY_SHORT_TERM_CONTEXT_SIZE: ${MEMORY_SHORT_TERM_CONTEXT_SIZE:-20}
+      MEMORY_SHORT_TERM_TTL_HOURS: ${MEMORY_SHORT_TERM_TTL_HOURS:-24}
       MINIO_ENABLED: ${MINIO_ENABLED:-true}
       MINIO_ENDPOINT: http://minio:9000
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-safeguard}
@@ -219,6 +221,11 @@ services:
       ADMIN_BOOTSTRAP_REGISTER: ${ADMIN_BOOTSTRAP_REGISTER:-false}
       SQL_INIT_MODE: ${SQL_INIT_MODE:-never}
       VIDEO_PREPROCESS_ENABLED: ${VIDEO_PREPROCESS_ENABLED:-false}
+      AUDIO_SERVICE_URL: ${AUDIO_SERVICE_URL:-http://safeguard-orchestrator:5003/v1/workflows/audio}
+      VIDEO_SERVICE_URL: ${VIDEO_SERVICE_URL:-http://safeguard-orchestrator:5003/v1/workflows/video}
+      ORCHESTRATOR_INTERNAL_TOKEN: ${ORCHESTRATOR_INTERNAL_TOKEN:-}
+      ORCHESTRATOR_BASE_URL: http://safeguard-orchestrator:5003
+      ORCHESTRATOR_MULTIMODAL_URL: http://safeguard-orchestrator:5003/v1/workflows/multimodal
     ports:
       - "8080:8080"
     volumes:
@@ -268,6 +275,40 @@ services:
       - VIDEO_MODEL_EFFICIENTNET_DFDC=pretrained/efficientnet_dfdc.pth
       - VIDEO_MODEL_MESONET_FFPP=pretrained/mesonet_ffpp.pth
 
+  # LangGraph 仅编排 AI 推理节点；Java 后端仍维护业务任务状态。
+  ai-orchestrator:
+    profiles: ["ai"]
+    build:
+      context: ./ai-services/orchestrator
+      dockerfile: Dockerfile
+    container_name: safeguard-orchestrator
+    restart: unless-stopped
+    mem_limit: 256m
+    depends_on:
+      - audio-detection
+      - video-detection
+    ports:
+      - "5003:5003"
+    volumes:
+      - orchestrator_data:/app/data
+    environment:
+      AUDIO_DETECTION_URL: http://safeguard-audio:5000/audio/detect
+      VIDEO_DETECTION_URL: http://safeguard-video:5002/api/detect/video
+      TEXT_DETECTION_URL: http://backend:8080/api/internal/llm/text-detection
+      ORCHESTRATOR_INTERNAL_TOKEN: ${ORCHESTRATOR_INTERNAL_TOKEN:-}
+      ORCHESTRATOR_STORAGE_DIR: /app/data
+      ORCHESTRATOR_MAX_CONCURRENT: ${ORCHESTRATOR_MAX_CONCURRENT:-4}
+      AUDIO_FALLBACK_MODEL: ${AUDIO_FALLBACK_MODEL:-}
+      VIDEO_FALLBACK_MODEL: ${VIDEO_FALLBACK_MODEL:-}
+      TEXT_FUSION_WEIGHT: ${TEXT_FUSION_WEIGHT:-0.25}
+      AUDIO_FUSION_WEIGHT: ${AUDIO_FUSION_WEIGHT:-0.35}
+      VIDEO_FUSION_WEIGHT: ${VIDEO_FUSION_WEIGHT:-0.40}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5003/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   # ==========================================
   # Web 管理后台（--profile web）
   # ==========================================
@@ -291,6 +332,7 @@ volumes:
   backend_data:
   audio_data:
   video_data:
+  orchestrator_data:
   qdrant_data:
   redis_data:
   minio_data:

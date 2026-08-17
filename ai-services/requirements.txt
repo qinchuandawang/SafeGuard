@@ -16,3 +16,6 @@ transformers>=4.15.0
 datasets>=2.0.0
 librosa>=0.9.0
 soundfile>=0.12.0
+
+# ============ LangGraph 编排服务 (orchestrator/) ============
+-r orchestrator/requirements.txt

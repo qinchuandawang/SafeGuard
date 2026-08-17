@@ -27,7 +27,7 @@ public class VideoTaskExecutionService {
         boolean temporaryDownload = task.getObjectKey() != null && !task.getObjectKey().isBlank();
         try {
             taskManager.updateProgress(task.getTaskId(), 0, Map.of("message", "准备处理视频文件..."));
-            VideoDetectionResult result = detectionService.detectVideo(mediaPath.toString(),
+            VideoDetectionResult result = detectionService.detectVideo(mediaPath.toString(), task.getTaskId(),
                     (progress, detail) -> taskManager.updateProgress(task.getTaskId(), progress, detail));
             if (result != null) {
                 taskManager.updateProgress(task.getTaskId(), 90,

@@ -47,6 +47,16 @@ public interface AsyncTaskMapper extends BaseMapper<AsyncTask> {
                            @Param("progress") int progress, @Param("resultJson") String resultJson,
                            @Param("error") String error);
 
+    @Update("UPDATE async_task SET status = 'waiting_review', progress = 90, result_json = #{resultJson}, " +
+            "version = version + 1, updated_at = NOW() " +
+            "WHERE task_id = #{taskId} AND status = 'processing' AND deleted = 0")
+    int markWaitingReview(@Param("taskId") String taskId, @Param("resultJson") String resultJson);
+
+    @Update("UPDATE async_task SET status = 'completed', progress = 100, result_json = #{resultJson}, " +
+            "error_message = NULL, completed_at = NOW(), version = version + 1 " +
+            "WHERE task_id = #{taskId} AND status = 'waiting_review' AND deleted = 0")
+    int finishIfWaitingReview(@Param("taskId") String taskId, @Param("resultJson") String resultJson);
+
     @Update("UPDATE async_task SET object_key = #{objectKey}, file_path = NULL, " +
             "version = version + 1 WHERE task_id = #{taskId} AND deleted = 0")
     int bindObjectKey(@Param("taskId") String taskId, @Param("objectKey") String objectKey);
@@ -56,7 +66,7 @@ public interface AsyncTaskMapper extends BaseMapper<AsyncTask> {
     int bindInputLocation(@Param("taskId") String taskId, @Param("objectKey") String objectKey,
                           @Param("filePath") String filePath);
 
-    @Select("SELECT * FROM async_task WHERE type = 'video' AND " +
+    @Select("SELECT * FROM async_task WHERE type IN ('video', 'multimodal') AND " +
             "((status = 'queued' AND updated_at < #{queuedBefore}) OR " +
             "(status = 'processing' AND updated_at < #{processingBefore})) " +
             "AND (object_key IS NOT NULL OR file_path IS NOT NULL) AND deleted = 0 ORDER BY id LIMIT #{limit}")

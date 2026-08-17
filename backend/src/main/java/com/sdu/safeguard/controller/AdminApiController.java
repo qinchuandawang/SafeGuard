@@ -5,6 +5,7 @@ import com.sdu.safeguard.dto.Result;
 import com.sdu.safeguard.entity.*;
 import com.sdu.safeguard.mapper.*;
 import com.sdu.safeguard.service.*;
+import com.sdu.safeguard.dto.MultimodalReviewRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,8 +35,28 @@ public class AdminApiController {
     private final UserMapper userMapper;
     private final ModelCatalogProperties modelCatalogProperties;
     private final ActiveModelRegistry activeModelRegistry;
+    private final MultimodalTaskExecutionService multimodalTaskExecutionService;
     @Value("${video.model.path:../ai-services/video/pretrained/best_model.pth}")
     private String videoModelPath;
+
+    @PostMapping("/multimodal-tasks/{taskId}/review")
+    public Result<Map<String, Object>> reviewMultimodalTask(
+            @PathVariable String taskId,
+            @RequestBody MultimodalReviewRequest request,
+            @RequestAttribute(value = "currentOpenid", required = false) String reviewer) {
+        if (request == null || !Set.of("fake", "real", "uncertain").contains(request.getDecision())) {
+            return Result.badRequest("decision 只能是 fake、real 或 uncertain");
+        }
+        try {
+            request.setReviewer(reviewer == null || reviewer.isBlank() ? "admin" : reviewer);
+            return Result.success(multimodalTaskExecutionService.review(taskId, request));
+        } catch (IllegalArgumentException | IllegalStateException exception) {
+            return Result.badRequest(exception.getMessage());
+        } catch (Exception exception) {
+            log.error("多模态人工审核失败: taskId={}", taskId, exception);
+            return Result.error("人工审核失败");
+        }
+    }
 
     @GetMapping("/users")
     public Result<List<User>> getUsers() {

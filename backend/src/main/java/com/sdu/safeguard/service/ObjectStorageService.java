@@ -55,6 +55,34 @@ public class ObjectStorageService {
         }
     }
 
+    public String upload(Path file, String category, String fileHash, String contentType) {
+        if (!enabled) return null;
+        if (file == null || !Files.isRegularFile(file)) {
+            throw new IllegalArgumentException("待上传文件不存在");
+        }
+        MinioClient client = minioClientProvider.getIfAvailable();
+        if (client == null) throw new IllegalStateException("MinIO 客户端未配置");
+        String fileName = file.getFileName().toString();
+        String suffix = fileName.contains(".") ? fileName.substring(fileName.lastIndexOf('.')) : "";
+        String objectKey = category + "/" + LocalDate.now() + "/" + fileHash + "-" + UUID.randomUUID() + suffix;
+        try {
+            if (!client.bucketExists(BucketExistsArgs.builder().bucket(bucket).build())) {
+                client.makeBucket(MakeBucketArgs.builder().bucket(bucket).build());
+            }
+            try (java.io.InputStream inputStream = Files.newInputStream(file)) {
+                client.putObject(PutObjectArgs.builder()
+                        .bucket(bucket)
+                        .object(objectKey)
+                        .stream(inputStream, Files.size(file), -1)
+                        .contentType(contentType)
+                        .build());
+            }
+            return objectKey;
+        } catch (Exception exception) {
+            throw new IllegalStateException("任务包写入对象存储失败", exception);
+        }
+    }
+
     public void deleteQuietly(String objectKey) {
         if (!enabled || objectKey == null || objectKey.isBlank()) return;
         MinioClient client = minioClientProvider.getIfAvailable();

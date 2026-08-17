@@ -154,6 +154,25 @@ public class QdrantService {
         }
     }
 
+    /** 删除指定集合中的单个业务向量。 */
+    public void deleteFrom(String chunkId, String collectionName) {
+        if (chunkId == null || chunkId.isBlank()) return;
+        if (!useRealQdrant) {
+            Map<String, StoredVector> collection = fallbackStore.get(collectionName);
+            if (collection != null) collection.remove(chunkId);
+            return;
+        }
+        Map<String, Object> request = Map.of("points", List.of(toQdrantId(chunkId)));
+        try {
+            restTemplate.postForEntity(
+                    baseUrl + "/collections/" + collectionName + "/points/delete?wait=true",
+                    request, Map.class);
+        } catch (Exception e) {
+            log.warn("Qdrant 删除向量失败: collection={}, chunkId={}, error={}",
+                    collectionName, chunkId, e.getMessage());
+        }
+    }
+
     public void batchInsertTo(List<String> chunkIds, List<List<Float>> vectors,
                                List<Map<String, Object>> metadatas, String collectionName) {
         if (chunkIds == null || vectors == null) return;
@@ -369,11 +388,7 @@ public class QdrantService {
                 .sorted((a, b) -> Double.compare(b.score, a.score))
                 .limit(searchK)
                 .collect(Collectors.toList());
-        if (!filteredResults.isEmpty() || payloadFilter == null || payloadFilter.isEmpty()) {
-            return filteredResults;
-        }
-        log.debug("内存向量检索过滤条件无结果，降级为全量检索: {}", payloadFilter);
-        return searchFallback(queryVector, topK, null, collectionName);
+        return filteredResults;
     }
 
     private boolean matchesPayloadValue(Object actual, String expected) {
@@ -458,7 +473,7 @@ public class QdrantService {
         public final double score;
         public final Map<String, Object> metadata;
 
-        ScoredResult(String chunkId, double score, Map<String, Object> metadata) {
+        public ScoredResult(String chunkId, double score, Map<String, Object> metadata) {
             this.chunkId = chunkId;
             this.score = score;
             this.metadata = metadata;

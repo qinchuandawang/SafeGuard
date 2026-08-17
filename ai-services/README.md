@@ -1,6 +1,6 @@
 # SafeGuard AI 检测服务
 
-统一管理音频伪造检测 (Wav2Vec2) 和视频换脸检测 (XceptionNet)。
+统一管理音频伪造检测、视频换脸检测和 LangGraph 多模型编排。
 
 ## 环境要求
 
@@ -26,6 +26,7 @@ ai-services/
 │   ├── pretrained/         # 本地模型目录（大权重文件不提交 Git）
 │   ├── train.py            # 训练脚本
 │   └── requirements.txt
+├── orchestrator/       # LangGraph 推理工作流 (port 5003)
 ├── run.py              # 统一启动入口
 ├── requirements.txt    # 合并依赖
 └── README.md
@@ -67,6 +68,7 @@ python run.py
 启动后：
 - 音频检测：http://localhost:5000
 - 视频检测：http://localhost:5002
+- AI 编排：http://localhost:5003
 
 ## 激活虚拟环境（可选）
 
@@ -127,3 +129,16 @@ D:\Git\SafeGuard\ai-services\.venv\Scripts\python.exe
 - `GET  /api/health`            健康检查
 - `POST /api/detect/image`      图片换脸检测
 - `POST /api/detect/video`      视频换脸检测
+
+### LangGraph 编排 (port 5003)
+- `GET  /health`                       健康检查
+- `POST /v1/workflows/audio`           单音频工作流
+- `POST /v1/workflows/video`           单视频工作流
+- `POST /v1/workflows/multimodal`      文本、音频、视频并行检测与融合
+- `POST /v1/workflows/{taskId}/resume` 人工审核后恢复
+
+Java 业务入口：
+
+- `POST /api/detection/multi`：异步创建可信多模态任务（音频、视频原始文件）
+- `POST /api/detection/multi/audio-stage`：小程序的音频一次性暂存入口
+- `POST /api/admin/multimodal-tasks/{taskId}/review`：管理员审核并恢复工作流

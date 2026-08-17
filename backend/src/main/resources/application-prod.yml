@@ -16,6 +16,10 @@ spring:
       data-locations: classpath:sql/init-data.sql
       continue-on-error: false
 
+memory:
+  short-term-context-size: ${MEMORY_SHORT_TERM_CONTEXT_SIZE:20}
+  short-term-ttl-hours: ${MEMORY_SHORT_TERM_TTL_HOURS:24}
+
 app:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:8085}
@@ -26,13 +30,18 @@ app:
   admin:
     allow-bootstrap-register: ${ADMIN_BOOTSTRAP_REGISTER:false}
 
+ai:
+  orchestrator:
+    base-url: ${ORCHESTRATOR_BASE_URL:http://safeguard-orchestrator:5003}
+    multimodal-url: ${ORCHESTRATOR_MULTIMODAL_URL:http://safeguard-orchestrator:5003/v1/workflows/multimodal}
+
 wechat:
   allow-test-login: ${WECHAT_ALLOW_TEST_LOGIN:false}
 
 # 音频检测服务（容器内使用容器名）
 audio:
   service:
-    url: http://safeguard-audio:5000/audio/detect
+    url: ${AUDIO_SERVICE_URL:http://safeguard-audio:5000/audio/detect}
   detection:
     api-url: http://safeguard-audio:5000/audio/detect
     health-url: http://safeguard-audio:5000/health
@@ -40,7 +49,7 @@ audio:
 # 视频检测服务（容器内使用容器名）
 video:
   service:
-    url: http://safeguard-video:5002/api/detect/video
+    url: ${VIDEO_SERVICE_URL:http://safeguard-video:5002/api/detect/video}
     image-url: http://safeguard-video:5002/api/detect/image
 
 # RAG 配置（Qdrant 容器名）

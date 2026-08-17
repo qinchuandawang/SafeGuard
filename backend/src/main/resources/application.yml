@@ -105,9 +105,16 @@ wechat:
   login-url: https://api.weixin.qq.com/sns/jscode2session
 
 # 音频检测服务地址
+ai:
+  orchestrator:
+    # 留空表示内部服务不鉴权；生产部署必须通过环境变量设置同一令牌。
+    internal-token: ${ORCHESTRATOR_INTERNAL_TOKEN:}
+    base-url: ${ORCHESTRATOR_BASE_URL:http://localhost:5003}
+    multimodal-url: ${ORCHESTRATOR_MULTIMODAL_URL:http://localhost:5003/v1/workflows/multimodal}
+
 audio:
   service:
-    url: http://localhost:5000/audio/detect
+    url: ${AUDIO_SERVICE_URL:http://localhost:5000/audio/detect}
   detection:
     api-url: http://localhost:5000/audio/detect
     health-url: http://localhost:5000/health
@@ -115,7 +122,7 @@ audio:
 # 视频检测服务地址
 video:
   service:
-    url: http://localhost:5002/api/detect/video
+    url: ${VIDEO_SERVICE_URL:http://localhost:5002/api/detect/video}
     image-url: http://localhost:5002/api/detect/image
   preprocess:
     enabled: ${VIDEO_PREPROCESS_ENABLED:true}
@@ -150,15 +157,15 @@ siliconflow:
   api-key: ${SILICONFLOW_API_KEY:}
   embedding-url: https://api.siliconflow.cn/v1/embeddings
   rerank-url: https://api.siliconflow.cn/v1/rerank
-  embedding-model: BAAI/bge-large-zh-v1.5
+  embedding-model: BAAI/bge-base-zh-v1.5
   rerank-model: BAAI/bge-reranker-v2-m3
 
 # RAG 配置
 rag:
-  embedding-dimension: 1024
+  embedding-dimension: 768
   qdrant-host: ${QDRANT_HOST:localhost}
   qdrant-port: ${QDRANT_PORT:6333}
-  collection-name: anti_fraud_knowledge
+  collection-name: anti_fraud_knowledge_v2
   fixed-chunk-size: 256
   fixed-chunk-overlap: 32
   semantic-chunk-min-size: 100
@@ -176,13 +183,15 @@ rag:
 # 记忆系统配置
 memory:
   short-term-max-size: 50
+  short-term-context-size: ${MEMORY_SHORT_TERM_CONTEXT_SIZE:20}
+  short-term-ttl-hours: ${MEMORY_SHORT_TERM_TTL_HOURS:24}
   long-term-max-size: 1000
   long-term-ttl-hours: 168
   long-term-importance-threshold: 0.6
   storage-path: ./data/memory
   memory-retrieval-top-k: 10
-  memory-collection: user_memories
-  memory-embedding-dim: 1024
+  memory-collection: user_memories_v2
+  memory-embedding-dim: 768
 
 infra:
   redis:
@@ -243,9 +252,13 @@ infra:
       max-reconsume-times: 5
 
 task:
+  multimodal-stage:
+    ttl-seconds: ${MULTIMODAL_STAGE_TTL_SECONDS:600}
+    cleanup-delay-ms: ${MULTIMODAL_STAGE_CLEANUP_DELAY_MS:60000}
   queue:
     # 包含 queued 与 processing，超过后提交接口返回 HTTP 503，避免无边界堆积。
     max-video-queued: ${TASK_MAX_VIDEO_QUEUED:20}
+    max-multimodal-queued: ${TASK_MAX_MULTIMODAL_QUEUED:10}
   idempotency:
     ttl-seconds: 600
     wait-time-ms: ${IDEMPOTENCY_WAIT_TIME_MS:2000}

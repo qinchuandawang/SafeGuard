@@ -121,6 +121,29 @@ class DetectionTaskManagerTest {
         assertThat(refreshTasks).isEmpty();
     }
 
+    @Test
+    void 多模态任务可以进入待审核并由审核完成() {
+        when(idempotencyService.reserve(any(), anyString())).thenReturn(true);
+        when(asyncTaskMapper.insert(any(AsyncTask.class))).thenReturn(1);
+        when(asyncTaskMapper.markProcessing(anyString(), any(Integer.class))).thenReturn(1);
+        when(asyncTaskMapper.markWaitingReview(anyString(), anyString())).thenReturn(1);
+        when(asyncTaskMapper.finishIfWaitingReview(anyString(), anyString())).thenReturn(1);
+
+        DetectionTask created = manager.createTaskIdempotently(
+                "multimodal", null, null, "hash", "audio:video").task();
+        AsyncTask persisted = AsyncTask.builder()
+                .taskId(created.getTaskId()).type("multimodal").status("queued").version(0).build();
+        assertThat(manager.markQueuedForProcessing(persisted)).isTrue();
+
+        manager.waitForReview(created.getTaskId(), Map.of("finalDecision", "uncertain"));
+        assertThat(manager.getTask(created.getTaskId()).getStatus()).isEqualTo("waiting_review");
+
+        manager.completeReview(created.getTaskId(), Map.of("finalDecision", "fake"));
+        assertThat(manager.getTask(created.getTaskId()).getStatus()).isEqualTo("completed");
+        verify(asyncTaskMapper).markWaitingReview(anyString(), anyString());
+        verify(asyncTaskMapper).finishIfWaitingReview(anyString(), anyString());
+    }
+
     private String lastTaskId;
 
     private String createdTaskId() {

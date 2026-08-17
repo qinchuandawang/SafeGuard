@@ -14,7 +14,7 @@ public class SiliconFlowConfig {
     private String apiKey = "";
     private String embeddingUrl = "https://api.siliconflow.cn/v1/embeddings";
     private String rerankUrl = "https://api.siliconflow.cn/v1/rerank";
-    private String embeddingModel = "BAAI/bge-large-zh-v1.5";
+    private String embeddingModel = "BAAI/bge-base-zh-v1.5";
     private String rerankModel = "BAAI/bge-reranker-v2-m3";
 
     @PostConstruct

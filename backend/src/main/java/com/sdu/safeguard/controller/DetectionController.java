@@ -3,11 +3,11 @@ package com.sdu.safeguard.controller;
 import com.sdu.safeguard.agent.AgentOrchestrator;
 import com.sdu.safeguard.dto.AudioDetectionResult;
 import com.sdu.safeguard.dto.DetectionTask;
-import com.sdu.safeguard.dto.MultiModalRequest;
 import com.sdu.safeguard.dto.OrchestratorRequest;
 import com.sdu.safeguard.dto.OrchestratorResponse;
 import com.sdu.safeguard.dto.Result;
 import com.sdu.safeguard.dto.VideoDetectionResult;
+import com.sdu.safeguard.memory.MemoryService;
 import com.sdu.safeguard.service.DetectionService;
 import com.sdu.safeguard.service.DetectionTaskManager;
 import com.sdu.safeguard.service.LLMService;
@@ -15,6 +15,8 @@ import com.sdu.safeguard.service.ActiveModelRegistry;
 import com.sdu.safeguard.service.ObjectStorageService;
 import com.sdu.safeguard.service.DetectionWorkQueueService;
 import com.sdu.safeguard.service.TaskQueueFullException;
+import com.sdu.safeguard.service.MultimodalMediaBundleService;
+import com.sdu.safeguard.service.MultimodalUploadStagingService;
 import com.sdu.safeguard.util.InputValidator;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.Loader;
@@ -36,6 +38,8 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -66,23 +70,32 @@ public class DetectionController {
     private final LLMService llmService;
     private final DetectionTaskManager taskManager;
     private final AgentOrchestrator agentOrchestrator;
+    private final MemoryService memoryService;
     private final ActiveModelRegistry activeModelRegistry;
     private final ObjectStorageService objectStorageService;
     private final DetectionWorkQueueService workQueueService;
+    private final MultimodalMediaBundleService multimodalBundleService;
+    private final MultimodalUploadStagingService multimodalUploadStagingService;
 
     @Autowired
     public DetectionController(DetectionService detectionService, LLMService llmService,
                                DetectionTaskManager taskManager, AgentOrchestrator agentOrchestrator,
+                               MemoryService memoryService,
                                ActiveModelRegistry activeModelRegistry,
                                ObjectStorageService objectStorageService,
-                               DetectionWorkQueueService workQueueService) {
+                               DetectionWorkQueueService workQueueService,
+                               MultimodalMediaBundleService multimodalBundleService,
+                               MultimodalUploadStagingService multimodalUploadStagingService) {
         this.detectionService = detectionService;
         this.llmService = llmService;
         this.taskManager = taskManager;
         this.agentOrchestrator = agentOrchestrator;
+        this.memoryService = memoryService;
         this.activeModelRegistry = activeModelRegistry;
         this.objectStorageService = objectStorageService;
         this.workQueueService = workQueueService;
+        this.multimodalBundleService = multimodalBundleService;
+        this.multimodalUploadStagingService = multimodalUploadStagingService;
     }
 
     /** 保留旧构造器，兼容不覆盖视频异步链路的控制器单元测试。 */
@@ -90,8 +103,8 @@ public class DetectionController {
                                DetectionTaskManager taskManager, AgentOrchestrator agentOrchestrator,
                                ActiveModelRegistry activeModelRegistry,
                                ObjectStorageService objectStorageService) {
-        this(detectionService, llmService, taskManager, agentOrchestrator,
-                activeModelRegistry, objectStorageService, null);
+        this(detectionService, llmService, taskManager, agentOrchestrator, null,
+                activeModelRegistry, objectStorageService, null, null, null);
     }
 
     @PostMapping("/audio")
@@ -192,7 +205,7 @@ public class DetectionController {
         if (!creation.created()) {
             if ("queued".equals(task.getStatus())) {
                 // 重试同一个幂等请求时补投递此前可能发送失败的工作消息。
-                enqueueVideoOrReject(task.getTaskId());
+                enqueueInferenceOrReject(task.getTaskId());
             }
             return Result.success(taskPayload(task, true));
         }
@@ -209,7 +222,7 @@ public class DetectionController {
             return Result.error("文件处理失败：" + e.getMessage());
         }
         // 提交接口只负责持久化输入并投递工作消息，模型调用由 RocketMQ 消费者执行。
-        enqueueVideoOrReject(task.getTaskId());
+        enqueueInferenceOrReject(task.getTaskId());
         return Result.success(taskPayload(task, false));
     }
 
@@ -217,9 +230,9 @@ public class DetectionController {
      * 队列满时请求并未被受理，必须将已落库的 queued 任务收敛为终态，
      * 避免无工作消息的僵尸任务长期占用排队计数。
      */
-    private void enqueueVideoOrReject(String taskId) {
+    private void enqueueInferenceOrReject(String taskId) {
         try {
-            workQueueService.enqueueVideo(taskId);
+            workQueueService.enqueueInference(taskId);
         } catch (TaskQueueFullException exception) {
             taskManager.failBeforeProcessing(taskId, "任务未受理：" + exception.getMessage());
             throw exception;
@@ -236,10 +249,16 @@ public class DetectionController {
         if (validationError != null) {
             return Result.error(validationError);
         }
+        String conversationId;
+        try {
+            conversationId = resolveConversationId(request);
+        } catch (IllegalArgumentException exception) {
+            return Result.badRequest(exception.getMessage());
+        }
         try {
             OrchestratorRequest agentRequest = OrchestratorRequest.builder()
                     .query(text)
-                    .sessionId(UUID.randomUUID().toString())
+                    .sessionId(conversationId)
                     .mode("TEXT_DETECTION")
                     .requiredAgents(List.of("TEXT_ANALYSIS", "KNOWLEDGE"))
                     .useReAct(true)
@@ -254,21 +273,152 @@ public class DetectionController {
         }
     }
 
-    @PostMapping("/multi")
-    public Result<Map<String, Object>> detectMulti(@RequestBody MultiModalRequest request) {
-        if (request == null) {
-            return Result.error("请求体不能为空");
-        }
+    @PostMapping(value = "/multi/audio-stage", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Result<Map<String, Object>> stageMultimodalAudio(@RequestParam("file") MultipartFile audio) {
+        if (audio == null || audio.isEmpty()) return Result.badRequest("音频文件不能为空");
+        String validationError = validateMediaFile(audio, "audio");
+        if (validationError != null) return Result.badRequest(validationError);
+        if (multimodalUploadStagingService == null) return Result.error("多模态暂存服务未配置");
         try {
-            String report = llmService.analyzeMultiModal(
-                    request.getText(),
-                    request.getAudioResult(),
-                    request.getVideoResult()
-            );
-            return Result.success(buildMultiModalPayload(request, report));
-        } catch (Exception e) {
-            log.error("综合检测异常: type={}, msg={}", e.getClass().getSimpleName(), e.getMessage(), e);
-            return Result.error("综合检测失败：" + (e.getMessage() != null ? e.getMessage() : "未知错误"));
+            String token = multimodalUploadStagingService.stage(audio, sha256(audio));
+            return Result.success(Map.of("audioToken", token,
+                    "expiresInSeconds", multimodalUploadStagingService.ttlSeconds()));
+        } catch (Exception exception) {
+            log.error("多模态音频暂存失败", exception);
+            return Result.error("音频暂存失败：" + exception.getMessage());
+        }
+    }
+
+    /** 历史记录以 MySQL 为准，Redis 仅用于活跃上下文加速。 */
+    @GetMapping("/text/conversations/{conversationId}/messages")
+    public Result<Map<String, Object>> getTextConversationHistory(
+            @PathVariable String conversationId,
+            @RequestParam(defaultValue = "50") int limit,
+            @RequestParam(required = false) Long beforeId) {
+        if (!isValidConversationId(conversationId)) {
+            return Result.badRequest("conversationId 格式无效");
+        }
+        if (memoryService == null) {
+            return Result.error("会话历史服务未配置");
+        }
+        MemoryService.ConversationHistoryPage page = memoryService
+                .getConversationHistoryPage(conversationId, limit, beforeId);
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("messages", page.messages());
+        response.put("nextBeforeId", page.nextBeforeId());
+        return Result.success(response);
+    }
+
+    private String resolveConversationId(Map<String, String> request) {
+        String conversationId = request.get("conversationId");
+        if (conversationId == null || conversationId.isBlank()) {
+            conversationId = request.get("sessionId");
+        }
+        if (conversationId == null || conversationId.isBlank()) {
+            return UUID.randomUUID().toString();
+        }
+        String normalized = conversationId.trim();
+        if (!isValidConversationId(normalized)) {
+            throw new IllegalArgumentException("conversationId 格式无效");
+        }
+        return normalized;
+    }
+
+    private boolean isValidConversationId(String conversationId) {
+        return conversationId != null && conversationId.trim().matches("[A-Za-z0-9_-]{1,128}");
+    }
+
+    @PostMapping(value = "/multi", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Result<?> detectMulti(@RequestParam(value = "audio", required = false) MultipartFile audio,
+                                 @RequestParam("video") MultipartFile video,
+                                 @RequestParam(value = "audioToken", required = false) String audioToken,
+                                 @RequestParam(value = "text", required = false) String text,
+                                 @RequestHeader(value = "Idempotency-Key", required = false) String requestKey) {
+        if ((audio == null || audio.isEmpty()) && (audioToken == null || audioToken.isBlank())) {
+            return Result.badRequest("必须提供音频文件或 audioToken");
+        }
+        if (video == null || video.isEmpty()) {
+            return Result.badRequest("视频文件不能为空");
+        }
+        String videoError = validateMediaFile(video, "video");
+        if (videoError != null) return Result.badRequest(videoError);
+        if (audio != null && !audio.isEmpty()) {
+            String audioError = validateMediaFile(audio, "audio");
+            if (audioError != null) return Result.badRequest(audioError);
+        }
+        String normalizedText = text == null ? "" : text.trim();
+        if (!normalizedText.isBlank()) {
+            String textError = InputValidator.validateAnalysisText(normalizedText);
+            if (textError != null) return Result.badRequest(textError);
+        }
+        if (multimodalBundleService == null || workQueueService == null) {
+            return Result.error("多模态异步服务未配置");
+        }
+        String audioModelId = activeModelRegistry.getActiveAudioModel();
+        String videoModelId = activeModelRegistry.getActiveVideoModel();
+        MultimodalUploadStagingService.StagedAudioHandle stagedAudio = null;
+        String fileHash;
+        String idempotencyKey;
+        try {
+            String audioHash;
+            if (audio != null && !audio.isEmpty()) {
+                audioHash = sha256(audio);
+            } else {
+                stagedAudio = multimodalUploadStagingService.consume(audioToken);
+                audioHash = stagedAudio.staged().fileHash();
+            }
+            fileHash = combinedMultimodalHash(audioHash, sha256(video), normalizedText);
+            idempotencyKey = normalizeIdempotencyKey(
+                    requestKey, "multimodal", fileHash, audioModelId + ":" + videoModelId);
+        } catch (IllegalArgumentException exception) {
+            multimodalUploadStagingService.cleanup(stagedAudio);
+            return Result.badRequest(exception.getMessage());
+        } catch (IOException exception) {
+            multimodalUploadStagingService.cleanup(stagedAudio);
+            return Result.error("多模态文件摘要计算失败");
+        }
+        DetectionTaskManager.TaskCreation creation;
+        try {
+            creation = taskManager.createTaskIdempotently(
+                    "multimodal", null, idempotencyKey, fileHash, audioModelId + ":" + videoModelId);
+        } catch (RuntimeException exception) {
+            multimodalUploadStagingService.cleanup(stagedAudio);
+            return Result.error("多模态任务创建失败：" + exception.getMessage());
+        }
+        DetectionTask task = creation.task();
+        if (!creation.created()) {
+            multimodalUploadStagingService.cleanup(stagedAudio);
+            if ("queued".equals(task.getStatus())) enqueueInferenceOrReject(task.getTaskId());
+            return Result.success(taskPayload(task, true));
+        }
+        Path bundle = null;
+        String objectKey = null;
+        try {
+            bundle = stagedAudio == null
+                    ? multimodalBundleService.create(
+                    audio, video, normalizedText, audioModelId, videoModelId)
+                    : multimodalBundleService.create(
+                    stagedAudio.path(), stagedAudio.staged().fileName(), video,
+                    normalizedText, audioModelId, videoModelId);
+            multimodalUploadStagingService.cleanup(stagedAudio);
+            stagedAudio = null;
+            objectKey = objectStorageService.upload(
+                    bundle, "multimodal", fileHash, "application/zip");
+            taskManager.bindInputLocation(task.getTaskId(), objectKey, bundle.toString());
+            enqueueInferenceOrReject(task.getTaskId());
+            return Result.success(taskPayload(task, false));
+        } catch (Exception exception) {
+            log.error("多模态任务包持久化失败", exception);
+            taskManager.failBeforeProcessing(task.getTaskId(), "多模态任务包持久化失败");
+            multimodalUploadStagingService.cleanup(stagedAudio);
+            objectStorageService.deleteQuietly(objectKey);
+            if (bundle != null) {
+                try {
+                    Files.deleteIfExists(bundle);
+                } catch (IOException ignored) {
+                }
+            }
+            return Result.error("多模态文件处理失败：" + exception.getMessage());
         }
     }
 
@@ -607,45 +757,6 @@ public class DetectionController {
         );
     }
 
-    private Map<String, Object> buildMultiModalPayload(MultiModalRequest request, String report) {
-        Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("type", "multi");
-        payload.put("source", "deepseek-agent-orchestrator");
-        payload.put("report", report);
-        payload.put("text", request.getText());
-        payload.put("audioResult", request.getAudioResult());
-        payload.put("videoResult", request.getVideoResult());
-
-        double audioRisk = extractAudioRisk(request.getAudioResult());
-        double videoRisk = extractVideoRisk(request.getVideoResult());
-        double textHintRisk = request.getText() != null && !request.getText().isBlank() ? 0.35 : 0.0;
-        double finalRisk = Math.max(Math.max(audioRisk, videoRisk), textHintRisk);
-        payload.put("confidence", Math.max(0.65, Math.min(0.95, 0.65 + finalRisk * 0.25)));
-        payload.put("riskProbability", finalRisk);
-        payload.put("probabilities", Map.of(
-                "fake", finalRisk,
-                "real", Math.max(0.0, 1.0 - finalRisk)
-        ));
-        payload.put("agentSteps", List.of(
-                Map.of("name", "DeepSeek 中枢接收任务", "status", "completed", "description", "汇总文本、音频和视频输入"),
-                Map.of("name", "音频模型调度", "status", request.getAudioResult() == null ? "skipped" : "completed", "description", "调用 Wav2Vec2 输出语音伪造证据"),
-                Map.of("name", "视频模型调度", "status", request.getVideoResult() == null ? "skipped" : "completed", "description", "调用 XceptionNet 输出换脸检测证据"),
-                Map.of("name", "多模态综合研判", "status", "completed", "description", "DeepSeek 融合模型结果和反诈知识生成最终报告")
-        ));
-        return payload;
-    }
-
-    private double extractAudioRisk(AudioDetectionResult result) {
-        if (result == null) return 0.0;
-        Double value = result.getSpoofProb() != null ? result.getSpoofProb() : result.getFakeProbability();
-        return clampProbability(value);
-    }
-
-    private double extractVideoRisk(VideoDetectionResult result) {
-        if (result == null) return 0.0;
-        return clampProbability(result.getFakeProbability());
-    }
-
     private double clampProbability(Double value) {
         if (value == null || value.isNaN()) return 0.0;
         return Math.max(0.0, Math.min(1.0, value));
@@ -783,6 +894,20 @@ public class DetectionController {
             return normalized;
         }
         return type + ":" + fileHash + ":" + modelId;
+    }
+
+    private String combinedMultimodalHash(String audioHash, String videoHash, String text) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            digest.update(audioHash.getBytes(StandardCharsets.US_ASCII));
+            digest.update((byte) ':');
+            digest.update(videoHash.getBytes(StandardCharsets.US_ASCII));
+            digest.update((byte) ':');
+            digest.update((text == null ? "" : text).getBytes(StandardCharsets.UTF_8));
+            return java.util.HexFormat.of().formatHex(digest.digest());
+        } catch (java.security.NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("JVM 不支持 SHA-256", exception);
+        }
     }
 
     private Map<String, Object> taskPayload(DetectionTask task, boolean reused) {

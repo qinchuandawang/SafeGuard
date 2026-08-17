@@ -34,6 +34,19 @@ MySQL / Redis / RocketMQ / Qdrant 基础设施
 
 当前选择 Spring AI，不是因为 LangChain4j 不好，而是因为项目已有自研 `AgentOrchestrator`、`ToolRegistry`、`ReActService`、`CoTService` 和 `RAGService`。如果再引入 LangChain4j，容易出现两套 Agent / Tool / Memory / RAG 抽象并存。
 
+## Spring AI 与 LangGraph 的边界
+
+项目采用 Java 与 Python 的职责分层，而不是让两个框架共同裁决同一件事：
+
+- Spring AI 位于 Java 业务层，`LLMService` 作为统一 LLM Gateway，集中处理 DeepSeek 普通补全、Function Calling、Token 预算、按场景缓存、重试和 Prompt 版本；业务模块不直接持有供应商客户端。
+- LangGraph 位于 Python 推理层，负责文本、音频、视频三路并行执行、动态权重融合、Checkpoint 和人工审核中断；文本节点调用 `/api/internal/llm/text-detection`，由统一网关完成结构化分析。备用模型目前仅保留扩展路由，未接入可用权重。
+- 音频/视频 Flask 服务只加载模型和返回原始推理证据，不保存业务任务状态。
+- Java `async_task` 是业务事实来源；`waiting_review` 是正式业务状态，管理员通过 Java 管理 API 恢复 LangGraph。
+
+多模态风险概率只以 LangGraph 的 `workflow.fused_probability` 为准。Java 不再接受客户端提交的 `AudioDetectionResult`/`VideoDetectionResult` 作为证据，也不重新使用 `max(audioRisk, videoRisk)` 覆盖工作流结果。
+
+短期记忆以稳定 `conversationId` 隔离会话，Redis List 作为多实例共享事实存储，通过 Lua 原子完成追加、定长裁剪和 24 小时 TTL 刷新；Caffeine 使用访问后过期保存本机副本，并在 Redis 异常时降级。上下文仅选取最近若干条及 Qdrant 召回的长期风险特征，避免完整历史占满 Prompt。
+
 Spring AI 在当前阶段承担的是模型接入层和 Function Calling 标准化能力，不替代业务智能体编排。这样既保留自研 Agent 的可解释性，也避免大规模重构。
 
 ## 4. Function Calling 与手写工具调用

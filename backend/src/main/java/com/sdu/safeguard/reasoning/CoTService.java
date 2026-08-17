@@ -1,16 +1,13 @@
 package com.sdu.safeguard.reasoning;
 
-import com.sdu.safeguard.config.LLMConfig;
 import com.sdu.safeguard.dto.CoTResult;
 import com.sdu.safeguard.dto.RagQueryResult;
 import com.sdu.safeguard.rag.RAGService;
-import com.sdu.safeguard.service.TokenCostService;
+import com.sdu.safeguard.service.LLMService;
 import com.sdu.safeguard.util.PromptLoader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -21,12 +18,10 @@ import java.util.*;
 @RequiredArgsConstructor
 public class CoTService {
 
-    private final LLMConfig llmConfig;
     private final PromptLoader promptLoader;
     private final RAGService ragService;
-    private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
-    private final TokenCostService tokenCostService;
+    private final LLMService llmService;
 
     public CoTResult analyzeWithCoT(String text) {
         return analyzeWithCoT(text, null);
@@ -146,59 +141,11 @@ public class CoTService {
     }
 
     private String callLLM(String prompt) {
-        int maxTokens = llmConfig.getMaxTokens() == null ? 0 : llmConfig.getMaxTokens();
-        TokenCostService.Reservation reservation = tokenCostService.reserve(
-                "cot-analysis", llmConfig.getModel(), prompt, maxTokens);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(llmConfig.getApiKey());
-
-        Map<String, Object> requestBody = new LinkedHashMap<>();
-        requestBody.put("model", llmConfig.getModel());
-        requestBody.put("messages", List.of(Map.of("role", "user", "content", prompt)));
-        requestBody.put("temperature", 0.3);
-        requestBody.put("max_tokens", llmConfig.getMaxTokens());
-
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-
         try {
-            ResponseEntity<Object> response = restTemplate.exchange(
-                    llmConfig.getApiUrl(),
-                    HttpMethod.POST,
-                    entity,
-                    Object.class);
-            Object body = response.getBody();
-            String content = extractContent(body);
-            int[] usage = extractUsage(body);
-            tokenCostService.complete(reservation, usage[0], usage[1], false, "success");
-            return content;
+            return llmService.complete(prompt, "cot-analysis");
         } catch (Exception e) {
-            tokenCostService.cancel(reservation, "error");
             log.error("CoT LLM调用失败: {}", e.getMessage());
             return "{\"riskLevel\":\"未知\",\"scamType\":\"分析失败\",\"riskProbability\":0.0}";
         }
-    }
-
-    private int[] extractUsage(Object responseBody) {
-        if (!(responseBody instanceof Map<?, ?> body) || !(body.get("usage") instanceof Map<?, ?> usage)) {
-            return new int[]{-1, -1};
-        }
-        Object prompt = usage.get("prompt_tokens");
-        Object completion = usage.get("completion_tokens");
-        return new int[]{prompt instanceof Number number ? number.intValue() : -1,
-                completion instanceof Number number ? number.intValue() : -1};
-    }
-
-    @SuppressWarnings("unchecked")
-    private String extractContent(Object responseBody) {
-        if (!(responseBody instanceof Map<?, ?> body)) return "";
-        Object choicesObj = body.get("choices");
-        if (!(choicesObj instanceof List<?> choices) || choices.isEmpty()) return "";
-        Object firstChoice = choices.get(0);
-        if (!(firstChoice instanceof Map<?, ?> choice)) return "";
-        Object messageObj = choice.get("message");
-        if (!(messageObj instanceof Map<?, ?> message)) return "";
-        Object content = message.get("content");
-        return content instanceof String ? (String) content : "";
     }
 }

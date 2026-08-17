@@ -419,6 +419,12 @@ Page({
         case 'multi':
           this.addProcessLog('正在综合检测...');
           result = await this.runMultiModalDetection(audioFile, videoFile, textDocument, textContent);
+          if (result && result.taskId && ['queued', 'processing', 'waiting_review'].includes(result.status)) {
+            this.addProcessLog('多模态任务已创建，正在跟踪处理进度...');
+            this.setWorkflow('analyzing', '多模态任务已提交', 25);
+            this.watchMultimodalTask(result.taskId);
+            return;
+          }
           break;
       }
       this.setWorkflow('advising', '生成建议中', 92);
@@ -469,8 +475,6 @@ Page({
   },
 
   async runMultiModalDetection(audioFile, videoFile, textDocument, textContent) {
-    let audioResult = null;
-    let videoResult = null;
     let effectiveText = textContent;
 
     if (textDocument && textDocument.path) {
@@ -480,26 +484,39 @@ Page({
       effectiveText = docResult?.extractedText || textContent || docResult?.report || '';
     }
 
-    if (audioFile && audioFile.path) {
-      this.addProcessLog('DeepSeek 中枢调度音频模型...');
-      this.setWorkflow('analyzing', '音频模型推理中', 35);
-      audioResult = this.unwrapDetectionResult(await detectionAPI.detectAudio(audioFile.path));
-    }
+    this.addProcessLog('正在安全上传音频和视频原始文件...');
+    this.setWorkflow('analyzing', '多模态文件上传中', 35);
+    return detectionAPI.detectMulti(audioFile.path, videoFile.path, effectiveText);
+  },
 
-    if (videoFile && videoFile.path) {
-      this.addProcessLog('DeepSeek 中枢调度视频模型...');
-      this.setWorkflow('analyzing', '视频模型推理中', 55);
-      const submitted = await detectionAPI.detectVideo(videoFile.path);
-      if (submitted && submitted.taskId && submitted.status === 'processing') {
-        videoResult = await this.waitForVideoTask(submitted.taskId);
-      } else {
-        videoResult = this.unwrapDetectionResult(submitted);
-      }
-    }
-
-    this.addProcessLog('DeepSeek 正在融合文本、音频和视频证据...');
-    this.setWorkflow('analyzing', '多模态融合分析中', 85);
-    return detectionAPI.detectMulti(audioResult, videoResult, effectiveText);
+  watchMultimodalTask(taskId) {
+    if (this._taskWatcher) this._taskWatcher.destroy();
+    const watcher = new TaskWatcher({ preferPolling: true, pollInterval: 1500, maxPollAttempts: 1200 });
+    this._taskWatcher = watcher;
+    watcher.watch(taskId, {
+      onProgress: (progress, data) => {
+        const msg = data?.message || ('多模态分析中 ' + progress + '%');
+        this.setWorkflow('analyzing', msg, Math.max(25, Math.min(90, progress || 35)));
+      },
+      onReviewRequired: () => {
+        this.setWorkflow('analyzing', '等待管理员审核', 90, {
+          processStage: '音视频模型结论冲突，等待人工审核',
+          processProgress: 90,
+        });
+      },
+      onDone: (result) => {
+        this.addProcessLog('多模态检测完成');
+        this.setWorkflow('advising', '生成建议中', 92, { isDetecting: false });
+        this.updateCanDetect();
+        this.handleDetectionResult(this.unwrapDetectionResult(result));
+      },
+      onError: (err) => {
+        this.addProcessLog('多模态检测失败：' + (err.message || err));
+        this.setWorkflow('idle', '检测失败', 0, { isDetecting: false });
+        this.updateCanDetect();
+        app.showError('多模态检测失败，请重试');
+      },
+    });
   },
 
   waitForVideoTask(taskId) {

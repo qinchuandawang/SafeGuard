@@ -168,6 +168,37 @@ CREATE TABLE `llm_usage_record` (
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE `memory_fact_event` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `event_id` VARCHAR(64) NOT NULL UNIQUE,
+    `session_id` VARCHAR(255) NOT NULL,
+    `owner_key` CHAR(64) NOT NULL,
+    `fact_key` VARCHAR(128) NOT NULL,
+    `fact_type` VARCHAR(64) NOT NULL,
+    `fact_value` VARCHAR(512) NOT NULL,
+    `content` TEXT NOT NULL,
+    `summary` VARCHAR(512),
+    `source` VARCHAR(32) NOT NULL,
+    `confidence` DECIMAL(5,4) NOT NULL DEFAULT 0,
+    `importance` DECIMAL(5,4) NOT NULL DEFAULT 0,
+    `version` INT NOT NULL,
+    `status` VARCHAR(16) NOT NULL,
+    `supersedes_event_id` VARCHAR(64),
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (`owner_key`, `fact_key`, `version`),
+    INDEX `idx_memory_fact_active` (`owner_key`, `fact_key`, `status`)
+);
+
+CREATE TABLE `conversation_message` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `message_id` VARCHAR(64) NOT NULL UNIQUE,
+    `conversation_id` VARCHAR(128) NOT NULL,
+    `role` VARCHAR(32) NOT NULL,
+    `content` TEXT NOT NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_conversation_message_recent` (`conversation_id`, `id`)
+);
+
 -- 初始化测试数据（5 条知识库 + 2 个音频模型 + 1 个管理员用户）
 INSERT INTO `knowledge_item` (`question`, `answer`, `category`, `tags`, `priority`, `enabled`) VALUES
 ('什么是AI换脸诈骗', 'AI换脸诈骗是指利用深度学习技术将受害者的面部特征替换到其他视频中...', 'AI诈骗', 'AI换脸,深度伪造', 10, 1),

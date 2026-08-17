@@ -2,7 +2,7 @@
 <jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
   <hashTree>
     <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="SafeGuard - LLM 精确缓存" enabled="true">
-      <stringProp name="TestPlan.comments">使用唯一 run_id 形成冷 Key，先预热一次，再并发请求同一多模态报告。</stringProp>
+      <stringProp name="TestPlan.comments">使用唯一 run_id 形成冷 Key，先预热一次，再并发请求同一文本检测报告。</stringProp>
       <boolProp name="TestPlan.functional_mode">false</boolProp><boolProp name="TestPlan.serialize_threadgroups">true</boolProp>
       <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="用户变量" enabled="true">
         <collectionProp name="Arguments.arguments">
@@ -48,10 +48,10 @@ props.put('cache.errors', new AtomicLong())
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="cache-warmup - 首次 LLM 调用" enabled="true">
           <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
             <collectionProp name="Arguments.arguments">
-              <elementProp name="" elementType="HTTPArgument"><boolProp name="HTTPArgument.always_encode">false</boolProp><stringProp name="Argument.value">{&quot;text&quot;:&quot;性能评测 ${run_id}：有人冒充客服要求共享屏幕并提供验证码，请进行风险分析。&quot;,&quot;audioResult&quot;:null,&quot;videoResult&quot;:null}</stringProp><stringProp name="Argument.metadata">=</stringProp></elementProp>
+              <elementProp name="" elementType="HTTPArgument"><boolProp name="HTTPArgument.always_encode">false</boolProp><stringProp name="Argument.value">{&quot;text&quot;:&quot;性能评测 ${run_id}：有人冒充客服要求共享屏幕并提供验证码，请进行风险分析。&quot;}</stringProp><stringProp name="Argument.metadata">=</stringProp></elementProp>
             </collectionProp>
           </elementProp>
-          <stringProp name="HTTPSampler.path">/api/detection/multi</stringProp><stringProp name="HTTPSampler.method">POST</stringProp>
+          <stringProp name="HTTPSampler.path">/api/detection/text</stringProp><stringProp name="HTTPSampler.method">POST</stringProp>
           <boolProp name="HTTPSampler.postBodyRaw">true</boolProp><boolProp name="HTTPSampler.use_keepalive">true</boolProp>
         </HTTPSamplerProxy>
         <hashTree>
@@ -83,13 +83,13 @@ try {
         <stringProp name="ThreadGroup.num_threads">${__P(threads,20)}</stringProp><stringProp name="ThreadGroup.ramp_time">${__P(ramp_seconds,2)}</stringProp><boolProp name="ThreadGroup.scheduler">false</boolProp>
       </ThreadGroup>
       <hashTree>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="cache-hit - 重复多模态报告" enabled="true">
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="cache-hit - 重复文本检测报告" enabled="true">
           <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
             <collectionProp name="Arguments.arguments">
-              <elementProp name="" elementType="HTTPArgument"><boolProp name="HTTPArgument.always_encode">false</boolProp><stringProp name="Argument.value">{&quot;text&quot;:&quot;性能评测 ${run_id}：有人冒充客服要求共享屏幕并提供验证码，请进行风险分析。&quot;,&quot;audioResult&quot;:null,&quot;videoResult&quot;:null}</stringProp><stringProp name="Argument.metadata">=</stringProp></elementProp>
+              <elementProp name="" elementType="HTTPArgument"><boolProp name="HTTPArgument.always_encode">false</boolProp><stringProp name="Argument.value">{&quot;text&quot;:&quot;性能评测 ${run_id}：有人冒充客服要求共享屏幕并提供验证码，请进行风险分析。&quot;}</stringProp><stringProp name="Argument.metadata">=</stringProp></elementProp>
             </collectionProp>
           </elementProp>
-          <stringProp name="HTTPSampler.path">/api/detection/multi</stringProp><stringProp name="HTTPSampler.method">POST</stringProp>
+          <stringProp name="HTTPSampler.path">/api/detection/text</stringProp><stringProp name="HTTPSampler.method">POST</stringProp>
           <boolProp name="HTTPSampler.postBodyRaw">true</boolProp><boolProp name="HTTPSampler.use_keepalive">true</boolProp>
         </HTTPSamplerProxy>
         <hashTree>

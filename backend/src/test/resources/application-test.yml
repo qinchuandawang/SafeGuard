@@ -71,6 +71,8 @@ rag:
 
 memory:
   short-term-max-size: 50
+  short-term-context-size: 20
+  short-term-ttl-hours: 24
   long-term-max-size: 100
   long-term-ttl-hours: 168
   long-term-importance-threshold: 0.6

@@ -28,24 +28,24 @@ class TaskWatcher {
    * @param {Object} callbacks - { onProgress, onDone, onError }
    */
   watch(taskId, callbacks = {}) {
-    const { onProgress, onDone, onError } = callbacks;
+    const { onProgress, onDone, onError, onReviewRequired } = callbacks;
     this._destroyed = false;
 
     if (this.preferPolling) {
-      this._startPolling(taskId, { onProgress, onDone, onError });
+      this._startPolling(taskId, { onProgress, onDone, onError, onReviewRequired });
       return;
     }
 
     // 优先尝试 SSE
-    const sseStarted = this._startSSE(taskId, { onProgress, onDone, onError });
+    const sseStarted = this._startSSE(taskId, { onProgress, onDone, onError, onReviewRequired });
     if (!sseStarted) {
       // SSE 不可用时自动回退到轮询
-      this._startPolling(taskId, { onProgress, onDone, onError });
+      this._startPolling(taskId, { onProgress, onDone, onError, onReviewRequired });
     }
   }
 
   /** SSE 模式：GET /api/detection/task/{taskId}/stream */
-  _startSSE(taskId, { onProgress, onDone, onError }) {
+  _startSSE(taskId, { onProgress, onDone, onError, onReviewRequired }) {
     try {
       const authModule = require('../utils/auth');
       const url = `${this.baseUrl}/api/detection/task/${taskId}/stream`;
@@ -82,7 +82,7 @@ class TaskWatcher {
             const parsed = this._parseSseBlock(block);
             if (!parsed) continue;
             hasHandledEvent = true;
-            this._handleEvent(parsed, { onProgress, onDone, onError });
+            this._handleEvent(parsed, { onProgress, onDone, onError, onReviewRequired });
           }
         } catch (err) {
           console.warn('[TaskWatcher] SSE 解析异常:', err);
@@ -97,7 +97,7 @@ class TaskWatcher {
           console.warn('[TaskWatcher] SSE 无有效事件，回退到轮询模式');
           this._destroyed = false;
           this._sseTask = null;
-          this._startPolling(taskId, { onProgress, onDone, onError });
+          this._startPolling(taskId, { onProgress, onDone, onError, onReviewRequired });
         }
       }, 5000);
 
@@ -134,7 +134,7 @@ class TaskWatcher {
   }
 
   /** 处理 SSE 事件分发 */
-  _handleEvent(data, { onProgress, onDone, onError }) {
+  _handleEvent(data, { onProgress, onDone, onError, onReviewRequired }) {
     const { event, status, progress, result, error } = data;
     const evt = event || status;
 
@@ -148,6 +148,9 @@ class TaskWatcher {
         onDone?.(result || data);
         this.destroy();
         break;
+      case 'waiting_review':
+        onReviewRequired?.(data);
+        break;
       case 'failed':
       case 'error':
         onError?.(new Error(error || '任务处理失败'));
@@ -157,7 +160,7 @@ class TaskWatcher {
   }
 
   /** 轮询模式：定时 GET /api/detection/task/{taskId} */
-  async _startPolling(taskId, { onProgress, onDone, onError }) {
+  async _startPolling(taskId, { onProgress, onDone, onError, onReviewRequired }) {
     const url = `${this.baseUrl}/api/detection/task/${taskId}`;
     this._pollAttempts = 0;
     this._lastPollError = null;
@@ -187,6 +190,10 @@ class TaskWatcher {
           case 'processing':
             onProgress?.(taskData.progress || 0, taskData);
             await this._sleep(this.pollInterval);
+            break;
+          case 'waiting_review':
+            onReviewRequired?.(taskData);
+            await this._sleep(Math.max(this.pollInterval, 5000));
             break;
           case 'done':
           case 'completed':

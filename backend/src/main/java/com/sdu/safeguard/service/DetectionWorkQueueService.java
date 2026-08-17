@@ -46,11 +46,18 @@ public class DetectionWorkQueueService {
     @Value("${task.queue.max-video-queued:20}")
     private int maxVideoQueued;
 
+    @Value("${task.queue.max-multimodal-queued:10}")
+    private int maxMultimodalQueued;
+
     /**
      * 发送前检查可接受的排队上限。超限时任务仍保持 queued，调用方返回 503，
      * 后续可通过同一个幂等键重试或由恢复任务重新投递。
      */
     public void enqueueVideo(String taskId) {
+        enqueueInference(taskId);
+    }
+
+    public void enqueueInference(String taskId) {
         AsyncTask task = asyncTaskMapper.findByTaskId(taskId);
         if (task == null) {
             throw new IllegalStateException("推理任务不存在: " + taskId);
@@ -58,11 +65,12 @@ public class DetectionWorkQueueService {
         if (!"queued".equals(task.getStatus())) {
             return;
         }
-        if (asyncTaskMapper.countActiveByType("video") > maxVideoQueued) {
-            throw new TaskQueueFullException("视频推理排队容量已满，请稍后重试");
+        int capacity = "multimodal".equals(task.getType()) ? maxMultimodalQueued : maxVideoQueued;
+        if (asyncTaskMapper.countActiveByType(task.getType()) > capacity) {
+            throw new TaskQueueFullException(task.getType() + "推理排队容量已满，请稍后重试");
         }
         if (!enabled) {
-            throw new IllegalStateException("RocketMQ 工作队列未启用，无法投递视频推理任务");
+            throw new IllegalStateException("RocketMQ 工作队列未启用，无法投递推理任务");
         }
         DefaultMQProducer producer = producerProvider.getIfAvailable();
         if (producer == null) {
@@ -80,15 +88,15 @@ public class DetectionWorkQueueService {
             Message message = new Message(topic, tag, task.getTaskId(),
                     body.getBytes(StandardCharsets.UTF_8));
             message.putUserProperty("taskId", task.getTaskId());
-            message.putUserProperty("workType", "video-inference");
+            message.putUserProperty("workType", task.getType() + "-inference");
             SendResult result = producer.send(message);
             if (result == null || result.getSendStatus() != SendStatus.SEND_OK) {
                 throw new IllegalStateException("RocketMQ 未确认工作消息写入成功");
             }
-            log.info("视频推理工作消息已投递: taskId={}, msgId={}, status={}",
-                    task.getTaskId(), result.getMsgId(), result.getSendStatus());
+            log.info("推理工作消息已投递: taskId={}, type={}, msgId={}, status={}",
+                    task.getTaskId(), task.getType(), result.getMsgId(), result.getSendStatus());
         } catch (Exception exception) {
-            throw new IllegalStateException("视频推理工作消息投递失败", exception);
+            throw new IllegalStateException("推理工作消息投递失败", exception);
         }
     }
 }

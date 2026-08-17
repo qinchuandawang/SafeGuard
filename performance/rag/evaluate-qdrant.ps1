@@ -4,7 +4,7 @@ $baseUrl = 'http://127.0.0.1:8080'
 $qdrantUrl = 'http://127.0.0.1:6333'
 
 $health = Invoke-RestMethod "$qdrantUrl/healthz"
-$collection = Invoke-RestMethod "$qdrantUrl/collections/anti_fraud_knowledge"
+$collection = Invoke-RestMethod "$qdrantUrl/collections/anti_fraud_knowledge_v2"
 if ($collection.result.points_count -le 36) {
     throw "Qdrant 知识集合未完成扩充，当前点数: $($collection.result.points_count)"
 }
@@ -20,11 +20,11 @@ function Get-QueryEmbedding([string]$query) {
         return $embeddingCache[$query]
     }
     $headers = @{ Authorization = "Bearer $siliconFlowKey" }
-    $body = @{ model = 'BAAI/bge-large-zh-v1.5'; input = $query } | ConvertTo-Json -Compress
+    $body = @{ model = 'BAAI/bge-base-zh-v1.5'; input = $query } | ConvertTo-Json -Compress
     $response = Invoke-RestMethod 'https://api.siliconflow.cn/v1/embeddings' -Method Post `
         -Headers $headers -ContentType 'application/json' -Body $body -TimeoutSec 60
     $vector = @($response.data[0].embedding)
-    if ($vector.Count -ne 1024) {
+    if ($vector.Count -ne 768) {
         throw "Embedding 维度异常: $($vector.Count)"
     }
     $embeddingCache[$query] = $vector
@@ -33,7 +33,7 @@ function Get-QueryEmbedding([string]$query) {
 
 function Test-VectorRecall([array]$vector, [string]$expectedSource) {
     $body = @{ vector = $vector; limit = 5; with_payload = $true; with_vector = $false } | ConvertTo-Json -Depth 8 -Compress
-    $response = Invoke-RestMethod "$qdrantUrl/collections/anti_fraud_knowledge/points/search" -Method Post `
+    $response = Invoke-RestMethod "$qdrantUrl/collections/anti_fraud_knowledge_v2/points/search" -Method Post `
         -ContentType 'application/json' -Body $body -TimeoutSec 60
     return @($response.result | ForEach-Object { $_.payload.source }) -contains $expectedSource
 }

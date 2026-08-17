@@ -21,4 +21,12 @@ public class MemoryItem {
     private double importance;
     private List<String> tags;
     private String summary;
+    private String factKey;
+    private String factType;
+    private String factValue;
+    private Integer version;
+    private String status;
+    private String source;
+    private Double confidence;
+    private String supersedesId;
 }

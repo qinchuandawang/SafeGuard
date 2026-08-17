@@ -11,10 +11,10 @@ import org.springframework.stereotype.Component;
 @Data
 @Slf4j
 public class RAGConfig {
-    private int embeddingDimension = 1024;
+    private int embeddingDimension = 768;
     private String qdrantHost = "localhost";
     private int qdrantPort = 6333;
-    private String collectionName = "anti_fraud_knowledge";
+    private String collectionName = "anti_fraud_knowledge_v2";
     private int fixedChunkSize = 256;
     private int fixedChunkOverlap = 32;
     private int semanticChunkMinSize = 100;

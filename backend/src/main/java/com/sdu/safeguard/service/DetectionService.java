@@ -43,6 +43,9 @@ public class DetectionService {
     @Value("${video.service.url:http://localhost:5002/api/detect/video}")
     private String videoServiceUrl;
 
+    @Value("${ai.orchestrator.internal-token:}")
+    private String orchestratorInternalToken;
+
     public AudioDetectionResult detectAudio(String filePath) {
         File file = new File(filePath);
         if (!file.exists()) {
@@ -76,18 +79,24 @@ public class DetectionService {
     }
 
     public VideoDetectionResult detectVideo(String filePath) {
-        return detectVideo(filePath, null);
+        return detectVideo(filePath, null, null);
     }
 
     public VideoDetectionResult detectVideo(String filePath,
                                             BiConsumer<Integer, Map<String, Object>> progressCallback) {
+        return detectVideo(filePath, null, progressCallback);
+    }
+
+    public VideoDetectionResult detectVideo(String filePath, String taskId,
+                                            BiConsumer<Integer, Map<String, Object>> progressCallback) {
         String modelId = activeModelRegistry.getActiveVideoModel();
         return inferenceCapacityService.execute("video", modelId,
                 () -> externalCallGuard.execute("videoDetection",
-                        () -> detectVideoInternal(filePath, progressCallback, modelId)));
+                        () -> detectVideoInternal(filePath, taskId, progressCallback, modelId)));
     }
 
     private VideoDetectionResult detectVideoInternal(String filePath,
+                                                     String taskId,
                                                      BiConsumer<Integer, Map<String, Object>> progressCallback,
                                                      String modelId) {
         VideoDetectionResult result;
@@ -97,7 +106,7 @@ public class DetectionService {
             if (progressCallback != null) {
                 progressCallback.accept(10, Map.of("message", "正在向 AI 检测服务提交视频..."));
             }
-            result = callVideoDetection(filePath, videoServiceUrl, modelId);
+            result = callVideoDetection(filePath, videoServiceUrl, modelId, taskId);
             if (progressCallback != null && result != null) {
                 progressCallback.accept(80, Map.of("message", "AI 检测完成，正在汇总结果..."));
             }
@@ -137,7 +146,7 @@ public class DetectionService {
         }
 
         HttpEntity<MultiValueMap<String, Object>> requestEntity =
-                buildMultipartRequest(file, modelId);
+                buildMultipartRequest(file, modelId, null);
 
         try {
             ResponseEntity<Map> response = restTemplate.exchange(
@@ -207,14 +216,14 @@ public class DetectionService {
      * 手动解析 Map 避免 Jackson snake_case/camelCase 不匹配。
      */
     @SuppressWarnings("unchecked")
-    private VideoDetectionResult callVideoDetection(String filePath, String url, String modelId) {
+    private VideoDetectionResult callVideoDetection(String filePath, String url, String modelId, String taskId) {
         File file = new File(filePath);
         if (!file.exists()) {
             throw new RuntimeException("文件不存在: " + filePath);
         }
 
         HttpEntity<MultiValueMap<String, Object>> requestEntity =
-                buildMultipartRequest(file, modelId);
+                buildMultipartRequest(file, modelId, taskId);
 
         try {
             ResponseEntity<Map> response = videoRestTemplate.exchange(
@@ -334,16 +343,31 @@ public class DetectionService {
         }
     }
 
-    private HttpEntity<MultiValueMap<String, Object>> buildMultipartRequest(File file, String modelId) {
+    private HttpEntity<MultiValueMap<String, Object>> buildMultipartRequest(File file, String modelId,
+                                                                            String taskId) {
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         body.add("file", new FileSystemResource(file));
         if (modelId != null && !modelId.isBlank()) {
             body.add("model_id", modelId);
         }
+        if (taskId != null && !taskId.isBlank()) {
+            body.add("task_id", taskId);
+        }
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        applyInternalHeaders(headers, taskId);
         return new HttpEntity<>(body, headers);
+    }
+
+    private void applyInternalHeaders(HttpHeaders headers, String taskId) {
+        if (taskId != null && !taskId.isBlank()) {
+            headers.set("X-Task-Id", taskId);
+            headers.set("X-Trace-Id", taskId);
+        }
+        if (orchestratorInternalToken != null && !orchestratorInternalToken.isBlank()) {
+            headers.setBearerAuth(orchestratorInternalToken);
+        }
     }
 
     /**
@@ -364,6 +388,7 @@ public class DetectionService {
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+            applyInternalHeaders(headers, null);
             HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
 
             ResponseEntity<Map> response = restTemplate.exchange(

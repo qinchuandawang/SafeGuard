@@ -898,25 +898,4 @@ class SafeGuardApplicationTests {
         }
     }
 
-    // =============================================
-    // 18. 多模态检测测试
-    // =============================================
-    @Nested
-    @DisplayName("18. 多模态检测测试")
-    class MultiModalTests {
-        @Test void multiModalRequestCanHoldAllData() {
-            MultiModalRequest req = new MultiModalRequest();
-            req.setText("测试文本");
-            AudioDetectionResult audio = new AudioDetectionResult();
-            audio.setLabel("spoof");
-            audio.setSpoofProb(0.95);
-            req.setAudioResult(audio);
-            VideoDetectionResult video = new VideoDetectionResult();
-            video.setFakeProbability(0.88);
-            req.setVideoResult(video);
-            assertEquals("测试文本", req.getText());
-            assertNotNull(req.getAudioResult());
-            assertNotNull(req.getVideoResult());
-        }
-    }
 }

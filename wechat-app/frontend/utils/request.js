@@ -9,6 +9,16 @@ function getAuth() {
   return require('./auth');
 }
 
+function getTextConversationId() {
+  const storageKey = 'safeguard_text_conversation_id';
+  let conversationId = wx.getStorageSync(storageKey);
+  if (!conversationId) {
+    conversationId = `text_${Date.now()}_${Math.random().toString(36).slice(2, 12)}`;
+    wx.setStorageSync(storageKey, conversationId);
+  }
+  return conversationId;
+}
+
 // Request queue for cancellation
 const requestQueue = new Map();
 let requestIdCounter = 0;
@@ -220,7 +230,7 @@ const detectionAPI = {
     return request({
       url: '/api/detection/text',
       method: 'POST',
-      data: { text },
+      data: { text, conversationId: getTextConversationId() },
       timeout: 120000,
       retries: 0,
       loadingTitle: 'AI分析中...',
@@ -229,14 +239,15 @@ const detectionAPI = {
   detectTextDocument(filePath) {
     return uploadFile(filePath, '/api/detection/text/document');
   },
-  detectMulti(audioResult, videoResult, text) {
-    return request({
-      url: '/api/detection/multi',
-      method: 'POST',
-      data: { text: text || '', audioResult: audioResult || null, videoResult: videoResult || null },
-      timeout: 30000,
-      retries: 0,
-    });
+  async detectMulti(audioPath, videoPath, text) {
+    const staged = await uploadFile(audioPath, '/api/detection/multi/audio-stage');
+    if (!staged || !staged.audioToken) {
+      throw new Error('音频暂存未返回有效凭证');
+    }
+    return uploadFile(videoPath, '/api/detection/multi', {
+      audioToken: staged.audioToken,
+      text: text || '',
+    }, 'video');
   },
 };
 

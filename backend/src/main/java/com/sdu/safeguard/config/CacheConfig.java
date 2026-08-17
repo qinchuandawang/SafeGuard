@@ -32,7 +32,7 @@ public class CacheConfig {
     @Bean("shortTermMemoryCache")
     public Cache<String, Object> shortTermMemoryCache() {
         return monitor("short-term-memory", Caffeine.newBuilder()
-                .expireAfterWrite(30, TimeUnit.MINUTES)
+                .expireAfterAccess(30, TimeUnit.MINUTES)
                 .maximumSize(5_000)
                 .recordStats()
                 .build());

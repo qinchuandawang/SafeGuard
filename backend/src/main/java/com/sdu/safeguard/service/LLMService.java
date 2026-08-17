@@ -12,6 +12,8 @@ import com.sdu.safeguard.util.PromptLoader;
 import com.github.benmanes.caffeine.cache.Cache;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.tool.ToolCallback;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,9 +22,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpServerErrorException;
-import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.ResponseExtractor;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -52,6 +51,7 @@ public class LLMService {
     private static final int RAG_MAX_ITEMS = 3;
 
     private final RestTemplate restTemplate;
+    private final ObjectProvider<ChatClient.Builder> chatClientBuilderProvider;
     private final LLMConfig llmConfig;
     private final PromptLoader promptLoader;
     private final KnowledgeService knowledgeService;
@@ -76,6 +76,44 @@ public class LLMService {
 
     public String askAssistant(String prompt) {
         return callLLM(prompt, "assistant");
+    }
+
+    /**
+     * 统一的普通大模型调用入口。业务模块只声明场景，不直接持有供应商客户端。
+     */
+    public String complete(String prompt, String scene) {
+        return callLLM(prompt, scene);
+    }
+
+    /**
+     * 统一的 Function Calling 入口。工具结果依赖实时状态，不进入确定性响应缓存。
+     */
+    public String completeWithTools(String systemPrompt, String userPrompt,
+                                    List<ToolCallback> callbacks, String scene) {
+        ChatClient.Builder builder = chatClientBuilderProvider.getIfAvailable();
+        if (builder == null) {
+            throw new IllegalStateException("Spring AI ChatClient 未配置");
+        }
+        int maxTokens = llmConfig.getMaxTokens() == null ? 0 : llmConfig.getMaxTokens();
+        TokenCostService.Reservation reservation = tokenCostService.reserve(
+                scene, llmConfig.getModel(), systemPrompt + "\n" + userPrompt, maxTokens * 3);
+        try {
+            String content = builder.build()
+                    .prompt()
+                    .system(systemPrompt)
+                    .user(userPrompt)
+                    .toolCallbacks(callbacks)
+                    .call()
+                    .content();
+            if (content == null || content.isBlank()) {
+                throw new IllegalStateException("大模型返回空响应");
+            }
+            tokenCostService.complete(reservation, -1, -1, false, "success");
+            return content;
+        } catch (Exception exception) {
+            tokenCostService.cancel(reservation, classifyLlmFailure(exception));
+            throw new IllegalStateException("Function Calling 调用失败", exception);
+        }
     }
 
     public String buildAssistantPrompt(String text) {
@@ -573,14 +611,17 @@ public class LLMService {
         ));
     }
 
-    public String analyzeMultiModal(String text, AudioDetectionResult audioResult, VideoDetectionResult videoResult) {
+    public String analyzeMultiModalEvidence(String text, Object textResult, Object audioResult,
+                                            Object videoResult, Object workflow) {
         String effectiveText = text != null ? text : DEFAULT_TEXT;
         String knowledge = buildKnowledgeContext(effectiveText);
         return callLLM(promptLoader.loadPrompt("multimodal_analysis", Map.of(
                 "text", effectiveText,
+                "textResult", textResult != null ? textResult : Map.of(),
                 "knowledge", knowledge,
-                "audio", audioResult != null ? audioResult : new AudioDetectionResult(),
-                "video", videoResult != null ? videoResult : new VideoDetectionResult()
+                "audio", audioResult != null ? audioResult : Map.of(),
+                "video", videoResult != null ? videoResult : Map.of(),
+                "workflow", workflow != null ? workflow : Map.of()
         )), "multimodal");
     }
 
@@ -770,63 +811,54 @@ public class LLMService {
         int maxCompletionTokens = llmConfig.getMaxTokens() == null ? 0 : llmConfig.getMaxTokens();
         TokenCostService.Reservation reservation = tokenCostService.reserve(
                 scene, llmConfig.getModel(), prompt, maxCompletionTokens);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(llmConfig.getApiKey());
-
-        HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(buildRequestBody(prompt), headers);
-
         try {
-            ResponseEntity<Object> response = restTemplate.exchange(
-                    llmConfig.getApiUrl(),
-                    HttpMethod.POST,
-                    requestEntity,
-                    Object.class
-            );
-            Object responseBody = response.getBody();
-            String content = extractContent(responseBody);
-            int[] usage = extractUsage(responseBody);
-            tokenCostService.complete(reservation, usage[0], usage[1], false, "success");
+            ChatClient.Builder builder = chatClientBuilderProvider.getIfAvailable();
+            if (builder == null) {
+                tokenCostService.cancel(reservation, "spring_ai_unavailable");
+                log.error("Spring AI ChatClient 未配置，无法执行同步大模型调用");
+                return FALLBACK_GENERAL;
+            }
+            String content = builder.build()
+                    .prompt()
+                    .user(prompt)
+                    .call()
+                    .content();
+            if (content == null || content.isBlank()) {
+                tokenCostService.cancel(reservation, "empty_response");
+                log.error("Spring AI 返回空响应: scene={}", scene);
+                return FALLBACK_GENERAL;
+            }
+            tokenCostService.complete(reservation, -1, -1, false, "success");
             if (tokenCostService.isCacheable(scene) && !isFallback(content)) {
                 putCachedResponse(cacheKey, content);
             }
             return content;
-        } catch (HttpClientErrorException e) {
-            tokenCostService.cancel(reservation, "client_error");
-            if (e.getStatusCode().value() == 429) {
+        } catch (Exception exception) {
+            tokenCostService.cancel(reservation, classifyLlmFailure(exception));
+            String message = exception.getMessage() == null ? "" : exception.getMessage();
+            if (message.contains("429")) {
                 log.error("LLM API 限流(429)，重试耗尽");
                 return FALLBACK_RATE_LIMIT;
             }
-            if (e.getStatusCode().is4xxClientError()) {
-                log.error("LLM API 客户端错误: {} - {}", e.getStatusCode(), e.getMessage());
-                return FALLBACK_GENERAL;
+            if (message.toLowerCase().contains("timeout") || message.contains("超时")) {
+                log.error("LLM API 连接超时，重试耗尽: {}", message);
+                return FALLBACK_TIMEOUT;
             }
-            log.error("LLM API 错误({}): {}", e.getStatusCode(), e.getMessage());
-            return FALLBACK_GENERAL;
-        } catch (HttpServerErrorException e) {
-            tokenCostService.cancel(reservation, "server_error");
-            log.error("LLM API 服务端错误({})，重试耗尽", e.getStatusCode());
-            return FALLBACK_SERVER_ERROR;
-        } catch (ResourceAccessException e) {
-            tokenCostService.cancel(reservation, "timeout");
-            log.error("LLM API 连接超时，重试耗尽: {}", e.getMessage());
-            return FALLBACK_TIMEOUT;
-        } catch (Exception e) {
-            tokenCostService.cancel(reservation, "error");
-            log.error("LLM API 未知错误", e);
+            if (message.contains("500") || message.contains("502") || message.contains("503")) {
+                log.error("LLM API 服务端错误，重试耗尽: {}", message);
+                return FALLBACK_SERVER_ERROR;
+            }
+            log.error("Spring AI LLM 调用失败: {}", message);
             return FALLBACK_GENERAL;
         }
     }
 
-    private int[] extractUsage(Object responseBody) {
-        if (!(responseBody instanceof Map<?, ?> body) || !(body.get("usage") instanceof Map<?, ?> usage)) {
-            return new int[]{-1, -1};
-        }
-        return new int[]{numberValue(usage.get("prompt_tokens")), numberValue(usage.get("completion_tokens"))};
-    }
-
-    private int numberValue(Object value) {
-        return value instanceof Number number ? number.intValue() : -1;
+    private String classifyLlmFailure(Exception exception) {
+        String message = exception.getMessage() == null ? "" : exception.getMessage();
+        if (message.contains("429")) return "rate_limit";
+        if (message.toLowerCase().contains("timeout") || message.contains("超时")) return "timeout";
+        if (message.contains("500") || message.contains("502") || message.contains("503")) return "server_error";
+        return "error";
     }
 
     private boolean isFallback(String content) {
@@ -1003,32 +1035,4 @@ public class LLMService {
         return streamCallLLM(prompt);
     }
 
-    private String extractContent(Object responseBody) {
-        if (!(responseBody instanceof Map<?, ?> body)) {
-            return invalidLLMResponse(responseBody);
-        }
-
-        Object choicesObj = body.get("choices");
-        if (!(choicesObj instanceof List<?> choices) || choices.isEmpty()) {
-            return invalidLLMResponse(responseBody);
-        }
-
-        Object firstChoice = choices.get(0);
-        if (!(firstChoice instanceof Map<?, ?> choice)) {
-            return invalidLLMResponse(responseBody);
-        }
-
-        Object messageObj = choice.get("message");
-        if (!(messageObj instanceof Map<?, ?> message)) {
-            return invalidLLMResponse(responseBody);
-        }
-
-        Object content = message.get("content");
-        return content instanceof String ? (String) content : invalidLLMResponse(responseBody);
-    }
-
-    private String invalidLLMResponse(Object responseBody) {
-        log.error("大模型返回格式异常: {}", responseBody);
-        return FALLBACK_GENERAL;
-    }
 }

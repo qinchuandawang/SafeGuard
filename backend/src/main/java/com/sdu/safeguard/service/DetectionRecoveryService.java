@@ -80,7 +80,7 @@ public class DetectionRecoveryService {
                         // 兼容旧测试构造器；生产环境始终走 RocketMQ 工作队列。
                         taskManager.runAsync(task.getTaskId(), ignored -> executeRecoveredVideo(task));
                     } else {
-                        workQueueService.enqueueVideo(task.getTaskId());
+                        workQueueService.enqueueInference(task.getTaskId());
                     }
                 } catch (TaskQueueFullException queueFullException) {
                     log.info("恢复任务暂未重新入队，等待下一轮容量释放: taskId={}", task.getTaskId());
@@ -98,7 +98,7 @@ public class DetectionRecoveryService {
         boolean temporaryDownload = task.getObjectKey() != null && !task.getObjectKey().isBlank();
         try {
             taskManager.updateProgress(task.getTaskId(), 5, java.util.Map.of("message", "正在恢复中断任务..."));
-            VideoDetectionResult result = detectionService.detectVideo(mediaPath.toString(),
+            VideoDetectionResult result = detectionService.detectVideo(mediaPath.toString(), task.getTaskId(),
                     (progress, detail) -> taskManager.updateProgress(task.getTaskId(), progress, detail));
             if (result != null) result.setReport(llmService.generateVideoReport(result));
             taskManager.complete(task.getTaskId(), result);

@@ -1,14 +1,11 @@
 package com.sdu.safeguard.agent.tool;
 
 import com.sdu.safeguard.dto.ReActThought;
-import com.sdu.safeguard.config.LLMConfig;
-import com.sdu.safeguard.service.TokenCostService;
+import com.sdu.safeguard.service.LLMService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.function.FunctionToolCallback;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -24,15 +21,12 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class FunctionCallingToolService {
 
-    private final ObjectProvider<ChatClient.Builder> chatClientBuilderProvider;
     private final ToolRegistry toolRegistry;
-    private final TokenCostService tokenCostService;
-    private final LLMConfig llmConfig;
+    private final LLMService llmService;
 
     public List<ReActThought> execute(String input, String context, String sessionId, String contextType) {
-        ChatClient.Builder builder = chatClientBuilderProvider.getIfAvailable();
         List<Tool> tools = toolRegistry.getTools(contextType);
-        if (builder == null || tools.isEmpty()) {
+        if (tools.isEmpty()) {
             return List.of();
         }
 
@@ -41,18 +35,11 @@ public class FunctionCallingToolService {
                 .map(tool -> createCallback(tool, input, sessionId, observations))
                 .toList();
 
-        int maxTokens = llmConfig.getMaxTokens() == null ? 0 : llmConfig.getMaxTokens();
-        TokenCostService.Reservation reservation = tokenCostService.reserve(
-                "function-calling", llmConfig.getModel(), input + "\n" + safe(context), maxTokens * 3);
-
         try {
-            String answer = builder.build()
-                    .prompt()
-                    .system("你是 SafeGuard 反诈骗分析助手。请按需调用工具获取证据，禁止虚构工具结果；完成后输出简洁、可执行的中文风险结论。")
-                    .user("用户问题：\n" + input + "\n\n已检索上下文：\n" + safe(context))
-                    .toolCallbacks(callbacks)
-                    .call()
-                    .content();
+            String answer = llmService.completeWithTools(
+                    "你是 SafeGuard 反诈骗分析助手。请按需调用工具获取证据，禁止虚构工具结果；完成后输出简洁、可执行的中文风险结论。",
+                    "用户问题：\n" + input + "\n\n已检索上下文：\n" + safe(context),
+                    callbacks, "function-calling");
 
             List<ReActThought> thoughts = new ArrayList<>();
             for (int index = 0; index < observations.size(); index++) {
@@ -77,10 +64,8 @@ public class FunctionCallingToolService {
                     .referencedSources(List.of())
                     .isFinal(true)
                     .build());
-            tokenCostService.complete(reservation, null, null, false, "success");
             return thoughts;
         } catch (Exception exception) {
-            tokenCostService.cancel(reservation, "error");
             log.warn("Spring AI Tool Calling 执行失败: {}", exception.getMessage());
             return List.of();
         }

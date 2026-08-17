@@ -285,6 +285,62 @@ public class DetectionTaskManager {
         scheduleCleanup(taskId);
     }
 
+    public void waitForReview(String taskId, Object result) {
+        DetectionTask task = activeTasks.get(taskId);
+        if (task == null || !"processing".equals(task.getStatus())) return;
+        Map<String, Object> eventData = new LinkedHashMap<>();
+        eventData.put("event", "waiting_review");
+        eventData.put("status", "waiting_review");
+        eventData.put("progress", 90);
+        eventData.put("result", result);
+        try {
+            String resultJson = objectMapper.writeValueAsString(result);
+            int updated = taskEventService.execute(taskId, "waiting_review", eventData,
+                    () -> asyncTaskMapper.markWaitingReview(taskId, resultJson),
+                    affected -> affected == 1);
+            if (updated != 1) return;
+            task.setStatus("waiting_review");
+            task.setProgress(90);
+            task.setResult(result);
+            sendSse(task, "waiting_review", eventData);
+            log.info("任务等待人工审核: taskId={}", taskId);
+        } catch (Exception exception) {
+            throw new IllegalStateException("持久化待审核状态失败", exception);
+        }
+    }
+
+    public void completeReview(String taskId, Object result) {
+        DetectionTask task = activeTasks.computeIfAbsent(taskId, ignored -> {
+            DetectionTask created = new DetectionTask();
+            created.setTaskId(taskId);
+            created.setType("multimodal");
+            created.setStatus("waiting_review");
+            created.setProgress(90);
+            return created;
+        });
+        Map<String, Object> eventData = new LinkedHashMap<>();
+        eventData.put("event", "completed");
+        eventData.put("status", "completed");
+        eventData.put("progress", 100);
+        eventData.put("result", result);
+        try {
+            String resultJson = objectMapper.writeValueAsString(result);
+            int updated = taskEventService.execute(taskId, "completed", eventData,
+                    () -> asyncTaskMapper.finishIfWaitingReview(taskId, resultJson),
+                    affected -> affected == 1);
+            if (updated != 1) throw new IllegalStateException("任务不处于待审核状态");
+            task.setStatus("completed");
+            task.setProgress(100);
+            task.setResult(result);
+            sendSse(task, "completed", eventData);
+            closeEmitter(task);
+            scheduleCleanup(taskId);
+            log.info("人工审核任务完成: taskId={}", taskId);
+        } catch (Exception exception) {
+            throw new IllegalStateException("持久化人工审核结果失败", exception);
+        }
+    }
+
     public DetectionTask getTask(String taskId) {
         DetectionTask task = activeTasks.get(taskId);
         if (task == null) {

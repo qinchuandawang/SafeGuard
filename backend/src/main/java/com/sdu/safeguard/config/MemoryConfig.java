@@ -12,17 +12,20 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class MemoryConfig {
     private int shortTermMaxSize = 50;
+    private int shortTermContextSize = 20;
+    private long shortTermTtlHours = 24;
     private int longTermMaxSize = 1000;
     private long longTermTtlHours = 168;
     private double longTermImportanceThreshold = 0.6;
     private String storagePath = "./data/memory";
     private int memoryRetrievalTopK = 10;
-    private String memoryCollection = "user_memories";
-    private int memoryEmbeddingDim = 1024;
+    private String memoryCollection = "user_memories_v2";
+    private int memoryEmbeddingDim = 768;
 
     @PostConstruct
     public void validate() {
-        log.info("Memory配置: STM={}, LTM={}, 记忆集合={}, dim={}",
-                shortTermMaxSize, longTermMaxSize, memoryCollection, memoryEmbeddingDim);
+        log.info("Memory配置: STM={}, context={}, ttl={}h, LTM={}, 记忆集合={}, dim={}",
+                shortTermMaxSize, shortTermContextSize, shortTermTtlHours,
+                longTermMaxSize, memoryCollection, memoryEmbeddingDim);
     }
 }

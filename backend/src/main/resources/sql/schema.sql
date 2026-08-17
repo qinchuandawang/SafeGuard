@@ -152,9 +152,9 @@ CREATE TABLE IF NOT EXISTS `user` (
 CREATE TABLE IF NOT EXISTS `async_task` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `task_id` VARCHAR(64) NOT NULL COMMENT '任务唯一ID',
-    `type` VARCHAR(50) NOT NULL COMMENT '任务类型：video/audio/text',
+    `type` VARCHAR(50) NOT NULL COMMENT '任务类型：video/audio/text/multimodal',
     `user_id` BIGINT DEFAULT NULL COMMENT '用户ID',
-    `status` VARCHAR(20) NOT NULL DEFAULT 'queued' COMMENT '状态：queued/processing/completed/failed',
+    `status` VARCHAR(20) NOT NULL DEFAULT 'queued' COMMENT '状态：queued/processing/waiting_review/completed/failed',
     `progress` INT DEFAULT 0 COMMENT '进度(0-100)',
     `result_json` TEXT DEFAULT NULL COMMENT '结果JSON',
     `error_message` TEXT DEFAULT NULL COMMENT '错误信息',
@@ -227,3 +227,39 @@ CREATE TABLE IF NOT EXISTS `llm_usage_record` (
     UNIQUE INDEX `uk_llm_usage_request` (`request_id`),
     INDEX `idx_llm_usage_created_scene` (`created_at`, `scene`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='大模型 Token 用量账本';
+
+CREATE TABLE IF NOT EXISTS `memory_fact_event` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `event_id` VARCHAR(64) NOT NULL,
+    `session_id` VARCHAR(255) NOT NULL,
+    `owner_key` CHAR(64) NOT NULL,
+    `fact_key` VARCHAR(128) NOT NULL,
+    `fact_type` VARCHAR(64) NOT NULL,
+    `fact_value` VARCHAR(512) NOT NULL,
+    `content` TEXT NOT NULL,
+    `summary` VARCHAR(512) DEFAULT NULL,
+    `source` VARCHAR(32) NOT NULL,
+    `confidence` DECIMAL(5,4) NOT NULL DEFAULT 0,
+    `importance` DECIMAL(5,4) NOT NULL DEFAULT 0,
+    `version` INT NOT NULL,
+    `status` VARCHAR(16) NOT NULL,
+    `supersedes_event_id` VARCHAR(64) DEFAULT NULL,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE INDEX `uk_memory_fact_event` (`event_id`),
+    UNIQUE INDEX `uk_memory_fact_version` (`owner_key`, `fact_key`, `version`),
+    INDEX `idx_memory_fact_active` (`owner_key`, `fact_key`, `status`),
+    INDEX `idx_memory_fact_created` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='长期记忆事实事件与版本表';
+
+CREATE TABLE IF NOT EXISTS `conversation_message` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `message_id` VARCHAR(64) NOT NULL,
+    `conversation_id` VARCHAR(128) NOT NULL,
+    `role` VARCHAR(32) NOT NULL,
+    `content` TEXT NOT NULL,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE INDEX `uk_conversation_message_id` (`message_id`),
+    INDEX `idx_conversation_message_recent` (`conversation_id`, `id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='会话消息历史';
