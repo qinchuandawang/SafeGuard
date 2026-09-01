@@ -83,6 +83,15 @@ public class CacheConfig {
                 .build());
     }
 
+    @Bean("ragSemanticCache")
+    public Cache<String, com.sdu.safeguard.rag.RAGService.SemanticCacheEntry> ragSemanticCache() {
+        return monitor("rag-semantic-result", Caffeine.newBuilder()
+                .expireAfterWrite(5, TimeUnit.MINUTES)
+                .maximumSize(200)
+                .recordStats()
+                .build());
+    }
+
     private <K, V> Cache<K, V> monitor(String cacheName, Cache<K, V> cache) {
         CaffeineCacheMetrics.monitor(meterRegistry, cache, cacheName);
         return cache;

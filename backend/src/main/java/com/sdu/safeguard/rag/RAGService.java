@@ -22,6 +22,13 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class RAGService {
 
+    /**
+     * 语义缓存只缓存检索结果，不缓存最终风险结论或报告。
+     */
+    public record SemanticCacheEntry(String query, List<Float> vector,
+                                     List<RagQueryResult> results, String ruleSignature) {
+    }
+
     private final HybridChunker hybridChunker;
     private final EmbeddingService embeddingService;
     private final QdrantService qdrantService;
@@ -34,6 +41,9 @@ public class RAGService {
 
     @Qualifier("ragResultCache")
     private final Cache<String, List<RagQueryResult>> ragResultCache;
+
+    @Qualifier("ragSemanticCache")
+    private final Cache<String, SemanticCacheEntry> ragSemanticCache;
 
     private static final Map<String, Double> FRAUD_KEYWORDS = new LinkedHashMap<>();
 
@@ -185,7 +195,8 @@ public class RAGService {
             return List.of();
         }
 
-        String cacheKey = "rag:" + queryText.toLowerCase().trim();
+        String normalizedQuery = queryText.toLowerCase().trim();
+        String cacheKey = "rag:" + normalizedQuery;
         List<RagQueryResult> cached = ragResultCache.getIfPresent(cacheKey);
         if (cached != null) {
             log.debug("RAG 缓存命中: query=\"{}\"", queryText);
@@ -208,6 +219,19 @@ public class RAGService {
             log.warn("嵌入服务不可用，仅执行关键词检索");
         }
 
+        List<Float> semanticQueryVector = null;
+        if (embeddingAvailable) {
+            semanticQueryVector = embeddingService.getEmbedding(searchQuery);
+            SemanticCacheEntry semanticCached = findSemanticCached(
+                    semanticQueryVector, ruleSignature(ruleResult));
+            if (semanticCached != null) {
+                log.debug("RAG 语义缓存命中: query={}, cachedQuery={}",
+                        queryText, semanticCached.query());
+                ragResultCache.put(cacheKey, semanticCached.results());
+                return semanticCached.results();
+            }
+        }
+
         List<String> queryChunks = hybridChunker.chunkQuery(searchQuery);
         log.debug("查询切块: {} 块, embeddingAvailable={}", queryChunks.size(), embeddingAvailable);
 
@@ -217,7 +241,9 @@ public class RAGService {
         for (String chunk : queryChunks) {
             List<QdrantService.ScoredResult> vectorResults;
             if (embeddingAvailable) {
-                List<Float> queryVector = embeddingService.getEmbedding(chunk);
+                List<Float> queryVector = chunk.equals(searchQuery)
+                        ? semanticQueryVector
+                        : embeddingService.getEmbedding(chunk);
                 // 规则命中只作为排序特征和风险证据，避免不完整标签导致召回被硬过滤为 0。
                 vectorResults = qdrantService.search(queryVector, ragConfig.getHnswTopK());
             } else {
@@ -322,7 +348,39 @@ public class RAGService {
                 embeddingAvailable ? "可用" : "不可用", ruleResult.isMatched(), cost);
 
         ragResultCache.put(cacheKey, finalResults);
+        if (semanticQueryVector != null) {
+            ragSemanticCache.put(
+                    UUID.randomUUID().toString(),
+                    new SemanticCacheEntry(
+                            normalizedQuery,
+                            semanticQueryVector,
+                            finalResults,
+                            ruleSignature(ruleResult)));
+        }
         return finalResults;
+    }
+
+    private SemanticCacheEntry findSemanticCached(List<Float> queryVector, String ruleSignature) {
+        if (queryVector == null || queryVector.isEmpty()) {
+            return null;
+        }
+        double threshold = ragConfig.getSemanticSimilarityThreshold();
+        return ragSemanticCache.asMap().values().stream()
+                .filter(entry -> Objects.equals(entry.ruleSignature(), ruleSignature))
+                .map(entry -> Map.entry(entry, embeddingService.cosineSimilarity(
+                        queryVector, entry.vector())))
+                .filter(item -> item.getValue() >= threshold)
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse(null);
+    }
+
+    private String ruleSignature(RuleFilter.RuleResult result) {
+        if (result == null) {
+            return "none";
+        }
+        return result.isMatched() + "|" + result.getRiskScore() + "|"
+                + result.getCategories();
     }
 
     /**
@@ -551,6 +609,7 @@ public class RAGService {
         ruleFilter.reload();
         knowledgeContentHash = "";
         ragResultCache.invalidateAll();
+        ragSemanticCache.invalidateAll();
         loadKnowledgeDocuments();
     }
 
