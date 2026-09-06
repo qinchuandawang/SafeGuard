@@ -22,6 +22,16 @@ public class TextDetectionResult {
     private Double confidence;       // 兼容字段，等同 riskProbability
     private Map<String, Double> probabilities;  // 兼容字段
 
+    // ===== 知识增强证据层（RAG 融入核心检测的辅助信号） =====
+    /** 规则过滤风险分（0~1），规则未命中时为 0 */
+    private Double ruleRiskScore;
+    /** 命中的欺诈规则关键词 */
+    private List<String> matchedRules;
+    /** 命中的反诈知识关键词（知识库证据） */
+    private List<String> knowledgeEvidence;
+    /** 是否由规则/RAG 辅助信号抬升了风险结论 */
+    private Boolean ruleEscalated;
+
     public void computeProbabilities() {
         if (riskProbability != null) {
             double fake = Math.max(0, Math.min(1, riskProbability));

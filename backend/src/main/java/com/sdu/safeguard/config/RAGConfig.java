@@ -28,9 +28,31 @@ public class RAGConfig {
     private boolean allowInMemoryFallback = false;
     private String rulesPath = "config/rules.json";
 
+    // ===== Agentic RAG =====
+    /** 是否启用 Agentic 检索（检索→反思→定向补检），关闭时退化为单轮 RAG */
+    private boolean agenticEnabled = true;
+    /** Agentic 检索最大迭代轮数（首轮 + 补检轮） */
+    private int agenticMaxIterations = 2;
+    /** 反思覆盖度阈值：查询关键词在返回块中的覆盖率低于该值则触发补检 */
+    private double agenticCoverageThreshold = 0.6;
+    /** 是否启用 LLM 反思判定（成本更高），默认用规则覆盖度自检 */
+    private boolean agenticUseLlmReflection = false;
+
+    // ===== 知识增强风险混合（融入核心检测） =====
+    /** 文本检测在 LLM 概率不确定时，是否用规则/RAG 风险分做辅助抬升 */
+    private boolean riskBlendEnabled = true;
+    /** 辅助抬升权重：blended = max(p, ruleRiskScore * weight) */
+    private double riskBlendWeight = 0.75;
+    /** 触发抬升所需的最低规则风险分 */
+    private double riskBlendRuleFloor = 0.85;
+    /** 触发抬升所需的概率不确定区间半径（|p - 0.5| 小于该值） */
+    private double riskBlendUncertaintyBand = 0.15;
+
     @PostConstruct
     public void validate() {
-        log.info("RAG配置加载完成: collection={}, dim={}, rerankTopK={}, dedupThreshold={}, allowInMemoryFallback={}",
-                collectionName, embeddingDimension, rerankTopK, dedupThreshold, allowInMemoryFallback);
+        log.info("RAG配置加载完成: collection={}, dim={}, rerankTopK={}, dedupThreshold={}, allowInMemoryFallback={}, " +
+                        "agenticEnabled={}, agenticMaxIterations={}, riskBlendEnabled={}",
+                collectionName, embeddingDimension, rerankTopK, dedupThreshold, allowInMemoryFallback,
+                agenticEnabled, agenticMaxIterations, riskBlendEnabled);
     }
 }

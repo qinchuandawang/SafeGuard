@@ -72,6 +72,34 @@ public class QueryRewriter {
             return new RewriteResult(original, original, List.of());
         }
 
+        List<String> expansions = collectExpansions(original);
+
+        // 构建扩展后的查询
+        String rewritten;
+        if (expansions.isEmpty()) {
+            rewritten = original;
+        } else {
+            Set<String> merged = new LinkedHashSet<>();
+            merged.add(original);
+            merged.addAll(expansions);
+            rewritten = String.join(" ", merged);
+        }
+
+        log.debug("QueryRewriter: \"{}\" → \"{}\" (expansions: {})",
+                original, rewritten, expansions.size());
+
+        return new RewriteResult(original, rewritten, new ArrayList<>(expansions));
+    }
+
+    /**
+     * 仅收集查询的同义扩展词，不拼接改写结果。
+     * 供 Agentic RAG 的查询分解/定向补检复用，保证与 {@link #rewrite} 行为一致。
+     */
+    public List<String> collectExpansions(String original) {
+        if (original == null || original.isBlank()) {
+            return List.of();
+        }
+
         String lower = original.toLowerCase().trim();
         List<String> expansions = new ArrayList<>();
 
@@ -106,21 +134,7 @@ public class QueryRewriter {
             expansions.add("防范");
         }
 
-        // 构建扩展后的查询
-        String rewritten;
-        if (expansions.isEmpty()) {
-            rewritten = original;
-        } else {
-            Set<String> merged = new LinkedHashSet<>();
-            merged.add(original);
-            merged.addAll(expansions);
-            rewritten = String.join(" ", merged);
-        }
-
-        log.debug("QueryRewriter: \"{}\" → \"{}\" (expansions: {}, negation: {})",
-                original, rewritten, expansions.size(), hasNegation);
-
-        return new RewriteResult(original, rewritten, new ArrayList<>(expansions));
+        return expansions;
     }
 
     /**

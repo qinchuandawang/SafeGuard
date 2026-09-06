@@ -1,13 +1,17 @@
 package com.sdu.safeguard.service;
 
 import com.sdu.safeguard.config.LLMConfig;
+import com.sdu.safeguard.config.RAGConfig;
 import com.sdu.safeguard.dto.AudioDetectionResult;
 import com.sdu.safeguard.dto.Message;
+import com.sdu.safeguard.dto.RagQueryResult;
 import com.sdu.safeguard.dto.ScamScenario;
 import com.sdu.safeguard.dto.SimulationResponse;
 import com.sdu.safeguard.dto.TextDetectionResult;
 import com.sdu.safeguard.dto.VideoDetectionResult;
 import com.sdu.safeguard.entity.KnowledgeItem;
+import com.sdu.safeguard.rag.RuleFilter;
+import com.sdu.safeguard.rag.agentic.AgenticRAGService;
 import com.sdu.safeguard.util.PromptLoader;
 import com.github.benmanes.caffeine.cache.Cache;
 import lombok.RequiredArgsConstructor;
@@ -63,6 +67,9 @@ public class LLMService {
     private final Cache<String, String> llmResponseCache;
     private final TokenCostService tokenCostService;
     private final ObjectProvider<StringRedisTemplate> redisTemplateProvider;
+    private final AgenticRAGService agenticRagService;
+    private final RuleFilter ruleFilter;
+    private final RAGConfig ragConfig;
 
     @Value("${infra.redis.enabled:false}")
     private boolean redisEnabled;
@@ -196,6 +203,7 @@ public class LLMService {
             result.setReasoningSteps(java.util.List.of("启动时未读取到 LLM API Key"));
             result.setAdvice(java.util.List.of("请先确认后端环境变量加载成功，再重新发起检测"));
             result.computeProbabilities();
+            injectEvidence(result, text);
             return result;
         }
         String raw = callLLM(buildAnalyzePrompt(text), "text-analysis");
@@ -259,6 +267,7 @@ public class LLMService {
                     parsed.setAdvice(list);
                 }
             }
+            applyRiskBlend(parsed, text);
             parsed.setReport(buildTextDetectionReport(parsed));
             parsed.computeProbabilities();
             return parsed;
@@ -271,6 +280,7 @@ public class LLMService {
             result.setSuspiciousPoints(java.util.List.of("无法解析 AI 分析结果，请查看原始报告"));
             result.setReasoningSteps(java.util.List.of("LLM 返回结果格式异常"));
             result.setAdvice(java.util.List.of("请人工核对原始报告内容"));
+            applyRiskBlend(result, text);
             result.setReport(buildTextDetectionReport(result));
             result.computeProbabilities();
             return result;
@@ -777,9 +787,35 @@ public class LLMService {
         if (cached != null) {
             return cached;
         }
+        // RAG 优先：Agentic RAG（Qdrant 混合检索）作为核心检测的知识上下文
+        String result = buildRagKnowledgeContext(keyword);
+        if (result.isBlank()) {
+            // 回退：MySQL 关键词知识检索
+            result = buildKeywordKnowledgeContext(keyword);
+        }
+        knowledgeContextCache.put(cacheKey, result);
+        return result;
+    }
+
+    /**
+     * 通过 Agentic RAG 获取反诈知识上下文。失败时返回空串触发回退。
+     */
+    private String buildRagKnowledgeContext(String keyword) {
+        try {
+            List<RagQueryResult> results = agenticRagService.query(keyword);
+            if (results == null || results.isEmpty()) {
+                return "";
+            }
+            return agenticRagService.formatRagContext(results);
+        } catch (Exception e) {
+            log.warn("RAG 知识检索失败，回退 MySQL 关键词检索: {}", e.getMessage());
+            return "";
+        }
+    }
+
+    private String buildKeywordKnowledgeContext(String keyword) {
         List<KnowledgeItem> items = knowledgeService.search(keyword);
         if (items.isEmpty()) {
-            knowledgeContextCache.put(cacheKey, "");
             return "";
         }
         List<KnowledgeItem> topItems = items.size() > RAG_MAX_ITEMS
@@ -792,9 +828,60 @@ public class LLMService {
             sb.append("问题").append(i + 1).append("：").append(item.getQuestion()).append("\n");
             sb.append("答案").append(i + 1).append("：").append(item.getAnswer()).append("\n");
         }
-        String result = sb.toString();
-        knowledgeContextCache.put(cacheKey, result);
-        return result;
+        return sb.toString();
+    }
+
+    /**
+     * 知识增强风险混合：LLM 概率不确定（|p-0.5| &lt; 带宽）且规则/RAG 风险分足够高时，
+     * 用规则风险分做辅助抬升，并将规则与知识证据注入检测结果。这是 RAG 融入核心
+     * 检测的辅助信号层，不改变模型本身的判定逻辑。
+     */
+    private void applyRiskBlend(TextDetectionResult result, String text) {
+        injectEvidence(result, text);
+        if (result == null || result.getRiskProbability() == null) {
+            return;
+        }
+        if (!ragConfig.isRiskBlendEnabled()) {
+            return;
+        }
+        RuleFilter.RuleResult rule = ruleFilter.match(text);
+        if (!rule.isMatched()) {
+            return;
+        }
+        double ruleScore = rule.getRiskScore();
+        double p = result.getRiskProbability();
+        if (Math.abs(p - 0.5) >= ragConfig.getRiskBlendUncertaintyBand()) {
+            return;
+        }
+        if (ruleScore < ragConfig.getRiskBlendRuleFloor()) {
+            return;
+        }
+        double blended = Math.max(p, ruleScore * ragConfig.getRiskBlendWeight());
+        result.setRiskProbability(blended);
+        result.setRuleEscalated(true);
+        if (blended >= 0.55) {
+            result.setRiskLevel("high");
+        }
+        result.computeProbabilities();
+    }
+
+    /**
+     * 将规则过滤与知识库命中的关键词作为证据注入检测结果（解释/审计层）。
+     */
+    private void injectEvidence(TextDetectionResult result, String text) {
+        if (result == null) {
+            return;
+        }
+        RuleFilter.RuleResult rule = ruleFilter.match(text);
+        result.setRuleRiskScore(rule.isMatched() ? rule.getRiskScore() : 0.0);
+        result.setMatchedRules(rule.isMatched()
+                ? rule.getMatchedKeywords()
+                : java.util.List.of());
+        try {
+            result.setKnowledgeEvidence(new java.util.ArrayList<>(agenticRagService.matchKeywords(text)));
+        } catch (Exception e) {
+            result.setKnowledgeEvidence(java.util.List.of());
+        }
     }
 
     private String callLLM(String prompt, String scene) {

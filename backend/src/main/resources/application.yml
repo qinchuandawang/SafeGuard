@@ -179,6 +179,16 @@ rag:
   allow-in-memory-fallback: true
   auto-manage-container: ${QDRANT_AUTO_MANAGE_CONTAINER:false}
   rules-path: config/rules.json
+  # Agentic RAG：检索 → 反思 → 定向补检
+  agentic-enabled: ${RAG_AGENTIC_ENABLED:true}
+  agentic-max-iterations: ${RAG_AGENTIC_MAX_ITERATIONS:2}
+  agentic-coverage-threshold: ${RAG_AGENTIC_COVERAGE_THRESHOLD:0.6}
+  agentic-use-llm-reflection: ${RAG_AGENTIC_USE_LLM_REFLECTION:true}
+  # 知识增强风险混合（核心检测辅助信号）
+  risk-blend-enabled: ${RAG_RISK_BLEND_ENABLED:true}
+  risk-blend-weight: ${RAG_RISK_BLEND_WEIGHT:0.75}
+  risk-blend-rule-floor: ${RAG_RISK_BLEND_RULE_FLOOR:0.85}
+  risk-blend-uncertainty-band: ${RAG_RISK_BLEND_UNCERTAINTY_BAND:0.15}
 
 # 记忆系统配置
 memory:

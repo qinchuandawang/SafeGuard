@@ -3,7 +3,7 @@ package com.sdu.safeguard.agent;
 import com.sdu.safeguard.dto.AgentRequest;
 import com.sdu.safeguard.dto.AgentResponse;
 import com.sdu.safeguard.dto.RagQueryResult;
-import com.sdu.safeguard.rag.RAGService;
+import com.sdu.safeguard.rag.agentic.AgenticRAGService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -16,7 +16,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class KnowledgeAgent implements Agent {
 
-    private final RAGService ragService;
+    private final AgenticRAGService ragService;
 
     @Override
     public String getType() {

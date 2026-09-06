@@ -83,10 +83,19 @@ public class CacheConfig {
                 .build());
     }
 
-    @Bean("ragSemanticCache")
+@Bean("ragSemanticCache")
     public Cache<String, com.sdu.safeguard.rag.RAGService.SemanticCacheEntry> ragSemanticCache() {
         return monitor("rag-semantic-result", Caffeine.newBuilder()
                 .expireAfterWrite(5, TimeUnit.MINUTES)
+                .maximumSize(200)
+                .recordStats()
+                .build());
+    }
+
+    @Bean("agenticResultCache")
+    public Cache<String, com.sdu.safeguard.rag.agentic.AgenticRagResult> agenticResultCache() {
+        return monitor("rag-agentic-result", Caffeine.newBuilder()
+                .expireAfterWrite(10, TimeUnit.MINUTES)
                 .maximumSize(200)
                 .recordStats()
                 .build());

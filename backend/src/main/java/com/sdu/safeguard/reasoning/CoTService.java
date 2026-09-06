@@ -2,7 +2,7 @@ package com.sdu.safeguard.reasoning;
 
 import com.sdu.safeguard.dto.CoTResult;
 import com.sdu.safeguard.dto.RagQueryResult;
-import com.sdu.safeguard.rag.RAGService;
+import com.sdu.safeguard.rag.agentic.AgenticRAGService;
 import com.sdu.safeguard.service.LLMService;
 import com.sdu.safeguard.util.PromptLoader;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ import java.util.*;
 public class CoTService {
 
     private final PromptLoader promptLoader;
-    private final RAGService ragService;
+    private final AgenticRAGService ragService;
     private final ObjectMapper objectMapper;
     private final LLMService llmService;
 

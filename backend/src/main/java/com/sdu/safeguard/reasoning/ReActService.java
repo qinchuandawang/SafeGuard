@@ -4,7 +4,7 @@ import com.sdu.safeguard.agent.tool.FunctionCallingToolService;
 import com.sdu.safeguard.dto.RagQueryResult;
 import com.sdu.safeguard.dto.ReActThought;
 import com.sdu.safeguard.memory.MemoryService;
-import com.sdu.safeguard.rag.RAGService;
+import com.sdu.safeguard.rag.agentic.AgenticRAGService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,7 +19,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ReActService {
 
-    private final RAGService ragService;
+    private final AgenticRAGService ragService;
     private final MemoryService memoryService;
     private final FunctionCallingToolService functionCallingToolService;
 

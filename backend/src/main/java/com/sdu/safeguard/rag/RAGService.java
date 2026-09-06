@@ -91,6 +91,10 @@ public class RAGService {
         FRAUD_KEYWORDS.put("合同", 0.65);
         FRAUD_KEYWORDS.put("印章", 0.65);
         FRAUD_KEYWORDS.put("证据", 0.6);
+        FRAUD_KEYWORDS.put("止损", 0.8);
+        FRAUD_KEYWORDS.put("报警", 0.7);
+        FRAUD_KEYWORDS.put("冻结", 0.7);
+        FRAUD_KEYWORDS.put("止付", 0.8);
     }
 
     @PostConstruct

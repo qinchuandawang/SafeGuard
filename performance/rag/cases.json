@@ -1,0 +1,1014 @@
+{
+  "positive": [
+    {
+      "q": "刷单兼职先垫钱再返利，应该如何处理",
+      "sources": [
+        "anti_fraud_knowledge_1.txt"
+      ]
+    },
+    {
+      "q": "刷单平台说最后一笔就能提现，我还要继续充值吗",
+      "sources": [
+        "anti_fraud_knowledge_1.txt"
+      ]
+    },
+    {
+      "q": "点赞返佣需要先转账，这种兼职可信吗",
+      "sources": [
+        "anti_fraud_knowledge_1.txt"
+      ]
+    },
+    {
+      "q": "刷单被骗后应该保存哪些证据",
+      "sources": [
+        "anti_fraud_knowledge_1.txt"
+      ]
+    },
+    {
+      "q": "网购退款客服要求共享屏幕，怎么验证真假",
+      "sources": [
+        "anti_fraud_knowledge_2.txt"
+      ]
+    },
+    {
+      "q": "冒充快递客服说会员扣费异常，要我提供验证码",
+      "sources": [
+        "anti_fraud_knowledge_2.txt"
+      ]
+    },
+    {
+      "q": "客服退款让我点击陌生链接，应该怎么办",
+      "sources": [
+        "anti_fraud_knowledge_2.txt"
+      ]
+    },
+    {
+      "q": "退款时泄露银行卡信息后如何止损",
+      "sources": [
+        "anti_fraud_knowledge_2.txt"
+      ]
+    },
+    {
+      "q": "有人自称公安说我涉嫌洗钱，要把钱转安全账户",
+      "sources": [
+        "anti_fraud_knowledge_3.txt"
+      ]
+    },
+    {
+      "q": "公检法会通过电话要求转账接受审查吗",
+      "sources": [
+        "anti_fraud_knowledge_3.txt"
+      ]
+    },
+    {
+      "q": "收到伪造通缉令并被要求保密，怎么核实",
+      "sources": [
+        "anti_fraud_knowledge_3.txt"
+      ]
+    },
+    {
+      "q": "冒充警官让我下载会议软件，应该打什么电话确认",
+      "sources": [
+        "anti_fraud_knowledge_3.txt"
+      ]
+    },
+    {
+      "q": "网友建立感情后推荐高收益投资平台，是否可信",
+      "sources": [
+        "anti_fraud_knowledge_4.txt"
+      ]
+    },
+    {
+      "q": "投资老师说稳赚不赔并要求缴纳解冻费",
+      "sources": [
+        "anti_fraud_knowledge_4.txt"
+      ]
+    },
+    {
+      "q": "杀猪盘投资被骗后还要追加资金吗",
+      "sources": [
+        "anti_fraud_knowledge_4.txt"
+      ]
+    },
+    {
+      "q": "虚假理财平台限制提现并要求保证金怎么办",
+      "sources": [
+        "anti_fraud_knowledge_4.txt"
+      ]
+    },
+    {
+      "q": "领导在群里让我紧急转账，如何确认身份",
+      "sources": [
+        "anti_fraud_knowledge_5.txt"
+      ]
+    },
+    {
+      "q": "熟人账号借钱并催促保密，能直接转账吗",
+      "sources": [
+        "anti_fraud_knowledge_5.txt"
+      ]
+    },
+    {
+      "q": "冒充老板要求财务马上付款，应该走什么流程",
+      "sources": [
+        "anti_fraud_knowledge_5.txt"
+      ]
+    },
+    {
+      "q": "朋友说出事故急需借钱，如何通过第二渠道核实",
+      "sources": [
+        "anti_fraud_knowledge_5.txt"
+      ]
+    },
+    {
+      "q": "AI换脸视频中嘴型和语音不同步，怎么判断风险",
+      "sources": [
+        "anti_fraud_knowledge_6.txt"
+      ]
+    },
+    {
+      "q": "视频通话看到熟人本人，涉及借钱就一定安全吗",
+      "sources": [
+        "anti_fraud_knowledge_6.txt"
+      ]
+    },
+    {
+      "q": "深度伪造视频借钱时应该要求对方做什么",
+      "sources": [
+        "anti_fraud_knowledge_6.txt"
+      ]
+    },
+    {
+      "q": "AI换脸视频识别不能只依靠哪些细节",
+      "sources": [
+        "anti_fraud_knowledge_6.txt"
+      ]
+    },
+    {
+      "q": "朋友发来语音借钱，可能是语音克隆吗",
+      "sources": [
+        "anti_fraud_knowledge_7.txt"
+      ]
+    },
+    {
+      "q": "AI合成语音要求紧急转账，应该如何核实",
+      "sources": [
+        "anti_fraud_knowledge_7.txt"
+      ]
+    },
+    {
+      "q": "语音电话背景异常且持续催促，怎么处理",
+      "sources": [
+        "anti_fraud_knowledge_7.txt"
+      ]
+    },
+    {
+      "q": "怀疑亲友声音被克隆后能不能直接向陌生账户付款",
+      "sources": [
+        "anti_fraud_knowledge_7.txt"
+      ]
+    },
+    {
+      "q": "AI生成的客服短信和钓鱼页面有哪些风险",
+      "sources": [
+        "anti_fraud_knowledge_8.txt"
+      ]
+    },
+    {
+      "q": "如何识别AI生成的头像证件和聊天截图",
+      "sources": [
+        "anti_fraud_knowledge_8.txt"
+      ]
+    },
+    {
+      "q": "短信页面要求输入银行卡和验证码，是否安全",
+      "sources": [
+        "anti_fraud_knowledge_8.txt"
+      ]
+    },
+    {
+      "q": "遇到精美的投资海报和中奖页面应该怎么核实",
+      "sources": [
+        "anti_fraud_knowledge_8.txt"
+      ]
+    },
+    {
+      "q": "有人要求马上紧急转账，我首先应该做什么",
+      "sources": [
+        "anti_fraud_knowledge_9.txt"
+      ]
+    },
+    {
+      "q": "领导催办转账并说不转就违法，如何处理",
+      "sources": [
+        "anti_fraud_knowledge_9.txt"
+      ]
+    },
+    {
+      "q": "遇到最后一次解冻的转账要求，应该相信吗",
+      "sources": [
+        "anti_fraud_knowledge_9.txt"
+      ]
+    },
+    {
+      "q": "核实紧急转账时可以通过哪些渠道确认",
+      "sources": [
+        "anti_fraud_knowledge_9.txt"
+      ]
+    },
+    {
+      "q": "96110是什么电话，接到来电需要接听吗",
+      "sources": [
+        "anti_fraud_knowledge_10.txt"
+      ]
+    },
+    {
+      "q": "怀疑自己正在遭遇电信诈骗可以拨打什么号码咨询",
+      "sources": [
+        "anti_fraud_knowledge_10.txt"
+      ]
+    },
+    {
+      "q": "已经发生转账应该拨打96110还是110",
+      "sources": [
+        "anti_fraud_knowledge_10.txt"
+      ]
+    },
+    {
+      "q": "警方会要求把钱转入安全账户吗",
+      "sources": [
+        "anti_fraud_knowledge_10.txt"
+      ]
+    },
+    {
+      "q": "被骗转账后第一时间应该做什么",
+      "sources": [
+        "anti_fraud_knowledge_11.txt"
+      ]
+    },
+    {
+      "q": "发现被骗后如何联系银行止付和冻结账户",
+      "sources": [
+        "anti_fraud_knowledge_11.txt"
+      ]
+    },
+    {
+      "q": "报警时需要保存哪些聊天和转账证据",
+      "sources": [
+        "anti_fraud_knowledge_11.txt"
+      ]
+    },
+    {
+      "q": "有人承诺帮助追回被骗资金，是否可能是二次诈骗",
+      "sources": [
+        "anti_fraud_knowledge_11.txt"
+      ]
+    },
+    {
+      "q": "社交平台上哪些个人信息不应该公开",
+      "sources": [
+        "anti_fraud_knowledge_12.txt"
+      ]
+    },
+    {
+      "q": "身份证和快递单丢弃前应该怎么处理",
+      "sources": [
+        "anti_fraud_knowledge_12.txt"
+      ]
+    },
+    {
+      "q": "如何设置账号密码和双因素认证更安全",
+      "sources": [
+        "anti_fraud_knowledge_12.txt"
+      ]
+    },
+    {
+      "q": "公共WiFi和来源不明的App有什么风险",
+      "sources": [
+        "anti_fraud_knowledge_12.txt"
+      ]
+    },
+    {
+      "q": "陌生人要求屏幕共享，可能看到哪些敏感信息",
+      "sources": [
+        "anti_fraud_knowledge_13.txt"
+      ]
+    },
+    {
+      "q": "开启远程控制后应该立即采取哪些措施",
+      "sources": [
+        "anti_fraud_knowledge_13.txt"
+      ]
+    },
+    {
+      "q": "冒充客服和公检法为什么喜欢要求共享屏幕",
+      "sources": [
+        "anti_fraud_knowledge_13.txt"
+      ]
+    },
+    {
+      "q": "如何防范屏幕共享泄露验证码和支付密码",
+      "sources": [
+        "anti_fraud_knowledge_13.txt"
+      ]
+    },
+    {
+      "q": "反电信网络诈骗法什么时候开始施行",
+      "sources": [
+        "anti_fraud_knowledge_14.txt"
+      ]
+    },
+    {
+      "q": "出租出售银行卡和电话卡可能承担什么法律责任",
+      "sources": [
+        "anti_fraud_knowledge_14.txt"
+      ]
+    },
+    {
+      "q": "反诈法对银行和互联网服务提供者有什么要求",
+      "sources": [
+        "anti_fraud_knowledge_14.txt"
+      ]
+    },
+    {
+      "q": "个人为什么不能出借支付账户给他人",
+      "sources": [
+        "anti_fraud_knowledge_14.txt"
+      ]
+    },
+    {
+      "q": "安全账户要求转账时应该怎么办",
+      "sources": [
+        "anti_fraud_knowledge_15.txt"
+      ]
+    },
+    {
+      "q": "朋友发语音借钱是否可以只凭声音相信",
+      "sources": [
+        "anti_fraud_knowledge_15.txt"
+      ]
+    },
+    {
+      "q": "视频通话看到本人后还能直接转账吗",
+      "sources": [
+        "anti_fraud_knowledge_15.txt"
+      ]
+    },
+    {
+      "q": "刷单投入资金后还要不要继续做任务",
+      "sources": [
+        "anti_fraud_knowledge_15.txt"
+      ]
+    },
+    {
+      "q": "贷款前要求交保证金和解冻费，是否属于诈骗",
+      "sources": [
+        "anti_fraud_knowledge_16.txt"
+      ]
+    },
+    {
+      "q": "有人说不修复征信就不能贷款，应该怎么核验",
+      "sources": [
+        "anti_fraud_knowledge_16.txt"
+      ]
+    },
+    {
+      "q": "网贷平台要求刷流水后才能放款，能不能操作",
+      "sources": [
+        "anti_fraud_knowledge_16.txt"
+      ]
+    },
+    {
+      "q": "贷款验证码和支付密码可以提供给客服吗",
+      "sources": [
+        "anti_fraud_knowledge_16.txt"
+      ]
+    },
+    {
+      "q": "征信记录能通过交钱让内部人员删除吗",
+      "sources": [
+        "anti_fraud_knowledge_16.txt"
+      ]
+    },
+    {
+      "q": "航班取消后有人来电要求验证资金，怎么处理",
+      "sources": [
+        "anti_fraud_knowledge_17.txt"
+      ]
+    },
+    {
+      "q": "快递理赔客服让我下载会议软件并共享屏幕",
+      "sources": [
+        "anti_fraud_knowledge_17.txt"
+      ]
+    },
+    {
+      "q": "机票退改签应该从什么渠道核实",
+      "sources": [
+        "anti_fraud_knowledge_17.txt"
+      ]
+    },
+    {
+      "q": "客服号码显示官方号码就一定可靠吗",
+      "sources": [
+        "anti_fraud_knowledge_17.txt"
+      ]
+    },
+    {
+      "q": "退改签时要求向个人账户转账是否正常",
+      "sources": [
+        "anti_fraud_knowledge_17.txt"
+      ]
+    },
+    {
+      "q": "低价购物收款后又要求交保证金，应该付款吗",
+      "sources": [
+        "anti_fraud_knowledge_18.txt"
+      ]
+    },
+    {
+      "q": "中奖通知要求先交税费才能领奖是真的吗",
+      "sources": [
+        "anti_fraud_knowledge_18.txt"
+      ]
+    },
+    {
+      "q": "取消会员扣费需要提供验证码和支付密码吗",
+      "sources": [
+        "anti_fraud_knowledge_18.txt"
+      ]
+    },
+    {
+      "q": "虚假购物诈骗应该保存哪些订单证据",
+      "sources": [
+        "anti_fraud_knowledge_18.txt"
+      ]
+    },
+    {
+      "q": "陌生收款码和私人转账能作为购物付款方式吗",
+      "sources": [
+        "anti_fraud_knowledge_18.txt"
+      ]
+    },
+    {
+      "q": "校园贷客服要求注销额度并把借款转给他",
+      "sources": [
+        "anti_fraud_knowledge_19.txt"
+      ]
+    },
+    {
+      "q": "有人说不注销校园贷会影响征信，怎么核验",
+      "sources": [
+        "anti_fraud_knowledge_19.txt"
+      ]
+    },
+    {
+      "q": "注销网贷要求刷流水和屏幕共享是否可信",
+      "sources": [
+        "anti_fraud_knowledge_19.txt"
+      ]
+    },
+    {
+      "q": "学生遇到校园贷诈骗可以向谁求助",
+      "sources": [
+        "anti_fraud_knowledge_19.txt"
+      ]
+    },
+    {
+      "q": "平台注销前要求借款转入指定账户怎么办",
+      "sources": [
+        "anti_fraud_knowledge_19.txt"
+      ]
+    },
+    {
+      "q": "AI生成的营业执照和合同可以直接证明对方真实吗",
+      "sources": [
+        "anti_fraud_knowledge_20.txt"
+      ]
+    },
+    {
+      "q": "如何独立核验AI生成的公司证件和印章",
+      "sources": [
+        "anti_fraud_knowledge_20.txt"
+      ]
+    },
+    {
+      "q": "大额付款前如何核对合同主体和收款账户",
+      "sources": [
+        "anti_fraud_knowledge_20.txt"
+      ]
+    },
+    {
+      "q": "伪造的聊天截图和证件材料有什么风险",
+      "sources": [
+        "anti_fraud_knowledge_20.txt"
+      ]
+    },
+    {
+      "q": "不能只通过材料中的电话和二维码核实身份吗",
+      "sources": [
+        "anti_fraud_knowledge_20.txt"
+      ]
+    },
+    {
+      "q": "钓鱼网站仿冒银行页面时有哪些特征",
+      "sources": [
+        "anti_fraud_knowledge_21.txt"
+      ]
+    },
+    {
+      "q": "陌生App要求开启无障碍权限应该怎么办",
+      "sources": [
+        "anti_fraud_knowledge_21.txt"
+      ]
+    },
+    {
+      "q": "从短信链接下载金融App安全吗",
+      "sources": [
+        "anti_fraud_knowledge_21.txt"
+      ]
+    },
+    {
+      "q": "恶意App可能窃取哪些验证码和设备权限",
+      "sources": [
+        "anti_fraud_knowledge_21.txt"
+      ]
+    },
+    {
+      "q": "发现可疑App后应该先做哪些处置",
+      "sources": [
+        "anti_fraud_knowledge_21.txt"
+      ]
+    },
+    {
+      "q": "账号被盗后骗子冒充本人借钱怎么办",
+      "sources": [
+        "anti_fraud_knowledge_22.txt"
+      ]
+    },
+    {
+      "q": "发现异常登录后如何撤销第三方授权",
+      "sources": [
+        "anti_fraud_knowledge_22.txt"
+      ]
+    },
+    {
+      "q": "企业群付款为什么需要二次确认和审批",
+      "sources": [
+        "anti_fraud_knowledge_22.txt"
+      ]
+    },
+    {
+      "q": "验证码和恢复码可以发给所谓客服吗",
+      "sources": [
+        "anti_fraud_knowledge_22.txt"
+      ]
+    },
+    {
+      "q": "社交工程攻击通常如何套取个人信息",
+      "sources": [
+        "anti_fraud_knowledge_22.txt"
+      ]
+    },
+    {
+      "q": "报警和止付时需要提供哪些诈骗证据",
+      "sources": [
+        "anti_fraud_knowledge_23.txt"
+      ]
+    },
+    {
+      "q": "聊天记录只截一张图能作为完整证据吗",
+      "sources": [
+        "anti_fraud_knowledge_23.txt"
+      ]
+    },
+    {
+      "q": "被骗后为什么不能删除聊天记录和刷机",
+      "sources": [
+        "anti_fraud_knowledge_23.txt"
+      ]
+    },
+    {
+      "q": "有人承诺交费就能追回资金是真的吗",
+      "sources": [
+        "anti_fraud_knowledge_23.txt"
+      ]
+    },
+    {
+      "q": "被骗后应该如何整理转账时间线",
+      "sources": [
+        "anti_fraud_knowledge_23.txt"
+      ]
+    },
+    {
+      "q": "贷款前交解冻费正常吗",
+      "sources": [
+        "anti_fraud_knowledge_24.txt"
+      ]
+    },
+    {
+      "q": "陌生App要求开启无障碍权限怎么办",
+      "sources": [
+        "anti_fraud_knowledge_24.txt"
+      ]
+    },
+    {
+      "q": "合同和营业执照图片能证明对方真实可靠吗",
+      "sources": [
+        "anti_fraud_knowledge_24.txt"
+      ]
+    },
+    {
+      "q": "账号被盗后联系人已经转账应该怎么办",
+      "sources": [
+        "anti_fraud_knowledge_24.txt"
+      ]
+    },
+    {
+      "q": "客服号码显示官方来电就一定是真的吗",
+      "sources": [
+        "anti_fraud_knowledge_24.txt"
+      ]
+    },
+    {
+      "q": "视频裸聊被录屏威胁索要封口费怎么办",
+      "sources": [
+        "anti_fraud_knowledge_25.txt"
+      ]
+    },
+    {
+      "q": "裸聊诈骗要求下载App并开启通讯录权限",
+      "sources": [
+        "anti_fraud_knowledge_25.txt"
+      ]
+    },
+    {
+      "q": "被裸聊视频威胁发送给家人应该怎么处理",
+      "sources": [
+        "anti_fraud_knowledge_25.txt"
+      ]
+    },
+    {
+      "q": "有人冒充军警采购让我先垫付货款",
+      "sources": [
+        "anti_fraud_knowledge_26.txt"
+      ]
+    },
+    {
+      "q": "部队采购指定供应商要求缴纳保证金",
+      "sources": [
+        "anti_fraud_knowledge_26.txt"
+      ]
+    },
+    {
+      "q": "收到军警采购合同和红头文件如何核验",
+      "sources": [
+        "anti_fraud_knowledge_26.txt"
+      ]
+    },
+    {
+      "q": "游戏账号交易要求脱离平台私下转账",
+      "sources": [
+        "anti_fraud_knowledge_27.txt"
+      ]
+    },
+    {
+      "q": "游戏装备交易先交定金安全吗",
+      "sources": [
+        "anti_fraud_knowledge_27.txt"
+      ]
+    },
+    {
+      "q": "游戏账号被要求交解冻费怎么办",
+      "sources": [
+        "anti_fraud_knowledge_27.txt"
+      ]
+    },
+    {
+      "q": "演唱会门票转让要求私下转账可以吗",
+      "sources": [
+        "anti_fraud_knowledge_28.txt"
+      ]
+    },
+    {
+      "q": "在社交平台买演唱会内部票被要求先交定金",
+      "sources": [
+        "anti_fraud_knowledge_28.txt"
+      ]
+    },
+    {
+      "q": "电子票如何核验真伪",
+      "sources": [
+        "anti_fraud_knowledge_28.txt"
+      ]
+    },
+    {
+      "q": "收到信用卡提额短信让我填验证码",
+      "sources": [
+        "anti_fraud_knowledge_29.txt"
+      ]
+    },
+    {
+      "q": "银行积分兑换短信里的链接能点吗",
+      "sources": [
+        "anti_fraud_knowledge_29.txt"
+      ]
+    },
+    {
+      "q": "信用卡提额要求先转账验证",
+      "sources": [
+        "anti_fraud_knowledge_29.txt"
+      ]
+    },
+    {
+      "q": "收到ETC被禁用短信怎么办",
+      "sources": [
+        "anti_fraud_knowledge_30.txt"
+      ]
+    },
+    {
+      "q": "车辆违章处理短信要求下载App",
+      "sources": [
+        "anti_fraud_knowledge_30.txt"
+      ]
+    },
+    {
+      "q": "ETC扣费失败短信怎么核实",
+      "sources": [
+        "anti_fraud_knowledge_30.txt"
+      ]
+    },
+    {
+      "q": "收到医保卡被停用电话怎么办",
+      "sources": [
+        "anti_fraud_knowledge_31.txt"
+      ]
+    },
+    {
+      "q": "社保补贴领取要求提供银行卡",
+      "sources": [
+        "anti_fraud_knowledge_31.txt"
+      ]
+    },
+    {
+      "q": "公积金账户异常要求填验证码",
+      "sources": [
+        "anti_fraud_knowledge_31.txt"
+      ]
+    },
+    {
+      "q": "数字人民币有投资理财吗",
+      "sources": [
+        "anti_fraud_knowledge_32.txt"
+      ]
+    },
+    {
+      "q": "虚拟币平台要求充值激活才能提现",
+      "sources": [
+        "anti_fraud_knowledge_32.txt"
+      ]
+    },
+    {
+      "q": "对方推荐央行虚拟货币高收益投资",
+      "sources": [
+        "anti_fraud_knowledge_32.txt"
+      ]
+    },
+    {
+      "q": "注销京东白条要我借款转账",
+      "sources": [
+        "anti_fraud_knowledge_33.txt"
+      ]
+    },
+    {
+      "q": "金条账户不注销影响征信吗",
+      "sources": [
+        "anti_fraud_knowledge_33.txt"
+      ]
+    },
+    {
+      "q": "银监会电话要求清空贷款额度",
+      "sources": [
+        "anti_fraud_knowledge_33.txt"
+      ]
+    },
+    {
+      "q": "收到孩子被绑架电话要求赎金",
+      "sources": [
+        "anti_fraud_knowledge_34.txt"
+      ]
+    },
+    {
+      "q": "老板语音让我马上付款如何核实",
+      "sources": [
+        "anti_fraud_knowledge_34.txt"
+      ]
+    },
+    {
+      "q": "AI合成家人声音借钱",
+      "sources": [
+        "anti_fraud_knowledge_34.txt"
+      ]
+    },
+    {
+      "q": "国家反诈中心App怎么用",
+      "sources": [
+        "anti_fraud_knowledge_35.txt"
+      ]
+    },
+    {
+      "q": "12381短信预警是什么",
+      "sources": [
+        "anti_fraud_knowledge_35.txt"
+      ]
+    },
+    {
+      "q": "96110来电不接会怎样",
+      "sources": [
+        "anti_fraud_knowledge_35.txt"
+      ]
+    },
+    {
+      "q": "转账前如何做二次核验",
+      "sources": [
+        "anti_fraud_knowledge_36.txt"
+      ]
+    },
+    {
+      "q": "大额转账前要检查哪些事项",
+      "sources": [
+        "anti_fraud_knowledge_36.txt"
+      ]
+    },
+    {
+      "q": "对方催促紧急转账要不要先核实",
+      "sources": [
+        "anti_fraud_knowledge_36.txt"
+      ]
+    },
+    {
+      "q": "老年人如何防范保健品投资诈骗",
+      "sources": [
+        "anti_fraud_knowledge_37.txt"
+      ]
+    },
+    {
+      "q": "青少年游戏交易防骗要点",
+      "sources": [
+        "anti_fraud_knowledge_37.txt"
+      ]
+    },
+    {
+      "q": "如何帮家里老人开启反诈预警",
+      "sources": [
+        "anti_fraud_knowledge_37.txt"
+      ]
+    },
+    {
+      "q": "收到课程安排通知是诈骗吗",
+      "sources": [
+        "anti_fraud_knowledge_38.txt"
+      ]
+    },
+    {
+      "q": "正常快递物流通知和钓鱼短信怎么区分",
+      "sources": [
+        "anti_fraud_knowledge_38.txt"
+      ]
+    },
+    {
+      "q": "什么是安全的转账情形",
+      "sources": [
+        "anti_fraud_knowledge_38.txt"
+      ]
+    },
+    {
+      "q": "出租银行卡给别人有什么法律风险",
+      "sources": [
+        "anti_fraud_knowledge_39.txt"
+      ]
+    },
+    {
+      "q": "帮信罪是什么",
+      "sources": [
+        "anti_fraud_knowledge_39.txt"
+      ]
+    },
+    {
+      "q": "出售电话卡可能承担什么责任",
+      "sources": [
+        "anti_fraud_knowledge_39.txt"
+      ]
+    },
+    {
+      "q": "注销京东金条要借款转账吗",
+      "sources": [
+        "anti_fraud_knowledge_40.txt"
+      ]
+    },
+    {
+      "q": "ETC短信点进去了怎么办",
+      "sources": [
+        "anti_fraud_knowledge_40.txt"
+      ]
+    },
+    {
+      "q": "老人接到孩子出事电话先做什么",
+      "sources": [
+        "anti_fraud_knowledge_40.txt"
+      ]
+    }
+  ],
+  "multiIntent": [
+    {
+      "q": "刷单兼职被骗后如何报警止损",
+      "sources": [
+        "anti_fraud_knowledge_1.txt",
+        "anti_fraud_knowledge_11.txt"
+      ]
+    },
+    {
+      "q": "冒充公检法要求转账到安全账户，如何核实身份并报警",
+      "sources": [
+        "anti_fraud_knowledge_3.txt",
+        "anti_fraud_knowledge_10.txt"
+      ]
+    },
+    {
+      "q": "AI语音克隆借钱和视频换脸转账都要二次核实吗",
+      "sources": [
+        "anti_fraud_knowledge_7.txt",
+        "anti_fraud_knowledge_6.txt"
+      ]
+    },
+    {
+      "q": "客服要求共享屏幕并下载会议软件，退款怎么核实",
+      "sources": [
+        "anti_fraud_knowledge_2.txt",
+        "anti_fraud_knowledge_13.txt"
+      ]
+    },
+    {
+      "q": "投资理财平台不让提现还要求解冻费怎么办",
+      "sources": [
+        "anti_fraud_knowledge_4.txt",
+        "anti_fraud_knowledge_11.txt"
+      ]
+    },
+    {
+      "q": "收到快递理赔和航班取消短信怎么核实",
+      "sources": [
+        "anti_fraud_knowledge_17.txt",
+        "anti_fraud_knowledge_21.txt"
+      ]
+    },
+    {
+      "q": "校园贷注销要求刷流水和共享屏幕，如何防范",
+      "sources": [
+        "anti_fraud_knowledge_19.txt",
+        "anti_fraud_knowledge_13.txt"
+      ]
+    },
+    {
+      "q": "裸聊被威胁发通讯录，如何止损并报警",
+      "sources": [
+        "anti_fraud_knowledge_25.txt",
+        "anti_fraud_knowledge_11.txt"
+      ]
+    },
+    {
+      "q": "老人接到孩子出事电话要先做什么，如何防骗",
+      "sources": [
+        "anti_fraud_knowledge_37.txt",
+        "anti_fraud_knowledge_10.txt"
+      ]
+    },
+    {
+      "q": "视频通话看到熟人称被绑架要赎金，如何核实",
+      "sources": [
+        "anti_fraud_knowledge_34.txt",
+        "anti_fraud_knowledge_6.txt"
+      ]
+    }
+  ],
+  "negative": [
+    {
+      "q": "如何制作红烧肉"
+    },
+    {
+      "q": "今天天气怎么样"
+    },
+    {
+      "q": "Java 后端学习路线推荐"
+    },
+    {
+      "q": "巴黎有哪些著名景点"
+    },
+    {
+      "q": "马拉松训练计划怎么写"
+    },
+    {
+      "q": "考研数学应该怎么复习"
+    }
+  ]
+}

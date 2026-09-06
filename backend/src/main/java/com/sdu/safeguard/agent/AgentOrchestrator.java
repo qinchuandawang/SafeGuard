@@ -2,7 +2,7 @@ package com.sdu.safeguard.agent;
 
 import com.sdu.safeguard.dto.*;
 import com.sdu.safeguard.memory.MemoryService;
-import com.sdu.safeguard.rag.RAGService;
+import com.sdu.safeguard.rag.agentic.AgenticRAGService;
 import com.sdu.safeguard.reasoning.CoTService;
 import com.sdu.safeguard.reasoning.ReActService;
 import lombok.extern.slf4j.Slf4j;
@@ -16,14 +16,14 @@ import java.util.concurrent.*;
 @Service
 public class AgentOrchestrator {
 
-    private final RAGService ragService;
+    private final AgenticRAGService ragService;
     private final CoTService cotService;
     private final ReActService reActService;
     private final MemoryService memoryService;
     private final Executor agentExecutor;
     private final AgentRegistry agentRegistry;
 
-    public AgentOrchestrator(RAGService ragService, CoTService cotService,
+    public AgentOrchestrator(AgenticRAGService ragService, CoTService cotService,
                              ReActService reActService, MemoryService memoryService,
                              @Qualifier("detectionTaskExecutor") Executor agentExecutor,
                              AgentRegistry agentRegistry) {

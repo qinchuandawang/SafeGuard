@@ -2,6 +2,8 @@ package com.sdu.safeguard.controller;
 
 import com.sdu.safeguard.dto.*;
 import com.sdu.safeguard.rag.RAGService;
+import com.sdu.safeguard.rag.agentic.AgenticRAGService;
+import com.sdu.safeguard.rag.agentic.AgenticRagResult;
 import com.sdu.safeguard.reasoning.CoTService;
 import com.sdu.safeguard.reasoning.ReActService;
 import com.sdu.safeguard.util.InputValidator;
@@ -18,6 +20,7 @@ import java.util.*;
 public class RAGController {
 
     private final RAGService ragService;
+    private final AgenticRAGService agenticRAGService;
     private final CoTService cotService;
     private final ReActService reActService;
 
@@ -33,6 +36,20 @@ public class RAGController {
         } catch (Exception e) {
             log.error("RAG查询异常", e);
             return Result.error("知识检索失败：" + e.getMessage());
+        }
+    }
+
+    @GetMapping("/rag/agentic-query")
+    public Result<AgenticRagResult> agenticQueryRAG(@RequestParam("q") String query) {
+        String validationError = InputValidator.validateAnalysisText(query);
+        if (validationError != null) {
+            return Result.error(validationError);
+        }
+        try {
+            return Result.success(agenticRAGService.agenticQuery(query.trim()));
+        } catch (Exception e) {
+            log.error("Agentic RAG查询异常", e);
+            return Result.error("Agentic知识检索失败：" + e.getMessage());
         }
     }
 

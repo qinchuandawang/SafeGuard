@@ -1,6 +1,6 @@
 package com.sdu.safeguard.agent.tool;
 
-import com.sdu.safeguard.rag.RAGService;
+import com.sdu.safeguard.rag.agentic.AgenticRAGService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RAGTool implements Tool {
 
-    private final RAGService ragService;
+    private final AgenticRAGService ragService;
 
     @Override
     public String getName() {

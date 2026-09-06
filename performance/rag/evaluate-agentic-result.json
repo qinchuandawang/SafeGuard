@@ -1,0 +1,147 @@
+{
+  "passed": true,
+  "summary": {
+    "totalChunks": 111,
+    "positiveAndMultiIntentCount": 163,
+    "negativeCount": 6,
+    "base": {
+      "hitAt1": 0.7362,
+      "hitAt3": 0.9325,
+      "hitAt5": 0.9632,
+      "mrr": 0.8325,
+      "ndcgAt5": 0.8928,
+      "precisionAt5": 0.2184
+    },
+    "agentic": {
+      "hitAt1": 0.7485,
+      "hitAt3": 0.9448,
+      "hitAt5": 0.9755,
+      "mrr": 0.8448,
+      "ndcgAt5": 0.9051,
+      "precisionAt5": 0.2209,
+      "refinedCaseCount": 4,
+      "multiIntentRefinedCount": 0
+    },
+    "baseLatencyP95Ms": 2024.0,
+    "agenticLatencyP95Ms": 4576.0,
+    "agenticLatencyMaxMs": 9645.0,
+    "baseLatencyMaxMs": 2591.0,
+    "misses": [
+      {
+        "query": "核实紧急转账时可以通过哪些渠道确认",
+        "expected": [
+          "anti_fraud_knowledge_9.txt"
+        ],
+        "baseline": [
+          "anti_fraud_knowledge_36.txt",
+          "anti_fraud_knowledge_24.txt",
+          "anti_fraud_knowledge_5.txt",
+          "anti_fraud_knowledge_40.txt",
+          "anti_fraud_knowledge_15.txt"
+        ],
+        "agentic": [
+          "anti_fraud_knowledge_36.txt",
+          "anti_fraud_knowledge_24.txt",
+          "anti_fraud_knowledge_5.txt",
+          "anti_fraud_knowledge_40.txt",
+          "anti_fraud_knowledge_15.txt"
+        ],
+        "trace": [
+          "analyze: facets=[转账]",
+          "retrieve[1]: base query -> 5 chunks",
+          "reflect[1]: coverage=1.00, sufficient=true, missing=[]",
+          "llm-reflect[1]: sufficient=false, missing=[紧急转账独立核验渠道]"
+        ]
+      },
+      {
+        "query": "被骗转账后第一时间应该做什么",
+        "expected": [
+          "anti_fraud_knowledge_11.txt"
+        ],
+        "baseline": [
+          "anti_fraud_knowledge_37.txt",
+          "anti_fraud_knowledge_15.txt",
+          "anti_fraud_knowledge_36.txt",
+          "anti_fraud_knowledge_9.txt",
+          "anti_fraud_knowledge_16.txt"
+        ],
+        "agentic": [
+          "anti_fraud_knowledge_37.txt",
+          "anti_fraud_knowledge_15.txt",
+          "anti_fraud_knowledge_36.txt",
+          "anti_fraud_knowledge_9.txt",
+          "anti_fraud_knowledge_16.txt"
+        ],
+        "trace": [
+          "analyze: facets=[转账]",
+          "retrieve[1]: base query -> 5 chunks",
+          "reflect[1]: coverage=1.00, sufficient=true, missing=[]",
+          "llm-reflect[1]: sufficient=false, missing=[被骗转账后止损流程, 报警与证据保存]"
+        ]
+      },
+      {
+        "query": "演唱会门票转让要求私下转账可以吗",
+        "expected": [
+          "anti_fraud_knowledge_28.txt"
+        ],
+        "baseline": [
+          "anti_fraud_knowledge_19.txt",
+          "anti_fraud_knowledge_40.txt",
+          "anti_fraud_knowledge_36.txt",
+          "anti_fraud_knowledge_5.txt",
+          "anti_fraud_knowledge_16.txt"
+        ],
+        "agentic": [
+          "anti_fraud_knowledge_19.txt",
+          "anti_fraud_knowledge_40.txt",
+          "anti_fraud_knowledge_36.txt",
+          "anti_fraud_knowledge_5.txt",
+          "anti_fraud_knowledge_16.txt"
+        ],
+        "trace": [
+          "analyze: facets=[转账]",
+          "retrieve[1]: base query -> 5 chunks",
+          "reflect[1]: coverage=1.00, sufficient=true, missing=[]",
+          "llm-reflect[1]: sufficient=false, missing=[演唱会门票转让诈骗识别, 私下转账风险核验方法]"
+        ]
+      },
+      {
+        "query": "什么是安全的转账情形",
+        "expected": [
+          "anti_fraud_knowledge_38.txt"
+        ],
+        "baseline": [
+          "anti_fraud_knowledge_36.txt",
+          "anti_fraud_knowledge_9.txt",
+          "anti_fraud_knowledge_40.txt",
+          "anti_fraud_knowledge_15.txt",
+          "anti_fraud_knowledge_23.txt"
+        ],
+        "agentic": [
+          "anti_fraud_knowledge_36.txt",
+          "anti_fraud_knowledge_9.txt",
+          "anti_fraud_knowledge_40.txt",
+          "anti_fraud_knowledge_15.txt",
+          "anti_fraud_knowledge_23.txt"
+        ],
+        "trace": [
+          "analyze: facets=[转账]",
+          "retrieve[1]: base query -> 5 chunks",
+          "reflect[1]: coverage=1.00, sufficient=true, missing=[]",
+          "llm-reflect[1]: sufficient=true, missing=[]",
+          "reflect[1]: LLM 判定知识充分，终止"
+        ]
+      }
+    ],
+    "negativePassRate": 1.0,
+    "negativeFailures": [],
+    "gates": {
+      "agentic recall@5 >= 0.95": true,
+      "agentic hit@1 >= 0.70": true,
+      "agentic mrr >= baseline mrr": true,
+      "negative pass rate >= 0.80": true,
+      "agentic P95 latency <= 5000ms": true,
+      "knowledge base expanded >= 80 chunks": true
+    }
+  }
+}
