@@ -183,7 +183,8 @@ $summary = [ordered]@{
 # ---------- 负例 ----------
 $negativePass = 0
 $negativeFailures = [System.Collections.Generic.List[object]]::new()
-$negativeScoreThreshold = 0.30
+# 负例得分阈值随 embedding 模型得分尺度校准（bge-large-zh 下需高于 bge-base-zh）
+$negativeScoreThreshold = if ($env:RAG_NEG_SCORE_THRESHOLD) { [double]$env:RAG_NEG_SCORE_THRESHOLD } else { 0.60 }
 foreach ($neg in $cases.negative) {
     $index++
     $results = Get-RagBaseline $neg.q $index

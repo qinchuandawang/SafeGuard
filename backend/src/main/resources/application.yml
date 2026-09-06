@@ -157,12 +157,12 @@ siliconflow:
   api-key: ${SILICONFLOW_API_KEY:}
   embedding-url: https://api.siliconflow.cn/v1/embeddings
   rerank-url: https://api.siliconflow.cn/v1/rerank
-  embedding-model: BAAI/bge-base-zh-v1.5
+  embedding-model: BAAI/bge-large-zh-v1.5
   rerank-model: BAAI/bge-reranker-v2-m3
 
 # RAG 配置
 rag:
-  embedding-dimension: 768
+  embedding-dimension: 1024
   qdrant-host: ${QDRANT_HOST:localhost}
   qdrant-port: ${QDRANT_PORT:6333}
   collection-name: anti_fraud_knowledge_v2
@@ -190,7 +190,7 @@ rag:
   risk-blend-rule-floor: ${RAG_RISK_BLEND_RULE_FLOOR:0.85}
   risk-blend-uncertainty-band: ${RAG_RISK_BLEND_UNCERTAINTY_BAND:0.15}
   # LLM 回复语义缓存相似度阈值（语义相近查询复用缓存答案）
-  llm-semantic-cache-threshold: ${RAG_LLM_SEMANTIC_CACHE_THRESHOLD:0.90}
+  llm-semantic-cache-threshold: ${RAG_LLM_SEMANTIC_CACHE_THRESHOLD:0.70}
 
 # 记忆系统配置
 memory:
@@ -203,7 +203,7 @@ memory:
   storage-path: ./data/memory
   memory-retrieval-top-k: 10
   memory-collection: user_memories_v2
-  memory-embedding-dim: 768
+  memory-embedding-dim: 1024
 
 infra:
   redis:

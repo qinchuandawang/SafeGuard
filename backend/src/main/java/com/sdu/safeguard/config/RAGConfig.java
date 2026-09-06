@@ -50,7 +50,7 @@ public class RAGConfig {
 
     // ===== LLM 回复语义缓存 =====
     /** 语义缓存余弦相似度阈值：语义相近的重复查询复用缓存答案，阈值需偏高避免误复用 */
-    private double llmSemanticCacheThreshold = 0.90;
+    private double llmSemanticCacheThreshold = 0.70;
 
     @PostConstruct
     public void validate() {
