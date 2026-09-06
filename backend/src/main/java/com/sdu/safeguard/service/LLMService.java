@@ -70,6 +70,7 @@ public class LLMService {
     private final AgenticRAGService agenticRagService;
     private final RuleFilter ruleFilter;
     private final RAGConfig ragConfig;
+    private final SemanticLlmCache semanticLlmCache;
 
     @Value("${infra.redis.enabled:false}")
     private boolean redisEnabled;
@@ -206,7 +207,8 @@ public class LLMService {
             injectEvidence(result, text);
             return result;
         }
-        String raw = callLLM(buildAnalyzePrompt(text), "text-analysis");
+        String raw = callWithSemanticCache("text-analysis", text,
+                () -> callLLM(buildAnalyzePrompt(text), "text-analysis"));
         result.setReport(raw);
 
         // LLM 返回的可能不是合法 JSON 字符串，先尝试去掉 markdown 包裹
@@ -638,12 +640,13 @@ public class LLMService {
     public String scamSimulation(String userMessage, List<Message> history, ScamScenario scenario) {
         String effectiveMessage = userMessage == null ? "" : userMessage;
         String knowledge = buildKnowledgeContext(effectiveMessage);
-        return callLLM(promptLoader.loadPrompt("scam_simulation", Map.of(
-                "scamScenario", scenario.getSystemPrompt(),
-                "knowledge", knowledge,
-                "conversationHistory", buildConversationHistory(history),
-                "userMessage", effectiveMessage
-        )), "simulation");
+        return callWithSemanticCache("simulation:" + scenario.name(), effectiveMessage,
+                () -> callLLM(promptLoader.loadPrompt("scam_simulation", Map.of(
+                        "scamScenario", scenario.getSystemPrompt(),
+                        "knowledge", knowledge,
+                        "conversationHistory", buildConversationHistory(history),
+                        "userMessage", effectiveMessage
+                )), "simulation"));
     }
 
     public SimulationResponse scamSimulationStructured(String userMessage, List<Message> history, ScamScenario scenario) {
@@ -882,6 +885,31 @@ public class LLMService {
         } catch (Exception e) {
             result.setKnowledgeEvidence(java.util.List.of());
         }
+    }
+
+    /**
+     * 语义缓存包装：语义相近（同场景、高相似度）的重复查询直接复用缓存回复，
+     * 命中即零 LLM 调用；未命中时正常调用并写入缓存（失败/降级结果不入缓存）。
+     */
+    private String callWithSemanticCache(String scene, String query,
+                                         java.util.function.Supplier<String> executor) {
+        try {
+            String cached = semanticLlmCache.get(scene, query);
+            if (cached != null) {
+                return cached;
+            }
+        } catch (Exception e) {
+            log.debug("LLM 语义缓存读取失败，跳过: {}", e.getMessage());
+        }
+        String result = executor.get();
+        if (result != null && !isFallback(result)) {
+            try {
+                semanticLlmCache.put(scene, query, result);
+            } catch (Exception e) {
+                log.debug("LLM 语义缓存写入失败，忽略: {}", e.getMessage());
+            }
+        }
+        return result;
     }
 
     private String callLLM(String prompt, String scene) {

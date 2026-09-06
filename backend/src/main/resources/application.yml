@@ -189,6 +189,8 @@ rag:
   risk-blend-weight: ${RAG_RISK_BLEND_WEIGHT:0.75}
   risk-blend-rule-floor: ${RAG_RISK_BLEND_RULE_FLOOR:0.85}
   risk-blend-uncertainty-band: ${RAG_RISK_BLEND_UNCERTAINTY_BAND:0.15}
+  # LLM 回复语义缓存相似度阈值（语义相近查询复用缓存答案）
+  llm-semantic-cache-threshold: ${RAG_LLM_SEMANTIC_CACHE_THRESHOLD:0.90}
 
 # 记忆系统配置
 memory:

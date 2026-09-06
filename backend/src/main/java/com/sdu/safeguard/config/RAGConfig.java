@@ -48,6 +48,10 @@ public class RAGConfig {
     /** 触发抬升所需的概率不确定区间半径（|p - 0.5| 小于该值） */
     private double riskBlendUncertaintyBand = 0.15;
 
+    // ===== LLM 回复语义缓存 =====
+    /** 语义缓存余弦相似度阈值：语义相近的重复查询复用缓存答案，阈值需偏高避免误复用 */
+    private double llmSemanticCacheThreshold = 0.90;
+
     @PostConstruct
     public void validate() {
         log.info("RAG配置加载完成: collection={}, dim={}, rerankTopK={}, dedupThreshold={}, allowInMemoryFallback={}, " +

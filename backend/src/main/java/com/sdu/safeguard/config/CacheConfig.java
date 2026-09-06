@@ -101,6 +101,15 @@ public class CacheConfig {
                 .build());
     }
 
+    @Bean("llmSemanticCache")
+    public Cache<String, com.sdu.safeguard.service.SemanticLlmCache.Entry> llmSemanticCache() {
+        return monitor("llm-semantic", Caffeine.newBuilder()
+                .expireAfterWrite(30, TimeUnit.MINUTES)
+                .maximumSize(200)
+                .recordStats()
+                .build());
+    }
+
     private <K, V> Cache<K, V> monitor(String cacheName, Cache<K, V> cache) {
         CaffeineCacheMetrics.monitor(meterRegistry, cache, cacheName);
         return cache;
