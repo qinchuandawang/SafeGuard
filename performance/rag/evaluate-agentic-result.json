@@ -6,26 +6,26 @@
     "negativeCount": 6,
     "base": {
       "hitAt1": 0.773,
-      "hitAt3": 0.9387,
-      "hitAt5": 0.9632,
-      "mrr": 0.8549,
-      "ndcgAt5": 0.8894,
-      "precisionAt5": 0.2074
+      "hitAt3": 0.9202,
+      "hitAt5": 0.9387,
+      "mrr": 0.8455,
+      "ndcgAt5": 0.8809,
+      "precisionAt5": 0.2049
     },
     "agentic": {
       "hitAt1": 0.773,
-      "hitAt3": 0.9387,
-      "hitAt5": 0.9632,
-      "mrr": 0.8549,
-      "ndcgAt5": 0.8894,
-      "precisionAt5": 0.2074,
+      "hitAt3": 0.9202,
+      "hitAt5": 0.9387,
+      "mrr": 0.8455,
+      "ndcgAt5": 0.8809,
+      "precisionAt5": 0.2049,
       "refinedCaseCount": 1,
-      "multiIntentRefinedCount": 0
+      "multiIntentRefinedCount": 1
     },
-    "baseLatencyP95Ms": 376.0,
-    "agenticLatencyP95Ms": 6.0,
-    "agenticLatencyMaxMs": 131.0,
-    "baseLatencyMaxMs": 690.0,
+    "baseLatencyP95Ms": 518.0,
+    "agenticLatencyP95Ms": 4781.0,
+    "agenticLatencyMaxMs": 28515.0,
+    "baseLatencyMaxMs": 4501.0,
     "misses": [
       {
         "query": "退款时泄露银行卡信息后如何止损",
@@ -49,7 +49,35 @@
         "trace": [
           "analyze: facets=[止损, 退款]",
           "retrieve[1]: base query -> 5 chunks",
-          "reflect[1]: coverage=1.00, sufficient=true, missing=[]"
+          "reflect[1]: coverage=1.00, sufficient=true, missing=[]",
+          "llm-reflect[1]: sufficient=false, missing=[银行卡挂失冻结步骤, 账户安全监控与密码修改]"
+        ]
+      },
+      {
+        "query": "短信页面要求输入银行卡和验证码，是否安全",
+        "expected": [
+          "anti_fraud_knowledge_8.txt"
+        ],
+        "baseline": [
+          "anti_fraud_knowledge_38.txt",
+          "anti_fraud_knowledge_21.txt",
+          "anti_fraud_knowledge_38.txt",
+          "anti_fraud_knowledge_30.txt",
+          "anti_fraud_knowledge_29.txt"
+        ],
+        "agentic": [
+          "anti_fraud_knowledge_38.txt",
+          "anti_fraud_knowledge_21.txt",
+          "anti_fraud_knowledge_38.txt",
+          "anti_fraud_knowledge_30.txt",
+          "anti_fraud_knowledge_29.txt"
+        ],
+        "trace": [
+          "analyze: facets=[验证码]",
+          "retrieve[1]: base query -> 5 chunks",
+          "reflect[1]: coverage=1.00, sufficient=true, missing=[]",
+          "llm-reflect[1]: sufficient=true, missing=[]",
+          "reflect[1]: LLM 判定知识充分，终止"
         ]
       },
       {
@@ -74,7 +102,8 @@
         "trace": [
           "analyze: facets=[]",
           "retrieve[1]: base query -> 5 chunks",
-          "reflect[1]: coverage=1.00, sufficient=true, missing=[]"
+          "reflect[1]: coverage=1.00, sufficient=true, missing=[]",
+          "llm-reflect[1]: sufficient=false, missing=[二次诈骗识别, 追回资金诈骗手法]"
         ]
       },
       {
@@ -99,7 +128,9 @@
         "trace": [
           "analyze: facets=[转账]",
           "retrieve[1]: base query -> 5 chunks",
-          "reflect[1]: coverage=1.00, sufficient=true, missing=[]"
+          "reflect[1]: coverage=1.00, sufficient=true, missing=[]",
+          "llm-reflect[1]: sufficient=true, missing=[]",
+          "reflect[1]: LLM 判定知识充分，终止"
         ]
       },
       {
@@ -110,21 +141,75 @@
         "baseline": [
           "anti_fraud_knowledge_19.txt",
           "anti_fraud_knowledge_24.txt",
+          "anti_fraud_knowledge_17.txt",
           "anti_fraud_knowledge_40.txt",
-          "anti_fraud_knowledge_36.txt",
-          "anti_fraud_knowledge_24.txt"
+          "anti_fraud_knowledge_36.txt"
         ],
         "agentic": [
           "anti_fraud_knowledge_19.txt",
           "anti_fraud_knowledge_24.txt",
+          "anti_fraud_knowledge_17.txt",
           "anti_fraud_knowledge_40.txt",
-          "anti_fraud_knowledge_36.txt",
-          "anti_fraud_knowledge_24.txt"
+          "anti_fraud_knowledge_36.txt"
         ],
         "trace": [
           "analyze: facets=[贷款, 征信]",
           "retrieve[1]: base query -> 5 chunks",
-          "reflect[1]: coverage=1.00, sufficient=true, missing=[]"
+          "reflect[1]: coverage=1.00, sufficient=true, missing=[]",
+          "llm-reflect[1]: sufficient=false, missing=[征信修复诈骗识别, 征信官方核验渠道]"
+        ]
+      },
+      {
+        "query": "贷款验证码和支付密码可以提供给客服吗",
+        "expected": [
+          "anti_fraud_knowledge_16.txt"
+        ],
+        "baseline": [
+          "anti_fraud_knowledge_38.txt",
+          "anti_fraud_knowledge_17.txt",
+          "anti_fraud_knowledge_33.txt",
+          "anti_fraud_knowledge_29.txt",
+          "anti_fraud_knowledge_22.txt"
+        ],
+        "agentic": [
+          "anti_fraud_knowledge_38.txt",
+          "anti_fraud_knowledge_17.txt",
+          "anti_fraud_knowledge_33.txt",
+          "anti_fraud_knowledge_29.txt",
+          "anti_fraud_knowledge_22.txt"
+        ],
+        "trace": [
+          "analyze: facets=[客服, 贷款, 验证码]",
+          "retrieve[1]: base query -> 5 chunks",
+          "reflect[1]: coverage=1.00, sufficient=true, missing=[]",
+          "llm-reflect[1]: sufficient=true, missing=[]",
+          "reflect[1]: LLM 判定知识充分，终止"
+        ]
+      },
+      {
+        "query": "聊天记录只截一张图能作为完整证据吗",
+        "expected": [
+          "anti_fraud_knowledge_23.txt"
+        ],
+        "baseline": [
+          "anti_fraud_knowledge_8.txt",
+          "anti_fraud_knowledge_25.txt",
+          "anti_fraud_knowledge_18.txt",
+          "anti_fraud_knowledge_3.txt",
+          "anti_fraud_knowledge_15.txt"
+        ],
+        "agentic": [
+          "anti_fraud_knowledge_8.txt",
+          "anti_fraud_knowledge_25.txt",
+          "anti_fraud_knowledge_18.txt",
+          "anti_fraud_knowledge_3.txt",
+          "anti_fraud_knowledge_15.txt"
+        ],
+        "trace": [
+          "analyze: facets=[证据]",
+          "retrieve[1]: base query -> 5 chunks",
+          "reflect[1]: coverage=1.00, sufficient=true, missing=[]",
+          "llm-reflect[1]: sufficient=false, missing=[电子证据完整性, 聊天记录取证要点]"
         ]
       },
       {
@@ -149,7 +234,8 @@
         "trace": [
           "analyze: facets=[]",
           "retrieve[1]: base query -> 5 chunks",
-          "reflect[1]: coverage=1.00, sufficient=true, missing=[]"
+          "reflect[1]: coverage=1.00, sufficient=true, missing=[]",
+          "llm-reflect[1]: sufficient=false, missing=[电子票核验方法, 官方票务平台验证渠道]"
         ]
       },
       {
@@ -160,42 +246,58 @@
         "baseline": [
           "anti_fraud_knowledge_10.txt",
           "anti_fraud_knowledge_15.txt",
+          "anti_fraud_knowledge_9.txt",
           "anti_fraud_knowledge_40.txt",
-          "anti_fraud_knowledge_37.txt",
-          "anti_fraud_knowledge_37.txt"
+          "anti_fraud_knowledge_40.txt"
         ],
         "agentic": [
           "anti_fraud_knowledge_10.txt",
           "anti_fraud_knowledge_15.txt",
+          "anti_fraud_knowledge_9.txt",
           "anti_fraud_knowledge_40.txt",
-          "anti_fraud_knowledge_37.txt",
-          "anti_fraud_knowledge_37.txt"
+          "anti_fraud_knowledge_40.txt"
         ],
         "trace": [
           "analyze: facets=[96110]",
           "retrieve[1]: base query -> 5 chunks",
-          "reflect[1]: coverage=1.00, sufficient=true, missing=[]"
+          "reflect[1]: coverage=1.00, sufficient=true, missing=[]",
+          "llm-reflect[1]: sufficient=false, missing=[不接96110的后果, 错过预警后的处理方式]"
+        ]
+      },
+      {
+        "query": "什么是安全的转账情形",
+        "expected": [
+          "anti_fraud_knowledge_38.txt"
+        ],
+        "baseline": [
+          "anti_fraud_knowledge_15.txt",
+          "anti_fraud_knowledge_9.txt",
+          "anti_fraud_knowledge_3.txt",
+          "anti_fraud_knowledge_37.txt",
+          "anti_fraud_knowledge_10.txt"
+        ],
+        "agentic": [
+          "anti_fraud_knowledge_15.txt",
+          "anti_fraud_knowledge_9.txt",
+          "anti_fraud_knowledge_3.txt",
+          "anti_fraud_knowledge_37.txt",
+          "anti_fraud_knowledge_10.txt"
+        ],
+        "trace": [
+          "analyze: facets=[转账]",
+          "retrieve[1]: base query -> 5 chunks",
+          "reflect[1]: coverage=1.00, sufficient=true, missing=[]",
+          "llm-reflect[1]: sufficient=false, missing=[安全转账场景识别, 正常转账核验方法]"
         ]
       }
     ],
-    "negativePassRate": 0.6667,
-    "negativeFailures": [
-      {
-        "q": "如何制作红烧肉",
-        "topScore": 0.4463,
-        "topVector": 0.5579
-      },
-      {
-        "q": "今天天气怎么样",
-        "topScore": 0.4732,
-        "topVector": 0.5915
-      }
-    ],
+    "negativePassRate": 1.0,
+    "negativeFailures": [],
     "gates": {
-      "agentic recall@5 >= 0.95": true,
+      "agentic recall@5 >= 0.95": false,
       "agentic hit@1 >= 0.70": true,
       "agentic mrr >= baseline mrr": true,
-      "negative pass rate >= 0.80": false,
+      "negative pass rate >= 0.80": true,
       "agentic P95 latency <= 5000ms": true,
       "knowledge base expanded >= 80 chunks": true
     }

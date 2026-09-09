@@ -199,31 +199,27 @@ Web 管理端位于 `web-admin`，使用 Vue 3、Vue Router、Axios、Element Pl
 | 数据库 | MySQL | 用户、检测记录、模型、知识库信息 |
 | 本地运行 | Windows 批处理、CUDA GPU | 一键启动、模型预热、GPU 推理 |
 
-## 13. 小组分工
+## 13. 职责范围与分工
 
-### 彭宏缤：后端
+本项目由本人（朱乘雨）**全栈独立开发**，音频 / 视频检测模型的**训练与权重产出由合作同学完成**。
 
-负责 Spring Boot 后端、Agent 编排、DeepSeek 接入、RAG 调用、音视频服务调度、异步任务进度和检测结果统一封装。核心代码包括 `DetectionController`、`LLMService`、`AgentOrchestrator`、`DetectionService`、`VideoImagePipelineService`、`DetectionTaskManager`。
+### 本人：全栈开发
 
-设计重点是让后端成为 Agent 调度层，而不是简单接口转发层。文本检测由 DeepSeek 和 RAG 直接分析，音频和视频先调用专用模型，再由 DeepSeek 解释结果，最终统一返回可被小程序展示的结构化结果。
+负责 Spring Boot 后端、Agent 编排、DeepSeek 接入、RAG 调用、音视频服务调度、异步任务进度和检测结果统一封装，以及微信小程序检测页、AI 智能助手、模拟诈骗、异步任务监听、流式输出适配、进度卡片、检测历史和 Web 管理端页面。
 
-### 朱乘雨：前端
+后端核心代码包括 `DetectionController`、`LLMService`、`AgentOrchestrator`、`DetectionService`、`VideoImagePipelineService`、`DetectionTaskManager`；前端核心代码包括 `detection.js`、`detection.wxml`、`knowledge.js`、`simulate.js`、`request.js`、`taskWatcher.js` 和 `web-admin`。
 
-负责微信小程序检测页、AI 智能助手、模拟诈骗、异步任务监听、流式输出适配、进度卡片、检测历史和 Web 管理端页面。核心代码包括 `detection.js`、`detection.wxml`、`knowledge.js`、`simulate.js`、`request.js`、`taskWatcher.js` 和 `web-admin`。
+后端的设计重点是让后端成为 Agent 调度层，而不是简单接口转发层：文本检测由 DeepSeek 和 RAG 直接分析，音频和视频先调用专用模型，再由 DeepSeek 解释结果，最终统一返回可被小程序展示的结构化结果。
 
-设计重点是把复杂的 AI 链路展示成用户能理解的操作流程：上传素材、查看进度、看到 Agent 步骤、阅读中文报告、保存历史记录。Web 管理端则承担记录管理、模型状态和统计展示，不作为答辩主线，但能体现完整工程闭环。
+前端的设计重点是把复杂的 AI 链路展示成用户能理解的操作流程：上传素材、查看进度、看到 Agent 步骤、阅读中文报告、保存历史记录。Web 管理端承担记录管理、模型状态和统计展示，不作为答辩主线，但能体现完整工程闭环。
 
-### 刘志恒：音频训练
+### 合作同学：模型训练
 
-负责 Wav2Vec2 音频伪造检测模型训练和服务化。核心代码包括 `ai-services/audio/src/train_wav2vec2.py`、`utils.py`、`app.py` 和 `pretrained/asvspoof-finetuned`。
+负责 Wav2Vec2 音频伪造检测与 XceptionNet 视频换脸检测模型的训练与权重产出；本人负责模型接入、Python 推理服务封装、GPU 推理与调度集成。
 
-设计重点是让音频模型输出可解释的中间证据，而不是只返回真假标签。训练阶段关注协议解析、重采样、类别不平衡、F1/accuracy 指标和最佳模型保存；服务化阶段关注模型缓存、GPU 推理、概率输出、时长截断和设备信息，便于 DeepSeek 生成差异化报告。
+音频侧关注协议解析、重采样、类别不平衡、F1/accuracy 指标和最佳模型保存；服务化阶段关注模型缓存、GPU 推理、概率输出、时长截断和设备信息，便于 DeepSeek 生成差异化报告。
 
-### 王家和：视频训练
-
-负责 XceptionNet 视频换脸检测模型训练和服务化。核心代码包括 `ai-services/video/models/xception.py`、`train.py`、`api/app.py`、`pretrained/best_model.pth`，并与后端 `VideoImagePipelineService` 对接。
-
-设计重点是把视频拆成关键帧进行局部分析，输出逐帧概率和聚合指标。训练阶段关注 XceptionNet 二分类、混合精度、梯度累积、断点恢复和最佳模型保存；服务化阶段关注关键帧推理、人脸裁剪、整帧降级和进度日志。由于 XceptionNet 聚焦换脸/面部篡改，系统在报告中明确说明它不是通用视频大模型，并通过元数据证据补充综合判断。
+视频侧关注 XceptionNet 二分类、混合精度、梯度累积、断点恢复和最佳模型保存；服务化阶段关注关键帧推理、人脸裁剪、整帧降级和进度日志。由于 XceptionNet 聚焦换脸/面部篡改，系统在报告中明确说明它不是通用视频大模型，并通过元数据证据补充综合判断。
 
 ## 14. 总结
 

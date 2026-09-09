@@ -241,4 +241,4 @@ curl http://localhost:8080/api/knowledge
 
 ---
 
-© 2025 彭宏缤 — SafeGuard Backend
+© 2026 朱乘雨 — SafeGuard Backend

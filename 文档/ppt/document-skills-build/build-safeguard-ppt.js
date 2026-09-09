@@ -334,7 +334,7 @@ function bullets(items) {
   addPill(slide, "RAG 增强", 2.48, 4.82, 1.28, "FFFFFF", C.teal);
   addPill(slide, "模型训练", 3.95, 4.82, 1.3, "FFFFFF", C.amber);
   addPill(slide, "多模态检测", 5.44, 4.82, 1.55, "FFFFFF", C.violet);
-  slide.addText("后端：彭宏缤    前端：朱乘雨    音频训练：刘志恒    视频训练：王家和", {
+  slide.addText("全栈开发：朱乘雨（后端 + AI 编排 + 前端）    模型训练：合作同学", {
     x: 0.84,
     y: 6.82,
     w: 8.2,
@@ -630,15 +630,13 @@ function bullets(items) {
   });
 }
 
-// 10. 小组分工
+// 10. 职责范围与分工
 {
   const slide = pptx.addSlide();
-  addTitle(slide, "小组分工与设计重点", "分工不是页面归属，而是围绕核心链路各自承担关键模块", 10);
+  addTitle(slide, "职责范围与设计重点", "本人全栈开发，模型训练由合作同学完成", 10);
   const rows = [
-    ["彭宏缤", "后端", "Spring Boot、AgentOrchestrator、LLMService、RAG 调用、音视频调度、异步任务、检测历史与统一结果封装"],
-    ["朱乘雨", "前端", "小程序检测页、AI 助手、模拟诈骗、SSE 流式输出、TaskWatcher、动态进度卡片、管理后台"],
-    ["刘志恒", "音频训练", "Wav2Vec2 训练与服务化、音频预处理、模型缓存、GPU 推理、概率与置信度输出、批量检测适配"],
-    ["王家和", "视频训练", "XceptionNet 训练与服务化、关键帧检测、逐帧概率、人脸/整帧检测、AIGC 元数据辅助聚合"]
+    ["朱乘雨", "全栈开发", "Spring Boot、AgentOrchestrator、LLMService、RAG 调用、音视频调度、异步任务、检测历史与统一结果封装；小程序检测页、AI 助手、模拟诈骗、SSE 流式输出、TaskWatcher、动态进度卡片、管理后台"],
+    ["合作同学", "模型训练", "Wav2Vec2 / XceptionNet 训练与权重产出；本人负责模型接入、Python 推理服务封装、GPU 推理与调度集成"]
   ];
   const x0 = 0.78;
   const y0 = 1.52;

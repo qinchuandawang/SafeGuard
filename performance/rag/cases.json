@@ -1010,5 +1010,3199 @@
     {
       "q": "考研数学应该怎么复习"
     }
+  ],
+  "generated": [
+    {
+      "q": "刷单返利诈骗通常以哪些诱饵吸引人？",
+      "sources": [
+        "anti_fraud_knowledge_1.txt"
+      ],
+      "topic": "诈骗类型：刷单返利诈骗",
+      "generated": true
+    },
+    {
+      "q": "为什么骗子一开始会返还小额佣金？",
+      "sources": [
+        "anti_fraud_knowledge_1.txt"
+      ],
+      "topic": "诈骗类型：刷单返利诈骗",
+      "generated": true
+    },
+    {
+      "q": "在刷单诈骗中，骗子常用哪些理由拒绝提现？",
+      "sources": [
+        "anti_fraud_knowledge_1.txt"
+      ],
+      "topic": "诈骗类型：刷单返利诈骗",
+      "generated": true
+    },
+    {
+      "q": "哪些兼职要求属于高度可疑的刷单诈骗信号？",
+      "sources": [
+        "anti_fraud_knowledge_1.txt"
+      ],
+      "topic": "诈骗类型：刷单返利诈骗",
+      "generated": true
+    },
+    {
+      "q": "正规平台会要求个人向私人账户转账吗？",
+      "sources": [
+        "anti_fraud_knowledge_1.txt"
+      ],
+      "topic": "诈骗类型：刷单返利诈骗",
+      "generated": true
+    },
+    {
+      "q": "如果‘导师’催促继续充值，应该怎么做？",
+      "sources": [
+        "anti_fraud_knowledge_1.txt"
+      ],
+      "topic": "诈骗类型：刷单返利诈骗",
+      "generated": true
+    },
+    {
+      "q": "遇到刷单诈骗，还能相信‘最后一笔即可提现’吗？",
+      "sources": [
+        "anti_fraud_knowledge_1.txt"
+      ],
+      "topic": "诈骗类型：刷单返利诈骗",
+      "generated": true
+    },
+    {
+      "q": "发现被骗后应该保存哪些证据？",
+      "sources": [
+        "anti_fraud_knowledge_1.txt"
+      ],
+      "topic": "诈骗类型：刷单返利诈骗",
+      "generated": true
+    },
+    {
+      "q": "除了保存证据，被骗后还应该立即做什么？",
+      "sources": [
+        "anti_fraud_knowledge_1.txt"
+      ],
+      "topic": "诈骗类型：刷单返利诈骗",
+      "generated": true
+    },
+    {
+      "q": "刷单诈骗中所谓的‘联单任务不能中断’是真实要求吗？",
+      "sources": [
+        "anti_fraud_knowledge_1.txt"
+      ],
+      "topic": "诈骗类型：刷单返利诈骗",
+      "generated": true
+    },
+    {
+      "q": "接到自称快递客服说我的快递丢了要理赔，该信吗？",
+      "sources": [
+        "anti_fraud_knowledge_2.txt"
+      ],
+      "topic": "诈骗类型：冒充客服退款诈骗",
+      "generated": true
+    },
+    {
+      "q": "客服让我下载会议软件开屏幕共享，说帮我操作退款，这是诈骗吗？",
+      "sources": [
+        "anti_fraud_knowledge_2.txt"
+      ],
+      "topic": "诈骗类型：冒充客服退款诈骗",
+      "generated": true
+    },
+    {
+      "q": "真正的客服会要我提供支付密码和验证码吗？",
+      "sources": [
+        "anti_fraud_knowledge_2.txt"
+      ],
+      "topic": "诈骗类型：冒充客服退款诈骗",
+      "generated": true
+    },
+    {
+      "q": "退款应该在哪里完成才安全？",
+      "sources": [
+        "anti_fraud_knowledge_2.txt"
+      ],
+      "topic": "诈骗类型：冒充客服退款诈骗",
+      "generated": true
+    },
+    {
+      "q": "骗子冒充客服时一般会自称是什么身份？",
+      "sources": [
+        "anti_fraud_knowledge_2.txt"
+      ],
+      "topic": "诈骗类型：冒充客服退款诈骗",
+      "generated": true
+    },
+    {
+      "q": "他们常用哪些理由说需要退款或理赔？",
+      "sources": [
+        "anti_fraud_knowledge_2.txt"
+      ],
+      "topic": "诈骗类型：冒充客服退款诈骗",
+      "generated": true
+    },
+    {
+      "q": "客服让我点击陌生链接填写银行卡信息，我该怎么做？",
+      "sources": [
+        "anti_fraud_knowledge_2.txt"
+      ],
+      "topic": "诈骗类型：冒充客服退款诈骗",
+      "generated": true
+    },
+    {
+      "q": "我已经把验证码告诉对方了，现在该怎么办？",
+      "sources": [
+        "anti_fraud_knowledge_2.txt"
+      ],
+      "topic": "诈骗类型：冒充客服退款诈骗",
+      "generated": true
+    },
+    {
+      "q": "客服说我的会员扣费异常，让我转账到安全账户，这是骗局吗？",
+      "sources": [
+        "anti_fraud_knowledge_2.txt"
+      ],
+      "topic": "诈骗类型：冒充客服退款诈骗",
+      "generated": true
+    },
+    {
+      "q": "怎么核实客服身份是不是真的？",
+      "sources": [
+        "anti_fraud_knowledge_2.txt"
+      ],
+      "topic": "诈骗类型：冒充客服退款诈骗",
+      "generated": true
+    },
+    {
+      "q": "冒充公检法诈骗一般会用什么话术来吓唬我？",
+      "sources": [
+        "anti_fraud_knowledge_3.txt"
+      ],
+      "topic": "诈骗类型：冒充公检法诈骗",
+      "generated": true
+    },
+    {
+      "q": "骗子让我加警官微信，还发通缉令给我，这是真的吗？",
+      "sources": [
+        "anti_fraud_knowledge_3.txt"
+      ],
+      "topic": "诈骗类型：冒充公检法诈骗",
+      "generated": true
+    },
+    {
+      "q": "什么是安全账户？公检法会让我把钱转进去吗？",
+      "sources": [
+        "anti_fraud_knowledge_3.txt"
+      ],
+      "topic": "诈骗类型：冒充公检法诈骗",
+      "generated": true
+    },
+    {
+      "q": "接到电话说我涉嫌洗钱，我该怎么办？",
+      "sources": [
+        "anti_fraud_knowledge_3.txt"
+      ],
+      "topic": "诈骗类型：冒充公检法诈骗",
+      "generated": true
+    },
+    {
+      "q": "公检法会通过电话或者网络直接办案吗？",
+      "sources": [
+        "anti_fraud_knowledge_3.txt"
+      ],
+      "topic": "诈骗类型：冒充公检法诈骗",
+      "generated": true
+    },
+    {
+      "q": "骗子让我下载会议软件开视频，还要我屏幕共享，这正常吗？",
+      "sources": [
+        "anti_fraud_knowledge_3.txt"
+      ],
+      "topic": "诈骗类型：冒充公检法诈骗",
+      "generated": true
+    },
+    {
+      "q": "对方说不让我告诉家人，说我泄密要负法律责任，我该信吗？",
+      "sources": [
+        "anti_fraud_knowledge_3.txt"
+      ],
+      "topic": "诈骗类型：冒充公检法诈骗",
+      "generated": true
+    },
+    {
+      "q": "我已经和骗子聊了一会儿了，现在应该怎么处理？",
+      "sources": [
+        "anti_fraud_knowledge_3.txt"
+      ],
+      "topic": "诈骗类型：冒充公检法诈骗",
+      "generated": true
+    },
+    {
+      "q": "如果遇到冒充公检法的电话，需要保留哪些证据？",
+      "sources": [
+        "anti_fraud_knowledge_3.txt"
+      ],
+      "topic": "诈骗类型：冒充公检法诈骗",
+      "generated": true
+    },
+    {
+      "q": "怎样核实对方到底是不是真正的警察？",
+      "sources": [
+        "anti_fraud_knowledge_3.txt"
+      ],
+      "topic": "诈骗类型：冒充公检法诈骗",
+      "generated": true
+    },
+    {
+      "q": "杀猪盘一般是怎么骗人的？",
+      "sources": [
+        "anti_fraud_knowledge_4.txt"
+      ],
+      "topic": "诈骗类型：杀猪盘和投资理财诈骗",
+      "generated": true
+    },
+    {
+      "q": "投资理财诈骗常用哪些话术当诱饵？",
+      "sources": [
+        "anti_fraud_knowledge_4.txt"
+      ],
+      "topic": "诈骗类型：杀猪盘和投资理财诈骗",
+      "generated": true
+    },
+    {
+      "q": "为什么平台让我先小额盈利提现，这是好事吗？",
+      "sources": [
+        "anti_fraud_knowledge_4.txt"
+      ],
+      "topic": "诈骗类型：杀猪盘和投资理财诈骗",
+      "generated": true
+    },
+    {
+      "q": "网上认识的人没几天就跟我特别亲热，还推荐我投资，正常吗？",
+      "sources": [
+        "anti_fraud_knowledge_4.txt"
+      ],
+      "topic": "诈骗类型：杀猪盘和投资理财诈骗",
+      "generated": true
+    },
+    {
+      "q": "对方说有个投资项目稳赚不赔、收益特别高，我能信吗？",
+      "sources": [
+        "anti_fraud_knowledge_4.txt"
+      ],
+      "topic": "诈骗类型：杀猪盘和投资理财诈骗",
+      "generated": true
+    },
+    {
+      "q": "我想查一下投资平台靠不靠谱，但它不在正规应用商店里，这说明了什么？",
+      "sources": [
+        "anti_fraud_knowledge_4.txt"
+      ],
+      "topic": "诈骗类型：杀猪盘和投资理财诈骗",
+      "generated": true
+    },
+    {
+      "q": "我被骗了，平台让我交解冻费才能提现，我该交吗？",
+      "sources": [
+        "anti_fraud_knowledge_4.txt"
+      ],
+      "topic": "诈骗类型：杀猪盘和投资理财诈骗",
+      "generated": true
+    },
+    {
+      "q": "发现被骗后，我应该保存哪些证据？",
+      "sources": [
+        "anti_fraud_knowledge_4.txt"
+      ],
+      "topic": "诈骗类型：杀猪盘和投资理财诈骗",
+      "generated": true
+    },
+    {
+      "q": "除了保存证据，报警之后还要做什么？",
+      "sources": [
+        "anti_fraud_knowledge_4.txt"
+      ],
+      "topic": "诈骗类型：杀猪盘和投资理财诈骗",
+      "generated": true
+    },
+    {
+      "q": "陌生人推荐投资，但客服只通过聊天软件联系，这有没有风险？",
+      "sources": [
+        "anti_fraud_knowledge_4.txt"
+      ],
+      "topic": "诈骗类型：杀猪盘和投资理财诈骗",
+      "generated": true
+    },
+    {
+      "q": "领导让我紧急转账，说等会补手续，我能只凭聊天记录转吗？",
+      "sources": [
+        "anti_fraud_knowledge_5.txt"
+      ],
+      "topic": "诈骗类型：冒充领导和熟人借钱",
+      "generated": true
+    },
+    {
+      "q": "有人用我朋友的微信号说她生病住院了要借钱，我该怎么确认是不是她本人？",
+      "sources": [
+        "anti_fraud_knowledge_5.txt"
+      ],
+      "topic": "诈骗类型：冒充领导和熟人借钱",
+      "generated": true
+    },
+    {
+      "q": "如果领导在群里让财务转账，但拒绝接视频电话，这正常吗？",
+      "sources": [
+        "anti_fraud_knowledge_5.txt"
+      ],
+      "topic": "诈骗类型：冒充领导和熟人借钱",
+      "generated": true
+    },
+    {
+      "q": "冒充领导和熟人诈骗有哪些常见套路？",
+      "sources": [
+        "anti_fraud_knowledge_5.txt"
+      ],
+      "topic": "诈骗类型：冒充领导和熟人借钱",
+      "generated": true
+    },
+    {
+      "q": "我收到熟人消息说遇到事故急需用钱，还让我别告诉别人，我该怎么办？",
+      "sources": [
+        "anti_fraud_knowledge_5.txt"
+      ],
+      "topic": "诈骗类型：冒充领导和熟人借钱",
+      "generated": true
+    },
+    {
+      "q": "发现有人冒充领导在群里要求转账，我应该先做什么？",
+      "sources": [
+        "anti_fraud_knowledge_5.txt"
+      ],
+      "topic": "诈骗类型：冒充领导和熟人借钱",
+      "generated": true
+    },
+    {
+      "q": "对方说是我的领导，头像和昵称都对，但一直催我立刻打款，我要注意什么？",
+      "sources": [
+        "anti_fraud_knowledge_5.txt"
+      ],
+      "topic": "诈骗类型：冒充领导和熟人借钱",
+      "generated": true
+    },
+    {
+      "q": "财务人员遇到老板在社交软件上要求转账，正确的处置流程是什么？",
+      "sources": [
+        "anti_fraud_knowledge_5.txt"
+      ],
+      "topic": "诈骗类型：冒充领导和熟人借钱",
+      "generated": true
+    },
+    {
+      "q": "熟人借钱时发来语音让我转账，但拒绝视频通话，我该警惕吗？",
+      "sources": [
+        "anti_fraud_knowledge_5.txt"
+      ],
+      "topic": "诈骗类型：冒充领导和熟人借钱",
+      "generated": true
+    },
+    {
+      "q": "怀疑有人盗用了我朋友的账号借钱，除了不转账，还应该做什么？",
+      "sources": [
+        "anti_fraud_knowledge_5.txt"
+      ],
+      "topic": "诈骗类型：冒充领导和熟人借钱",
+      "generated": true
+    },
+    {
+      "q": "AI换脸视频诈骗一般是怎么骗人的？",
+      "sources": [
+        "anti_fraud_knowledge_6.txt"
+      ],
+      "topic": "AI诈骗：AI换脸视频",
+      "generated": true
+    },
+    {
+      "q": "我在视频通话里看到对方脸有点僵硬，嘴型和声音对不上，是不是有可能是AI换脸？",
+      "sources": [
+        "anti_fraud_knowledge_6.txt"
+      ],
+      "topic": "AI诈骗：AI换脸视频",
+      "generated": true
+    },
+    {
+      "q": "如果视频通话时对方只露了一下脸就关了摄像头，还跟我借钱，我该不该信？",
+      "sources": [
+        "anti_fraud_knowledge_6.txt"
+      ],
+      "topic": "AI诈骗：AI换脸视频",
+      "generated": true
+    },
+    {
+      "q": "视频里的人让我转账，但我觉得表情很不自然，应该怎么核实他是不是本人？",
+      "sources": [
+        "anti_fraud_knowledge_6.txt"
+      ],
+      "topic": "AI诈骗：AI换脸视频",
+      "generated": true
+    },
+    {
+      "q": "AI换脸视频里通常会有哪些不自然的地方可以留意？",
+      "sources": [
+        "anti_fraud_knowledge_6.txt"
+      ],
+      "topic": "AI诈骗：AI换脸视频",
+      "generated": true
+    },
+    {
+      "q": "对方在视频里说急事要借钱，还说视频都看到了不用怀疑，我该怎么处理？",
+      "sources": [
+        "anti_fraud_knowledge_6.txt"
+      ],
+      "topic": "AI诈骗：AI换脸视频",
+      "generated": true
+    },
+    {
+      "q": "听说现在AI换脸技术进步了，光靠眼睛看能判断真假吗？",
+      "sources": [
+        "anti_fraud_knowledge_6.txt"
+      ],
+      "topic": "AI诈骗：AI换脸视频",
+      "generated": true
+    },
+    {
+      "q": "如果怀疑对方是AI换脸，我可以让对方做什么来验证？",
+      "sources": [
+        "anti_fraud_knowledge_6.txt"
+      ],
+      "topic": "AI诈骗：AI换脸视频",
+      "generated": true
+    },
+    {
+      "q": "涉及大额转账时，除了视频确认，还应该怎么做才安全？",
+      "sources": [
+        "anti_fraud_knowledge_6.txt"
+      ],
+      "topic": "AI诈骗：AI换脸视频",
+      "generated": true
+    },
+    {
+      "q": "系统里的视频检测功能对这种AI换脸诈骗有帮助吗？",
+      "sources": [
+        "anti_fraud_knowledge_6.txt"
+      ],
+      "topic": "AI诈骗：AI换脸视频",
+      "generated": true
+    },
+    {
+      "q": "我接到朋友的语音电话，说车祸急需用钱，声音很像，这会不会是AI克隆诈骗？",
+      "sources": [
+        "anti_fraud_knowledge_7.txt"
+      ],
+      "topic": "AI诈骗：AI语音克隆",
+      "generated": true
+    },
+    {
+      "q": "AI合成的声音一般有哪些破绽可以听出来？",
+      "sources": [
+        "anti_fraud_knowledge_7.txt"
+      ],
+      "topic": "AI诈骗：AI语音克隆",
+      "generated": true
+    },
+    {
+      "q": "领导声音给我打电话说‘会议中不方便多说’，让我转账，我该怎么核实？",
+      "sources": [
+        "anti_fraud_knowledge_7.txt"
+      ],
+      "topic": "AI诈骗：AI语音克隆",
+      "generated": true
+    },
+    {
+      "q": "只要声音听起来像熟人，是不是就可以相信他不是骗子？",
+      "sources": [
+        "anti_fraud_knowledge_7.txt"
+      ],
+      "topic": "AI诈骗：AI语音克隆",
+      "generated": true
+    },
+    {
+      "q": "对方一直催我转账，还让我保密，这种情况是不是很危险？",
+      "sources": [
+        "anti_fraud_knowledge_7.txt"
+      ],
+      "topic": "AI诈骗：AI语音克隆",
+      "generated": true
+    },
+    {
+      "q": "接到客服语音电话让我转账，我应该怎么做？",
+      "sources": [
+        "anti_fraud_knowledge_7.txt"
+      ],
+      "topic": "AI诈骗：AI语音克隆",
+      "generated": true
+    },
+    {
+      "q": "我已经把可疑的语音录音了，接下来可以做什么？",
+      "sources": [
+        "anti_fraud_knowledge_7.txt"
+      ],
+      "topic": "AI诈骗：AI语音克隆",
+      "generated": true
+    },
+    {
+      "q": "如果对方不回答我的私密问题，是不是说明风险很高？",
+      "sources": [
+        "anti_fraud_knowledge_7.txt"
+      ],
+      "topic": "AI诈骗：AI语音克隆",
+      "generated": true
+    },
+    {
+      "q": "电话里熟人让我转钱，我想确认是不是本人，有什么办法？",
+      "sources": [
+        "anti_fraud_knowledge_7.txt"
+      ],
+      "topic": "AI诈骗：AI语音克隆",
+      "generated": true
+    },
+    {
+      "q": "为什么不能完全靠听声音判断对方是不是AI合成的？",
+      "sources": [
+        "anti_fraud_knowledge_7.txt"
+      ],
+      "topic": "AI诈骗：AI语音克隆",
+      "generated": true
+    },
+    {
+      "q": "AI生成的诈骗图片一般有什么破绽可以看？",
+      "sources": [
+        "anti_fraud_knowledge_8.txt"
+      ],
+      "topic": "AI诈骗：AI生成图片、短信和钓鱼内容",
+      "generated": true
+    },
+    {
+      "q": "收到一条看起来很官方的短信，让我点链接输入银行卡号，这是不是诈骗？",
+      "sources": [
+        "anti_fraud_knowledge_8.txt"
+      ],
+      "topic": "AI诈骗：AI生成图片、短信和钓鱼内容",
+      "generated": true
+    },
+    {
+      "q": "如果怀疑对方发来的截图是AI伪造的，我该怎么核实？",
+      "sources": [
+        "anti_fraud_knowledge_8.txt"
+      ],
+      "topic": "AI诈骗：AI生成图片、短信和钓鱼内容",
+      "generated": true
+    },
+    {
+      "q": "看到AI做的中奖海报，怎么判断是不是假的？",
+      "sources": [
+        "anti_fraud_knowledge_8.txt"
+      ],
+      "topic": "AI诈骗：AI生成图片、短信和钓鱼内容",
+      "generated": true
+    },
+    {
+      "q": "有人发了一个很精美的投资页面，能直接信吗？",
+      "sources": [
+        "anti_fraud_knowledge_8.txt"
+      ],
+      "topic": "AI诈骗：AI生成图片、短信和钓鱼内容",
+      "generated": true
+    },
+    {
+      "q": "AI生成的假领导指令该怎么识别？",
+      "sources": [
+        "anti_fraud_knowledge_8.txt"
+      ],
+      "topic": "AI诈骗：AI生成图片、短信和钓鱼内容",
+      "generated": true
+    },
+    {
+      "q": "收到陌生邮件带链接，我该怎么做才安全？",
+      "sources": [
+        "anti_fraud_knowledge_8.txt"
+      ],
+      "topic": "AI诈骗：AI生成图片、短信和钓鱼内容",
+      "generated": true
+    },
+    {
+      "q": "AI能用来伪造哪些东西搞诈骗？",
+      "sources": [
+        "anti_fraud_knowledge_8.txt"
+      ],
+      "topic": "AI诈骗：AI生成图片、短信和钓鱼内容",
+      "generated": true
+    },
+    {
+      "q": "发现可疑的AI诈骗材料，我该做什么？",
+      "sources": [
+        "anti_fraud_knowledge_8.txt"
+      ],
+      "topic": "AI诈骗：AI生成图片、短信和钓鱼内容",
+      "generated": true
+    },
+    {
+      "q": "为什么不能随便点短信里的链接？",
+      "sources": [
+        "anti_fraud_knowledge_8.txt"
+      ],
+      "topic": "AI诈骗：AI生成图片、短信和钓鱼内容",
+      "generated": true
+    },
+    {
+      "q": "有人催我马上紧急转账，说再不转就违法了，我该先做什么？",
+      "sources": [
+        "anti_fraud_knowledge_9.txt"
+      ],
+      "topic": "防骗技巧：遇到紧急转账要求怎么办",
+      "generated": true
+    },
+    {
+      "q": "对方说‘马上截止’让我赶紧转钱，这是不是诈骗套路？",
+      "sources": [
+        "anti_fraud_knowledge_9.txt"
+      ],
+      "topic": "防骗技巧：遇到紧急转账要求怎么办",
+      "generated": true
+    },
+    {
+      "q": "领导在微信上催我紧急转账，我该怎么核实？",
+      "sources": [
+        "anti_fraud_knowledge_9.txt"
+      ],
+      "topic": "防骗技巧：遇到紧急转账要求怎么办",
+      "generated": true
+    },
+    {
+      "q": "紧急转账前，怎么核对收款账户靠不靠谱？",
+      "sources": [
+        "anti_fraud_knowledge_9.txt"
+      ],
+      "topic": "防骗技巧：遇到紧急转账要求怎么办",
+      "generated": true
+    },
+    {
+      "q": "遇到转账要求，除了核对账户还能找谁商量？",
+      "sources": [
+        "anti_fraud_knowledge_9.txt"
+      ],
+      "topic": "防骗技巧：遇到紧急转账要求怎么办",
+      "generated": true
+    },
+    {
+      "q": "不确定是不是诈骗，可以打什么电话咨询？",
+      "sources": [
+        "anti_fraud_knowledge_9.txt"
+      ],
+      "topic": "防骗技巧：遇到紧急转账要求怎么办",
+      "generated": true
+    },
+    {
+      "q": "反诈里的‘三不一多’具体指什么？",
+      "sources": [
+        "anti_fraud_knowledge_9.txt"
+      ],
+      "topic": "防骗技巧：遇到紧急转账要求怎么办",
+      "generated": true
+    },
+    {
+      "q": "如果对方说不转就违法，这种话能信吗？",
+      "sources": [
+        "anti_fraud_knowledge_9.txt"
+      ],
+      "topic": "防骗技巧：遇到紧急转账要求怎么办",
+      "generated": true
+    },
+    {
+      "q": "回拨原号码联系本人这个做法有什么用？",
+      "sources": [
+        "anti_fraud_knowledge_9.txt"
+      ],
+      "topic": "防骗技巧：遇到紧急转账要求怎么办",
+      "generated": true
+    },
+    {
+      "q": "转账前发现收款账户是私人账户而不是单位对公账户，应该怎么处理？",
+      "sources": [
+        "anti_fraud_knowledge_9.txt"
+      ],
+      "topic": "防骗技巧：遇到紧急转账要求怎么办",
+      "generated": true
+    },
+    {
+      "q": "96110 是什么电话？",
+      "sources": [
+        "anti_fraud_knowledge_10.txt"
+      ],
+      "topic": "防骗技巧：96110 和 110 的使用",
+      "generated": true
+    },
+    {
+      "q": "接到 96110 打来的电话该怎么办？",
+      "sources": [
+        "anti_fraud_knowledge_10.txt"
+      ],
+      "topic": "防骗技巧：96110 和 110 的使用",
+      "generated": true
+    },
+    {
+      "q": "我自己拿不准碰到的情况是不是诈骗，能打 96110 咨询吗？",
+      "sources": [
+        "anti_fraud_knowledge_10.txt"
+      ],
+      "topic": "防骗技巧：96110 和 110 的使用",
+      "generated": true
+    },
+    {
+      "q": "已经把钱转出去了，应该打哪个电话报警？",
+      "sources": [
+        "anti_fraud_knowledge_10.txt"
+      ],
+      "topic": "防骗技巧：96110 和 110 的使用",
+      "generated": true
+    },
+    {
+      "q": "除了打 110，还可以怎么报案？",
+      "sources": [
+        "anti_fraud_knowledge_10.txt"
+      ],
+      "topic": "防骗技巧：96110 和 110 的使用",
+      "generated": true
+    },
+    {
+      "q": "如果接到 96110 来电，是不是可以直接挂掉？",
+      "sources": [
+        "anti_fraud_knowledge_10.txt"
+      ],
+      "topic": "防骗技巧：96110 和 110 的使用",
+      "generated": true
+    },
+    {
+      "q": "96110 和 110 有什么区别？",
+      "sources": [
+        "anti_fraud_knowledge_10.txt"
+      ],
+      "topic": "防骗技巧：96110 和 110 的使用",
+      "generated": true
+    },
+    {
+      "q": "警察会不会让我把钱转到所谓的安全账户里？",
+      "sources": [
+        "anti_fraud_knowledge_10.txt"
+      ],
+      "topic": "防骗技巧：96110 和 110 的使用",
+      "generated": true
+    },
+    {
+      "q": "如果有人说我是骗子，让我把存款转到指定账户接受审查，这可信吗？",
+      "sources": [
+        "anti_fraud_knowledge_10.txt"
+      ],
+      "topic": "防骗技巧：96110 和 110 的使用",
+      "generated": true
+    },
+    {
+      "q": "个人信息已经泄露了，该拨打哪个电话？",
+      "sources": [
+        "anti_fraud_knowledge_10.txt"
+      ],
+      "topic": "防骗技巧：96110 和 110 的使用",
+      "generated": true
+    },
+    {
+      "q": "被骗后第一步应该做什么？",
+      "sources": [
+        "anti_fraud_knowledge_11.txt"
+      ],
+      "topic": "报警流程：被骗后的止损步骤",
+      "generated": true
+    },
+    {
+      "q": "怎么申请止付或者冻结账户？",
+      "sources": [
+        "anti_fraud_knowledge_11.txt"
+      ],
+      "topic": "报警流程：被骗后的止损步骤",
+      "generated": true
+    },
+    {
+      "q": "报警电话是多少？",
+      "sources": [
+        "anti_fraud_knowledge_11.txt"
+      ],
+      "topic": "报警流程：被骗后的止损步骤",
+      "generated": true
+    },
+    {
+      "q": "需要保存哪些证据？",
+      "sources": [
+        "anti_fraud_knowledge_11.txt"
+      ],
+      "topic": "报警流程：被骗后的止损步骤",
+      "generated": true
+    },
+    {
+      "q": "为什么要尽快联系银行和报警？",
+      "sources": [
+        "anti_fraud_knowledge_11.txt"
+      ],
+      "topic": "报警流程：被骗后的止损步骤",
+      "generated": true
+    },
+    {
+      "q": "联系银行和报警哪个先做？",
+      "sources": [
+        "anti_fraud_knowledge_11.txt"
+      ],
+      "topic": "报警流程：被骗后的止损步骤",
+      "generated": true
+    },
+    {
+      "q": "追回机构的说法能信吗？",
+      "sources": [
+        "anti_fraud_knowledge_11.txt"
+      ],
+      "topic": "报警流程：被骗后的止损步骤",
+      "generated": true
+    },
+    {
+      "q": "发现被骗后还能继续和对方沟通吗？",
+      "sources": [
+        "anti_fraud_knowledge_11.txt"
+      ],
+      "topic": "报警流程：被骗后的止损步骤",
+      "generated": true
+    },
+    {
+      "q": "转账凭证和对方账号也要保存吗？",
+      "sources": [
+        "anti_fraud_knowledge_11.txt"
+      ],
+      "topic": "报警流程：被骗后的止损步骤",
+      "generated": true
+    },
+    {
+      "q": "报警前需要准备好什么材料？",
+      "sources": [
+        "anti_fraud_knowledge_11.txt"
+      ],
+      "topic": "报警流程：被骗后的止损步骤",
+      "generated": true
+    },
+    {
+      "q": "在社交平台上晒学生证和行程有什么风险？",
+      "sources": [
+        "anti_fraud_knowledge_12.txt"
+      ],
+      "topic": "安全防护：个人信息保护",
+      "generated": true
+    },
+    {
+      "q": "快递单和证件复印件丢掉之前应该怎么处理？",
+      "sources": [
+        "anti_fraud_knowledge_12.txt"
+      ],
+      "topic": "安全防护：个人信息保护",
+      "generated": true
+    },
+    {
+      "q": "为什么说个人信息泄露会被用来精准诈骗？",
+      "sources": [
+        "anti_fraud_knowledge_12.txt"
+      ],
+      "topic": "安全防护：个人信息保护",
+      "generated": true
+    },
+    {
+      "q": "我的银行卡号和身份证号能随便告诉网友吗？",
+      "sources": [
+        "anti_fraud_knowledge_12.txt"
+      ],
+      "topic": "安全防护：个人信息保护",
+      "generated": true
+    },
+    {
+      "q": "设置密码时有什么要注意的？",
+      "sources": [
+        "anti_fraud_knowledge_12.txt"
+      ],
+      "topic": "安全防护：个人信息保护",
+      "generated": true
+    },
+    {
+      "q": "重要账号除了密码之外还能怎么保护？",
+      "sources": [
+        "anti_fraud_knowledge_12.txt"
+      ],
+      "topic": "安全防护：个人信息保护",
+      "generated": true
+    },
+    {
+      "q": "多个网站可以用同一个密码吗？",
+      "sources": [
+        "anti_fraud_knowledge_12.txt"
+      ],
+      "topic": "安全防护：个人信息保护",
+      "generated": true
+    },
+    {
+      "q": "在外面连公共 WiFi 安全吗？",
+      "sources": [
+        "anti_fraud_knowledge_12.txt"
+      ],
+      "topic": "安全防护：个人信息保护",
+      "generated": true
+    },
+    {
+      "q": "来路不明的 App 能安装吗？",
+      "sources": [
+        "anti_fraud_knowledge_12.txt"
+      ],
+      "topic": "安全防护：个人信息保护",
+      "generated": true
+    },
+    {
+      "q": "手机号、住址和亲属关系这些信息能在网上公开吗？",
+      "sources": [
+        "anti_fraud_knowledge_12.txt"
+      ],
+      "topic": "安全防护：个人信息保护",
+      "generated": true
+    },
+    {
+      "q": "屏幕共享会泄露哪些信息？",
+      "sources": [
+        "anti_fraud_knowledge_13.txt"
+      ],
+      "topic": "安全防护：屏幕共享和远程控制风险",
+      "generated": true
+    },
+    {
+      "q": "为什么不能跟陌生人开屏幕共享？",
+      "sources": [
+        "anti_fraud_knowledge_13.txt"
+      ],
+      "topic": "安全防护：屏幕共享和远程控制风险",
+      "generated": true
+    },
+    {
+      "q": "远程控制软件有什么风险？",
+      "sources": [
+        "anti_fraud_knowledge_13.txt"
+      ],
+      "topic": "安全防护：屏幕共享和远程控制风险",
+      "generated": true
+    },
+    {
+      "q": "哪些诈骗类型会让我开屏幕共享？",
+      "sources": [
+        "anti_fraud_knowledge_13.txt"
+      ],
+      "topic": "安全防护：屏幕共享和远程控制风险",
+      "generated": true
+    },
+    {
+      "q": "有陌生人让我开屏幕共享，我该怎么办？",
+      "sources": [
+        "anti_fraud_knowledge_13.txt"
+      ],
+      "topic": "安全防护：屏幕共享和远程控制风险",
+      "generated": true
+    },
+    {
+      "q": "如果已经开了屏幕共享，第一时间要做什么？",
+      "sources": [
+        "anti_fraud_knowledge_13.txt"
+      ],
+      "topic": "安全防护：屏幕共享和远程控制风险",
+      "generated": true
+    },
+    {
+      "q": "开过屏幕共享后，为什么还要检查手机里有没有可疑软件？",
+      "sources": [
+        "anti_fraud_knowledge_13.txt"
+      ],
+      "topic": "安全防护：屏幕共享和远程控制风险",
+      "generated": true
+    },
+    {
+      "q": "关闭会议软件之后还需要做什么？",
+      "sources": [
+        "anti_fraud_knowledge_13.txt"
+      ],
+      "topic": "安全防护：屏幕共享和远程控制风险",
+      "generated": true
+    },
+    {
+      "q": "对方说要帮我注销校园贷，让我开屏幕共享，这是不是骗子？",
+      "sources": [
+        "anti_fraud_knowledge_13.txt"
+      ],
+      "topic": "安全防护：屏幕共享和远程控制风险",
+      "generated": true
+    },
+    {
+      "q": "公检法打电话让我开远程控制配合调查，能信吗？",
+      "sources": [
+        "anti_fraud_knowledge_13.txt"
+      ],
+      "topic": "安全防护：屏幕共享和远程控制风险",
+      "generated": true
+    },
+    {
+      "q": "反电信网络诈骗法是什么时候开始施行的？",
+      "sources": [
+        "anti_fraud_knowledge_14.txt"
+      ],
+      "topic": "法律法规：反电信网络诈骗法",
+      "generated": true
+    },
+    {
+      "q": "这部法律主要要求哪些机构加强实名制和账户管理？",
+      "sources": [
+        "anti_fraud_knowledge_14.txt"
+      ],
+      "topic": "法律法规：反电信网络诈骗法",
+      "generated": true
+    },
+    {
+      "q": "个人保管电话卡、银行卡和互联网账号要注意什么？",
+      "sources": [
+        "anti_fraud_knowledge_14.txt"
+      ],
+      "topic": "法律法规：反电信网络诈骗法",
+      "generated": true
+    },
+    {
+      "q": "把自己的银行卡出租给别人用，会有什么法律风险？",
+      "sources": [
+        "anti_fraud_knowledge_14.txt"
+      ],
+      "topic": "法律法规：反电信网络诈骗法",
+      "generated": true
+    },
+    {
+      "q": "如果我没有直接参与诈骗，只是把支付账户卖给别人，要不要承担责任？",
+      "sources": [
+        "anti_fraud_knowledge_14.txt"
+      ],
+      "topic": "法律法规：反电信网络诈骗法",
+      "generated": true
+    },
+    {
+      "q": "反电信网络诈骗法要求互联网服务提供者做好哪方面的治理？",
+      "sources": [
+        "anti_fraud_knowledge_14.txt"
+      ],
+      "topic": "法律法规：反电信网络诈骗法",
+      "generated": true
+    },
+    {
+      "q": "银行和非银行支付机构在法律里需要做哪些风险监测？",
+      "sources": [
+        "anti_fraud_knowledge_14.txt"
+      ],
+      "topic": "法律法规：反电信网络诈骗法",
+      "generated": true
+    },
+    {
+      "q": "法律对电信业务经营者在实名制方面有什么要求？",
+      "sources": [
+        "anti_fraud_knowledge_14.txt"
+      ],
+      "topic": "法律法规：反电信网络诈骗法",
+      "generated": true
+    },
+    {
+      "q": "出租电话卡给别人，可能会被用来干什么？",
+      "sources": [
+        "anti_fraud_knowledge_14.txt"
+      ],
+      "topic": "法律法规：反电信网络诈骗法",
+      "generated": true
+    },
+    {
+      "q": "除了银行卡和电话卡，还有哪些东西不能随便出借给他人？",
+      "sources": [
+        "anti_fraud_knowledge_14.txt"
+      ],
+      "topic": "法律法规：反电信网络诈骗法",
+      "generated": true
+    },
+    {
+      "q": "收到'安全账户'要求转账怎么办？",
+      "sources": [
+        "anti_fraud_knowledge_15.txt"
+      ],
+      "topic": "咨询问答：常见演示问题",
+      "generated": true
+    },
+    {
+      "q": "公检法会不会要求我把钱转到安全账户？",
+      "sources": [
+        "anti_fraud_knowledge_15.txt"
+      ],
+      "topic": "咨询问答：常见演示问题",
+      "generated": true
+    },
+    {
+      "q": "朋友发语音找我借钱，能信吗？",
+      "sources": [
+        "anti_fraud_knowledge_15.txt"
+      ],
+      "topic": "咨询问答：常见演示问题",
+      "generated": true
+    },
+    {
+      "q": "语音借钱怎么核实是不是本人？",
+      "sources": [
+        "anti_fraud_knowledge_15.txt"
+      ],
+      "topic": "咨询问答：常见演示问题",
+      "generated": true
+    },
+    {
+      "q": "视频通话看到对方本人，转账是不是就安全了？",
+      "sources": [
+        "anti_fraud_knowledge_15.txt"
+      ],
+      "topic": "咨询问答：常见演示问题",
+      "generated": true
+    },
+    {
+      "q": "视频里看到人脸但可能是AI换脸，该怎么办？",
+      "sources": [
+        "anti_fraud_knowledge_15.txt"
+      ],
+      "topic": "咨询问答：常见演示问题",
+      "generated": true
+    },
+    {
+      "q": "刷单已经投了钱，还要继续做任务吗？",
+      "sources": [
+        "anti_fraud_knowledge_15.txt"
+      ],
+      "topic": "咨询问答：常见演示问题",
+      "generated": true
+    },
+    {
+      "q": "刷单被骗了应该怎么做？",
+      "sources": [
+        "anti_fraud_knowledge_15.txt"
+      ],
+      "topic": "咨询问答：常见演示问题",
+      "generated": true
+    },
+    {
+      "q": "接到96110的电话要不要接？",
+      "sources": [
+        "anti_fraud_knowledge_15.txt"
+      ],
+      "topic": "咨询问答：常见演示问题",
+      "generated": true
+    },
+    {
+      "q": "96110是什么电话？",
+      "sources": [
+        "anti_fraud_knowledge_15.txt"
+      ],
+      "topic": "咨询问答：常见演示问题",
+      "generated": true
+    },
+    {
+      "q": "我在网上看到一个贷款广告说无抵押、秒放款，但要我先交一笔手续费，这是诈骗吗？",
+      "sources": [
+        "anti_fraud_knowledge_16.txt"
+      ],
+      "topic": "诈骗类型：虚假贷款和征信修复诈骗",
+      "generated": true
+    },
+    {
+      "q": "有人自称是银行客服，说我征信有不良记录，可以帮我花钱洗白，还要我提供验证码，能信吗？",
+      "sources": [
+        "anti_fraud_knowledge_16.txt"
+      ],
+      "topic": "诈骗类型：虚假贷款和征信修复诈骗",
+      "generated": true
+    },
+    {
+      "q": "虚假贷款诈骗一般会用哪些话术来吸引人上钩？",
+      "sources": [
+        "anti_fraud_knowledge_16.txt"
+      ],
+      "topic": "诈骗类型：虚假贷款和征信修复诈骗",
+      "generated": true
+    },
+    {
+      "q": "贷款过程中对方让我下载一个非官方App，还要共享屏幕操作，这样正常吗？",
+      "sources": [
+        "anti_fraud_knowledge_16.txt"
+      ],
+      "topic": "诈骗类型：虚假贷款和征信修复诈骗",
+      "generated": true
+    },
+    {
+      "q": "正规贷款会不会在放款前让我把保证金转到私人账户？",
+      "sources": [
+        "anti_fraud_knowledge_16.txt"
+      ],
+      "topic": "诈骗类型：虚假贷款和征信修复诈骗",
+      "generated": true
+    },
+    {
+      "q": "我的征信有逾期，交钱就能删除负面记录是不是真的？",
+      "sources": [
+        "anti_fraud_knowledge_16.txt"
+      ],
+      "topic": "诈骗类型：虚假贷款和征信修复诈骗",
+      "generated": true
+    },
+    {
+      "q": "我收到一条陌生短信，说可以给我超高额度贷款，还附了链接，我能点开吗？",
+      "sources": [
+        "anti_fraud_knowledge_16.txt"
+      ],
+      "topic": "诈骗类型：虚假贷款和征信修复诈骗",
+      "generated": true
+    },
+    {
+      "q": "我已经把银行卡号和验证码发给一个贷款平台了，现在该怎么办？",
+      "sources": [
+        "anti_fraud_knowledge_16.txt"
+      ],
+      "topic": "诈骗类型：虚假贷款和征信修复诈骗",
+      "generated": true
+    },
+    {
+      "q": "如果被虚假贷款骗了，报警时应该保留哪些证据？",
+      "sources": [
+        "anti_fraud_knowledge_16.txt"
+      ],
+      "topic": "诈骗类型：虚假贷款和征信修复诈骗",
+      "generated": true
+    },
+    {
+      "q": "怎么判断一个贷款平台是不是正规的？",
+      "sources": [
+        "anti_fraud_knowledge_16.txt"
+      ],
+      "topic": "诈骗类型：虚假贷款和征信修复诈骗",
+      "generated": true
+    },
+    {
+      "q": "航班取消后，客服让我下载一个会议软件操作退款，这正常吗？",
+      "sources": [
+        "anti_fraud_knowledge_17.txt"
+      ],
+      "topic": "诈骗类型：机票退改签和快递理赔诈骗",
+      "generated": true
+    },
+    {
+      "q": "快递理赔说包裹丢了，让我点短信里的链接填银行卡信息，能点吗？",
+      "sources": [
+        "anti_fraud_knowledge_17.txt"
+      ],
+      "topic": "诈骗类型：机票退改签和快递理赔诈骗",
+      "generated": true
+    },
+    {
+      "q": "客服说我开通了会员要帮我取消，还要我共享屏幕，我该怎么办？",
+      "sources": [
+        "anti_fraud_knowledge_17.txt"
+      ],
+      "topic": "诈骗类型：机票退改签和快递理赔诈骗",
+      "generated": true
+    },
+    {
+      "q": "来电显示是航空公司的官方号码，是不是就一定是真的客服？",
+      "sources": [
+        "anti_fraud_knowledge_17.txt"
+      ],
+      "topic": "诈骗类型：机票退改签和快递理赔诈骗",
+      "generated": true
+    },
+    {
+      "q": "机票退改签应该在哪里核实才安全？",
+      "sources": [
+        "anti_fraud_knowledge_17.txt"
+      ],
+      "topic": "诈骗类型：机票退改签和快递理赔诈骗",
+      "generated": true
+    },
+    {
+      "q": "客服让我用个人收款码转一笔钱来验证资金，这可信吗？",
+      "sources": [
+        "anti_fraud_knowledge_17.txt"
+      ],
+      "topic": "诈骗类型：机票退改签和快递理赔诈骗",
+      "generated": true
+    },
+    {
+      "q": "我怀疑接到了机票退改签诈骗电话，应该怎么处置？",
+      "sources": [
+        "anti_fraud_knowledge_17.txt"
+      ],
+      "topic": "诈骗类型：机票退改签和快递理赔诈骗",
+      "generated": true
+    },
+    {
+      "q": "收到快递理赔短信让我点陌生链接，我应该怎么做？",
+      "sources": [
+        "anti_fraud_knowledge_17.txt"
+      ],
+      "topic": "诈骗类型：机票退改签和快递理赔诈骗",
+      "generated": true
+    },
+    {
+      "q": "我已经给骗子转账了，现在应该怎么办？",
+      "sources": [
+        "anti_fraud_knowledge_17.txt"
+      ],
+      "topic": "诈骗类型：机票退改签和快递理赔诈骗",
+      "generated": true
+    },
+    {
+      "q": "客服以验证资金为由让我去贷款刷流水，这是诈骗吗？",
+      "sources": [
+        "anti_fraud_knowledge_17.txt"
+      ],
+      "topic": "诈骗类型：机票退改签和快递理赔诈骗",
+      "generated": true
+    },
+    {
+      "q": "在二手平台买东西，卖家让我直接转账给他，不走平台担保，这正常吗？",
+      "sources": [
+        "anti_fraud_knowledge_18.txt"
+      ],
+      "topic": "诈骗类型：虚假购物、中奖和会员扣费诈骗",
+      "generated": true
+    },
+    {
+      "q": "收到短信说我中奖了，但要领奖得先交手续费，这是诈骗吗？",
+      "sources": [
+        "anti_fraud_knowledge_18.txt"
+      ],
+      "topic": "诈骗类型：虚假购物、中奖和会员扣费诈骗",
+      "generated": true
+    },
+    {
+      "q": "有人说我误开了会员要帮我取消，让我下载软件开屏幕共享，我该信吗？",
+      "sources": [
+        "anti_fraud_knowledge_18.txt"
+      ],
+      "topic": "诈骗类型：虚假购物、中奖和会员扣费诈骗",
+      "generated": true
+    },
+    {
+      "q": "怎么判断网上商家是不是骗子？",
+      "sources": [
+        "anti_fraud_knowledge_18.txt"
+      ],
+      "topic": "诈骗类型：虚假购物、中奖和会员扣费诈骗",
+      "generated": true
+    },
+    {
+      "q": "平台客服打电话说要把钱转到安全账户，是真的吗？",
+      "sources": [
+        "anti_fraud_knowledge_18.txt"
+      ],
+      "topic": "诈骗类型：虚假购物、中奖和会员扣费诈骗",
+      "generated": true
+    },
+    {
+      "q": "如果不小心给骗子转账了，第一时间该做什么？",
+      "sources": [
+        "anti_fraud_knowledge_18.txt"
+      ],
+      "topic": "诈骗类型：虚假购物、中奖和会员扣费诈骗",
+      "generated": true
+    },
+    {
+      "q": "在购物网站上看到价格特别低的商品，能买吗？",
+      "sources": [
+        "anti_fraud_knowledge_18.txt"
+      ],
+      "topic": "诈骗类型：虚假购物、中奖和会员扣费诈骗",
+      "generated": true
+    },
+    {
+      "q": "虚假购物中骗子收款后还会以什么理由继续要钱？",
+      "sources": [
+        "anti_fraud_knowledge_18.txt"
+      ],
+      "topic": "诈骗类型：虚假购物、中奖和会员扣费诈骗",
+      "generated": true
+    },
+    {
+      "q": "中奖诈骗通常会伪装成什么身份来骗人？",
+      "sources": [
+        "anti_fraud_knowledge_18.txt"
+      ],
+      "topic": "诈骗类型：虚假购物、中奖和会员扣费诈骗",
+      "generated": true
+    },
+    {
+      "q": "为了避免被骗，付款时应该注意什么？",
+      "sources": [
+        "anti_fraud_knowledge_18.txt"
+      ],
+      "topic": "诈骗类型：虚假购物、中奖和会员扣费诈骗",
+      "generated": true
+    },
+    {
+      "q": "校园贷注销诈骗一般会冒充什么身份？",
+      "sources": [
+        "anti_fraud_knowledge_19.txt"
+      ],
+      "topic": "诈骗类型：校园贷注销和冒充平台客服诈骗",
+      "generated": true
+    },
+    {
+      "q": "骗子说我的校园贷账户需要注销，不然影响征信，这是真的吗？",
+      "sources": [
+        "anti_fraud_knowledge_19.txt"
+      ],
+      "topic": "诈骗类型：校园贷注销和冒充平台客服诈骗",
+      "generated": true
+    },
+    {
+      "q": "如果对方让我把借来的钱转到指定账户来注销额度，我该怎么做？",
+      "sources": [
+        "anti_fraud_knowledge_19.txt"
+      ],
+      "topic": "诈骗类型：校园贷注销和冒充平台客服诈骗",
+      "generated": true
+    },
+    {
+      "q": "骗子让我下载远程会议软件共享屏幕指导操作，这种情况正常吗？",
+      "sources": [
+        "anti_fraud_knowledge_19.txt"
+      ],
+      "topic": "诈骗类型：校园贷注销和冒充平台客服诈骗",
+      "generated": true
+    },
+    {
+      "q": "平台客服会通过私人联系方式向我要验证码吗？",
+      "sources": [
+        "anti_fraud_knowledge_19.txt"
+      ],
+      "topic": "诈骗类型：校园贷注销和冒充平台客服诈骗",
+      "generated": true
+    },
+    {
+      "q": "征信记录可以通过向陌生人转账来消除吗？",
+      "sources": [
+        "anti_fraud_knowledge_19.txt"
+      ],
+      "topic": "诈骗类型：校园贷注销和冒充平台客服诈骗",
+      "generated": true
+    },
+    {
+      "q": "对方说我的贷款额度要清零，需要刷流水验证资金，这是不是诈骗？",
+      "sources": [
+        "anti_fraud_knowledge_19.txt"
+      ],
+      "topic": "诈骗类型：校园贷注销和冒充平台客服诈骗",
+      "generated": true
+    },
+    {
+      "q": "接到校园贷注销电话，我应该通过什么渠道核实？",
+      "sources": [
+        "anti_fraud_knowledge_19.txt"
+      ],
+      "topic": "诈骗类型：校园贷注销和冒充平台客服诈骗",
+      "generated": true
+    },
+    {
+      "q": "我是学生，遇到这种诈骗除了报警还可以告诉谁？",
+      "sources": [
+        "anti_fraud_knowledge_19.txt"
+      ],
+      "topic": "诈骗类型：校园贷注销和冒充平台客服诈骗",
+      "generated": true
+    },
+    {
+      "q": "如果我已经给骗子转了钱，应该第一时间做什么？",
+      "sources": [
+        "anti_fraud_knowledge_19.txt"
+      ],
+      "topic": "诈骗类型：校园贷注销和冒充平台客服诈骗",
+      "generated": true
+    },
+    {
+      "q": "AI能生成哪些看起来像真的文件？",
+      "sources": [
+        "anti_fraud_knowledge_20.txt"
+      ],
+      "topic": "AI诈骗：AI生成证件、印章和合同",
+      "generated": true
+    },
+    {
+      "q": "诈骗分子可能会冒充哪些身份来骗我？",
+      "sources": [
+        "anti_fraud_knowledge_20.txt"
+      ],
+      "topic": "AI诈骗：AI生成证件、印章和合同",
+      "generated": true
+    },
+    {
+      "q": "为什么图片清晰、有盖章的文件还不能相信是真的？",
+      "sources": [
+        "anti_fraud_knowledge_20.txt"
+      ],
+      "topic": "AI诈骗：AI生成证件、印章和合同",
+      "generated": true
+    },
+    {
+      "q": "怎么确认对方公司的真实身份？",
+      "sources": [
+        "anti_fraud_knowledge_20.txt"
+      ],
+      "topic": "AI诈骗：AI生成证件、印章和合同",
+      "generated": true
+    },
+    {
+      "q": "材料里给的二维码和电话能作为唯一验证方式吗？",
+      "sources": [
+        "anti_fraud_knowledge_20.txt"
+      ],
+      "topic": "AI诈骗：AI生成证件、印章和合同",
+      "generated": true
+    },
+    {
+      "q": "给公司对公转账前，应该核对哪些信息？",
+      "sources": [
+        "anti_fraud_knowledge_20.txt"
+      ],
+      "topic": "AI诈骗：AI生成证件、印章和合同",
+      "generated": true
+    },
+    {
+      "q": "涉及大额交易时，除了线上核验还需要做什么？",
+      "sources": [
+        "anti_fraud_knowledge_20.txt"
+      ],
+      "topic": "AI诈骗：AI生成证件、印章和合同",
+      "generated": true
+    },
+    {
+      "q": "国家企业信用信息公示系统可以用来干什么？",
+      "sources": [
+        "anti_fraud_knowledge_20.txt"
+      ],
+      "topic": "AI诈骗：AI生成证件、印章和合同",
+      "generated": true
+    },
+    {
+      "q": "如果对方发来营业执照和合同截图，我该怎么核验？",
+      "sources": [
+        "anti_fraud_knowledge_20.txt"
+      ],
+      "topic": "AI诈骗：AI生成证件、印章和合同",
+      "generated": true
+    },
+    {
+      "q": "AI生成的证件和合同主要风险是什么？",
+      "sources": [
+        "anti_fraud_knowledge_20.txt"
+      ],
+      "topic": "AI诈骗：AI生成证件、印章和合同",
+      "generated": true
+    },
+    {
+      "q": "我看到一个网站和银行官网一模一样，还有https锁标，这一定安全吗？",
+      "sources": [
+        "anti_fraud_knowledge_21.txt"
+      ],
+      "topic": "安全防护：钓鱼网站、二维码和恶意 App",
+      "generated": true
+    },
+    {
+      "q": "如果不小心从短信链接下载了一个金融App，应该怎么办？",
+      "sources": [
+        "anti_fraud_knowledge_21.txt"
+      ],
+      "topic": "安全防护：钓鱼网站、二维码和恶意 App",
+      "generated": true
+    },
+    {
+      "q": "恶意App一般会申请哪些权限来偷我的验证码和操控支付页面？",
+      "sources": [
+        "anti_fraud_knowledge_21.txt"
+      ],
+      "topic": "安全防护：钓鱼网站、二维码和恶意 App",
+      "generated": true
+    },
+    {
+      "q": "我扫码支付前需要注意什么？",
+      "sources": [
+        "anti_fraud_knowledge_21.txt"
+      ],
+      "topic": "安全防护：钓鱼网站、二维码和恶意 App",
+      "generated": true
+    },
+    {
+      "q": "怎么判断下载的App是不是正规官方的？",
+      "sources": [
+        "anti_fraud_knowledge_21.txt"
+      ],
+      "topic": "安全防护：钓鱼网站、二维码和恶意 App",
+      "generated": true
+    },
+    {
+      "q": "发现手机里有可疑App，第一步要做什么？",
+      "sources": [
+        "anti_fraud_knowledge_21.txt"
+      ],
+      "topic": "安全防护：钓鱼网站、二维码和恶意 App",
+      "generated": true
+    },
+    {
+      "q": "钓鱼网站通常仿冒哪些类型的机构？",
+      "sources": [
+        "anti_fraud_knowledge_21.txt"
+      ],
+      "topic": "安全防护：钓鱼网站、二维码和恶意 App",
+      "generated": true
+    },
+    {
+      "q": "陌生人发来的App下载链接能点吗？为什么？",
+      "sources": [
+        "anti_fraud_knowledge_21.txt"
+      ],
+      "topic": "安全防护：钓鱼网站、二维码和恶意 App",
+      "generated": true
+    },
+    {
+      "q": "安装App时，哪些权限千万不要随便给？",
+      "sources": [
+        "anti_fraud_knowledge_21.txt"
+      ],
+      "topic": "安全防护：钓鱼网站、二维码和恶意 App",
+      "generated": true
+    },
+    {
+      "q": "卸掉可疑App之后还需要做什么？",
+      "sources": [
+        "anti_fraud_knowledge_21.txt"
+      ],
+      "topic": "安全防护：钓鱼网站、二维码和恶意 App",
+      "generated": true
+    },
+    {
+      "q": "账号被盗后，诈骗分子可能用我的聊天记录做什么？",
+      "sources": [
+        "anti_fraud_knowledge_22.txt"
+      ],
+      "topic": "安全防护：个人账号被盗和社交工程",
+      "generated": true
+    },
+    {
+      "q": "如果有人假冒客服、同事或领导套取我的验证码和家庭关系，这属于什么攻击？",
+      "sources": [
+        "anti_fraud_knowledge_22.txt"
+      ],
+      "topic": "安全防护：个人账号被盗和社交工程",
+      "generated": true
+    },
+    {
+      "q": "我怀疑账号被盗了，第一步应该做什么？",
+      "sources": [
+        "anti_fraud_knowledge_22.txt"
+      ],
+      "topic": "安全防护：个人账号被盗和社交工程",
+      "generated": true
+    },
+    {
+      "q": "发现账号异常登录后，除了改密码还要做哪些事？",
+      "sources": [
+        "anti_fraud_knowledge_22.txt"
+      ],
+      "topic": "安全防护：个人账号被盗和社交工程",
+      "generated": true
+    },
+    {
+      "q": "账号被盗后，应该怎么告诉联系人？",
+      "sources": [
+        "anti_fraud_knowledge_22.txt"
+      ],
+      "topic": "安全防护：个人账号被盗和社交工程",
+      "generated": true
+    },
+    {
+      "q": "验证码、恢复码和屏幕内容可以发给别人吗？",
+      "sources": [
+        "anti_fraud_knowledge_22.txt"
+      ],
+      "topic": "安全防护：个人账号被盗和社交工程",
+      "generated": true
+    },
+    {
+      "q": "在群里涉及付款时，必须执行什么流程？",
+      "sources": [
+        "anti_fraud_knowledge_22.txt"
+      ],
+      "topic": "安全防护：个人账号被盗和社交工程",
+      "generated": true
+    },
+    {
+      "q": "重要账号的密码应该怎么设置？",
+      "sources": [
+        "anti_fraud_knowledge_22.txt"
+      ],
+      "topic": "安全防护：个人账号被盗和社交工程",
+      "generated": true
+    },
+    {
+      "q": "多因素认证对账号安全有什么作用？",
+      "sources": [
+        "anti_fraud_knowledge_22.txt"
+      ],
+      "topic": "安全防护：个人账号被盗和社交工程",
+      "generated": true
+    },
+    {
+      "q": "诈骗分子在账号被盗后可能冒充我向联系人发送什么？",
+      "sources": [
+        "anti_fraud_knowledge_22.txt"
+      ],
+      "topic": "安全防护：个人账号被盗和社交工程",
+      "generated": true
+    },
+    {
+      "q": "报警时要提供哪些时间线信息？",
+      "sources": [
+        "anti_fraud_knowledge_23.txt"
+      ],
+      "topic": "报警流程：证据保全和账户止付",
+      "generated": true
+    },
+    {
+      "q": "聊天记录怎么保存才算有效证据？",
+      "sources": [
+        "anti_fraud_knowledge_23.txt"
+      ],
+      "topic": "报警流程：证据保全和账户止付",
+      "generated": true
+    },
+    {
+      "q": "除了聊天记录，还有哪些凭证需要保存？",
+      "sources": [
+        "anti_fraud_knowledge_23.txt"
+      ],
+      "topic": "报警流程：证据保全和账户止付",
+      "generated": true
+    },
+    {
+      "q": "发现被骗后怎么联系银行处理？",
+      "sources": [
+        "anti_fraud_knowledge_23.txt"
+      ],
+      "topic": "报警流程：证据保全和账户止付",
+      "generated": true
+    },
+    {
+      "q": "为什么不能相信收费帮忙追回资金的机构？",
+      "sources": [
+        "anti_fraud_knowledge_23.txt"
+      ],
+      "topic": "报警流程：证据保全和账户止付",
+      "generated": true
+    },
+    {
+      "q": "被骗后能自己删聊天记录或者刷手机吗？",
+      "sources": [
+        "anti_fraud_knowledge_23.txt"
+      ],
+      "topic": "报警流程：证据保全和账户止付",
+      "generated": true
+    },
+    {
+      "q": "拨打110报案前需要先做什么？",
+      "sources": [
+        "anti_fraud_knowledge_23.txt"
+      ],
+      "topic": "报警流程：证据保全和账户止付",
+      "generated": true
+    },
+    {
+      "q": "转账凭证和短信通知也要交给警方吗？",
+      "sources": [
+        "anti_fraud_knowledge_23.txt"
+      ],
+      "topic": "报警流程：证据保全和账户止付",
+      "generated": true
+    },
+    {
+      "q": "哪些机构才有合法的止付和追查途径？",
+      "sources": [
+        "anti_fraud_knowledge_23.txt"
+      ],
+      "topic": "报警流程：证据保全和账户止付",
+      "generated": true
+    },
+    {
+      "q": "贷款前要求先交解冻费正常吗？",
+      "sources": [
+        "anti_fraud_knowledge_24.txt"
+      ],
+      "topic": "咨询问答：新增高频问题",
+      "generated": true
+    },
+    {
+      "q": "客服来电显示是官方号码，我能相信吗？",
+      "sources": [
+        "anti_fraud_knowledge_24.txt"
+      ],
+      "topic": "咨询问答：新增高频问题",
+      "generated": true
+    },
+    {
+      "q": "陌生App让我开启无障碍权限，该不该开？",
+      "sources": [
+        "anti_fraud_knowledge_24.txt"
+      ],
+      "topic": "咨询问答：新增高频问题",
+      "generated": true
+    },
+    {
+      "q": "对方发来了营业执照和合同，可以直接付款吗？",
+      "sources": [
+        "anti_fraud_knowledge_24.txt"
+      ],
+      "topic": "咨询问答：新增高频问题",
+      "generated": true
+    },
+    {
+      "q": "我账号被盗了，朋友已经给骗子转了钱，现在怎么办？",
+      "sources": [
+        "anti_fraud_knowledge_24.txt"
+      ],
+      "topic": "咨询问答：新增高频问题",
+      "generated": true
+    },
+    {
+      "q": "骗子用改号软件冒充官方客服，我该怎么核实？",
+      "sources": [
+        "anti_fraud_knowledge_24.txt"
+      ],
+      "topic": "咨询问答：新增高频问题",
+      "generated": true
+    },
+    {
+      "q": "在贷款过程中对方说要先交解冻费，我应该怎么做？",
+      "sources": [
+        "anti_fraud_knowledge_24.txt"
+      ],
+      "topic": "咨询问答：新增高频问题",
+      "generated": true
+    },
+    {
+      "q": "看到的来电号码是银行官方客服，一定安全吗？",
+      "sources": [
+        "anti_fraud_knowledge_24.txt"
+      ],
+      "topic": "咨询问答：新增高频问题",
+      "generated": true
+    },
+    {
+      "q": "陌生人让我下载App并开启无障碍权限，有什么风险？",
+      "sources": [
+        "anti_fraud_knowledge_24.txt"
+      ],
+      "topic": "咨询问答：新增高频问题",
+      "generated": true
+    },
+    {
+      "q": "朋友因为我的账号被盗给骗子转了账，除了报警还要做什么？",
+      "sources": [
+        "anti_fraud_knowledge_24.txt"
+      ],
+      "topic": "咨询问答：新增高频问题",
+      "generated": true
+    },
+    {
+      "q": "裸聊诈骗一般是怎么骗人的？",
+      "sources": [
+        "anti_fraud_knowledge_25.txt"
+      ],
+      "topic": "诈骗类型：裸聊敲诈和视频裸聊诈骗",
+      "generated": true
+    },
+    {
+      "q": "对方说有我通讯录，还要发给我领导，我该怎么办？",
+      "sources": [
+        "anti_fraud_knowledge_25.txt"
+      ],
+      "topic": "诈骗类型：裸聊敲诈和视频裸聊诈骗",
+      "generated": true
+    },
+    {
+      "q": "网上遇到美女让我下载一个App开视频聊天，这会不会是诈骗？",
+      "sources": [
+        "anti_fraud_knowledge_25.txt"
+      ],
+      "topic": "诈骗类型：裸聊敲诈和视频裸聊诈骗",
+      "generated": true
+    },
+    {
+      "q": "我被裸聊视频威胁了，要不要先转一笔钱过去？",
+      "sources": [
+        "anti_fraud_knowledge_25.txt"
+      ],
+      "topic": "诈骗类型：裸聊敲诈和视频裸聊诈骗",
+      "generated": true
+    },
+    {
+      "q": "如果已经下载了可疑的裸聊App，我应该怎么处理？",
+      "sources": [
+        "anti_fraud_knowledge_25.txt"
+      ],
+      "topic": "诈骗类型：裸聊敲诈和视频裸聊诈骗",
+      "generated": true
+    },
+    {
+      "q": "正规交友会不会让我开摄像头和通讯录权限？",
+      "sources": [
+        "anti_fraud_knowledge_25.txt"
+      ],
+      "topic": "诈骗类型：裸聊敲诈和视频裸聊诈骗",
+      "generated": true
+    },
+    {
+      "q": "那种视频裸聊后要我交封口费、删除费的，是敲诈吗？",
+      "sources": [
+        "anti_fraud_knowledge_25.txt"
+      ],
+      "topic": "诈骗类型：裸聊敲诈和视频裸聊诈骗",
+      "generated": true
+    },
+    {
+      "q": "裸聊敲诈的骗子通常在国内还是境外？",
+      "sources": [
+        "anti_fraud_knowledge_25.txt"
+      ],
+      "topic": "诈骗类型：裸聊敲诈和视频裸聊诈骗",
+      "generated": true
+    },
+    {
+      "q": "遇到裸聊敲诈，我该报警还是自己删掉记录就行？",
+      "sources": [
+        "anti_fraud_knowledge_25.txt"
+      ],
+      "topic": "诈骗类型：裸聊敲诈和视频裸聊诈骗",
+      "generated": true
+    },
+    {
+      "q": "对方威胁说不转账就把不雅视频曝光，我该保留什么证据？",
+      "sources": [
+        "anti_fraud_knowledge_25.txt"
+      ],
+      "topic": "诈骗类型：裸聊敲诈和视频裸聊诈骗",
+      "generated": true
+    },
+    {
+      "q": "商家接到自称是消防队的人要订大批帐篷，还让我先垫付货款，这靠谱吗？",
+      "sources": [
+        "anti_fraud_knowledge_26.txt"
+      ],
+      "topic": "诈骗类型：冒充军警采购诈骗",
+      "generated": true
+    },
+    {
+      "q": "有个自称是部队采购的人发来一张红头文件，说要跟我买食品，但让我先交保证金，是不是骗子？",
+      "sources": [
+        "anti_fraud_knowledge_26.txt"
+      ],
+      "topic": "诈骗类型：冒充军警采购诈骗",
+      "generated": true
+    },
+    {
+      "q": "对方发来了转账截图，说钱已经打过来了，但让我先给指定供应商付钱，我该信吗？",
+      "sources": [
+        "anti_fraud_knowledge_26.txt"
+      ],
+      "topic": "诈骗类型：冒充军警采购诈骗",
+      "generated": true
+    },
+    {
+      "q": "我是做餐饮的，有个人自称是警察局后勤，说要订大量盒饭，但要求我向一个个人账户转钱，这种情况怎么办？",
+      "sources": [
+        "anti_fraud_knowledge_26.txt"
+      ],
+      "topic": "诈骗类型：冒充军警采购诈骗",
+      "generated": true
+    },
+    {
+      "q": "如果对方自称是消防采购，还给了我一个所谓的‘指定供货商’，让我先跟那个供应商联系，这种能信吗？",
+      "sources": [
+        "anti_fraud_knowledge_26.txt"
+      ],
+      "topic": "诈骗类型：冒充军警采购诈骗",
+      "generated": true
+    },
+    {
+      "q": "有人打电话说自己是武警部队的，要采购一批物资，还发来了采购合同，我怎么核实是不是真的？",
+      "sources": [
+        "anti_fraud_knowledge_26.txt"
+      ],
+      "topic": "诈骗类型：冒充军警采购诈骗",
+      "generated": true
+    },
+    {
+      "q": "遇到冒充军警采购说让我垫付货款的，我应该怎么做才对？",
+      "sources": [
+        "anti_fraud_knowledge_26.txt"
+      ],
+      "topic": "诈骗类型：冒充军警采购诈骗",
+      "generated": true
+    },
+    {
+      "q": "对方说他是某事业单位的采购员，要买一批器材，但必须先交一笔‘保证金’才能签合同，这是不是诈骗？",
+      "sources": [
+        "anti_fraud_knowledge_26.txt"
+      ],
+      "topic": "诈骗类型：冒充军警采购诈骗",
+      "generated": true
+    },
+    {
+      "q": "我收到一份盖了红章的采购单，对方说是军工企业的，让我先打钱到指定账户才能送货，这会不会有问题？",
+      "sources": [
+        "anti_fraud_knowledge_26.txt"
+      ],
+      "topic": "诈骗类型：冒充军警采购诈骗",
+      "generated": true
+    },
+    {
+      "q": "如果我已经给冒充军警采购的人转了钱，现在发现不对劲，应该怎么办？",
+      "sources": [
+        "anti_fraud_knowledge_26.txt"
+      ],
+      "topic": "诈骗类型：冒充军警采购诈骗",
+      "generated": true
+    },
+    {
+      "q": "我玩游戏时有人高价收我账号，但让我去一个网站交易，说还要交解冻费，这是诈骗吗？",
+      "sources": [
+        "anti_fraud_knowledge_27.txt"
+      ],
+      "topic": "诈骗类型：游戏账号和装备交易诈骗",
+      "generated": true
+    },
+    {
+      "q": "骗子一般会在哪些地方发布游戏账号或装备的交易信息？",
+      "sources": [
+        "anti_fraud_knowledge_27.txt"
+      ],
+      "topic": "诈骗类型：游戏账号和装备交易诈骗",
+      "generated": true
+    },
+    {
+      "q": "他说先付定金再发装备，这种能信吗？",
+      "sources": [
+        "anti_fraud_knowledge_27.txt"
+      ],
+      "topic": "诈骗类型：游戏账号和装备交易诈骗",
+      "generated": true
+    },
+    {
+      "q": "为什么不能点对方发来的所谓交易链接？",
+      "sources": [
+        "anti_fraud_knowledge_27.txt"
+      ],
+      "topic": "诈骗类型：游戏账号和装备交易诈骗",
+      "generated": true
+    },
+    {
+      "q": "游戏账号交易时，对方让我先脱离平台私下转账，我应该怎么做？",
+      "sources": [
+        "anti_fraud_knowledge_27.txt"
+      ],
+      "topic": "诈骗类型：游戏账号和装备交易诈骗",
+      "generated": true
+    },
+    {
+      "q": "已经给骗子转账了，现在该怎么办？",
+      "sources": [
+        "anti_fraud_knowledge_27.txt"
+      ],
+      "topic": "诈骗类型：游戏账号和装备交易诈骗",
+      "generated": true
+    },
+    {
+      "q": "在游戏交易里，哪些东西一定不能告诉陌生人？",
+      "sources": [
+        "anti_fraud_knowledge_27.txt"
+      ],
+      "topic": "诈骗类型：游戏账号和装备交易诈骗",
+      "generated": true
+    },
+    {
+      "q": "对方说平台提现需要充值激活，这是不是骗人的？",
+      "sources": [
+        "anti_fraud_knowledge_27.txt"
+      ],
+      "topic": "诈骗类型：游戏账号和装备交易诈骗",
+      "generated": true
+    },
+    {
+      "q": "正规的游戏交易应该通过什么渠道完成？",
+      "sources": [
+        "anti_fraud_knowledge_27.txt"
+      ],
+      "topic": "诈骗类型：游戏账号和装备交易诈骗",
+      "generated": true
+    },
+    {
+      "q": "如果对方说我的账号有风险，需要交保证金才能继续交易，这正常吗？",
+      "sources": [
+        "anti_fraud_knowledge_27.txt"
+      ],
+      "topic": "诈骗类型：游戏账号和装备交易诈骗",
+      "generated": true
+    },
+    {
+      "q": "在社交平台上看到有人卖演唱会‘内部票’，靠谱吗？",
+      "sources": [
+        "anti_fraud_knowledge_28.txt"
+      ],
+      "topic": "诈骗类型：演唱会门票和票务代购诈骗",
+      "generated": true
+    },
+    {
+      "q": "购买演唱会门票应该通过哪些官方平台？",
+      "sources": [
+        "anti_fraud_knowledge_28.txt"
+      ],
+      "topic": "诈骗类型：演唱会门票和票务代购诈骗",
+      "generated": true
+    },
+    {
+      "q": "如果卖家说转账时‘备注错误’让我再付一笔钱，我该怎么办？",
+      "sources": [
+        "anti_fraud_knowledge_28.txt"
+      ],
+      "topic": "诈骗类型：演唱会门票和票务代购诈骗",
+      "generated": true
+    },
+    {
+      "q": "收到电子票后，怎么确认票是不是真的？",
+      "sources": [
+        "anti_fraud_knowledge_28.txt"
+      ],
+      "topic": "诈骗类型：演唱会门票和票务代购诈骗",
+      "generated": true
+    },
+    {
+      "q": "有人让我先交定金再发货，这种能不能信？",
+      "sources": [
+        "anti_fraud_knowledge_28.txt"
+      ],
+      "topic": "诈骗类型：演唱会门票和票务代购诈骗",
+      "generated": true
+    },
+    {
+      "q": "被演唱会门票骗子拉黑了，应该怎么处理？",
+      "sources": [
+        "anti_fraud_knowledge_28.txt"
+      ],
+      "topic": "诈骗类型：演唱会门票和票务代购诈骗",
+      "generated": true
+    },
+    {
+      "q": "对方说‘再补一笔就能出票’，我要不要相信？",
+      "sources": [
+        "anti_fraud_knowledge_28.txt"
+      ],
+      "topic": "诈骗类型：演唱会门票和票务代购诈骗",
+      "generated": true
+    },
+    {
+      "q": "在二手平台买演唱会门票，卖家要求私下转账，这样做有什么风险？",
+      "sources": [
+        "anti_fraud_knowledge_28.txt"
+      ],
+      "topic": "诈骗类型：演唱会门票和票务代购诈骗",
+      "generated": true
+    },
+    {
+      "q": "骗子说可以‘代抢票’，但要求先给钱，这正常吗？",
+      "sources": [
+        "anti_fraud_knowledge_28.txt"
+      ],
+      "topic": "诈骗类型：演唱会门票和票务代购诈骗",
+      "generated": true
+    },
+    {
+      "q": "买演唱会门票被骗了几千块，除了投诉还需要做什么？",
+      "sources": [
+        "anti_fraud_knowledge_28.txt"
+      ],
+      "topic": "诈骗类型：演唱会门票和票务代购诈骗",
+      "generated": true
+    },
+    {
+      "q": "银行发短信说我的信用卡积分要清零了，让我点链接兑换，这是真的吗？",
+      "sources": [
+        "anti_fraud_knowledge_29.txt"
+      ],
+      "topic": "诈骗类型：冒充银行积分兑换和信用卡提额诈骗",
+      "generated": true
+    },
+    {
+      "q": "如果收到自称银行短信说可以提额，但要先转账验证，该怎么办？",
+      "sources": [
+        "anti_fraud_knowledge_29.txt"
+      ],
+      "topic": "诈骗类型：冒充银行积分兑换和信用卡提额诈骗",
+      "generated": true
+    },
+    {
+      "q": "骗子发的积分兑换短信有什么特点？",
+      "sources": [
+        "anti_fraud_knowledge_29.txt"
+      ],
+      "topic": "诈骗类型：冒充银行积分兑换和信用卡提额诈骗",
+      "generated": true
+    },
+    {
+      "q": "银行会不会通过短信链接让我填密码和验证码？",
+      "sources": [
+        "anti_fraud_knowledge_29.txt"
+      ],
+      "topic": "诈骗类型：冒充银行积分兑换和信用卡提额诈骗",
+      "generated": true
+    },
+    {
+      "q": "收到仿冒银行的短信，显示是官方客服号码发的，能信吗？",
+      "sources": [
+        "anti_fraud_knowledge_29.txt"
+      ],
+      "topic": "诈骗类型：冒充银行积分兑换和信用卡提额诈骗",
+      "generated": true
+    },
+    {
+      "q": "我不小心点了钓鱼链接还填了银行卡信息，现在应该做什么？",
+      "sources": [
+        "anti_fraud_knowledge_29.txt"
+      ],
+      "topic": "诈骗类型：冒充银行积分兑换和信用卡提额诈骗",
+      "generated": true
+    },
+    {
+      "q": "信用卡积分兑换应该通过什么渠道进行才安全？",
+      "sources": [
+        "anti_fraud_knowledge_29.txt"
+      ],
+      "topic": "诈骗类型：冒充银行积分兑换和信用卡提额诈骗",
+      "generated": true
+    },
+    {
+      "q": "短信里说信用卡可提额，但要我点击链接填写卡号密码验证码，这种能信吗？",
+      "sources": [
+        "anti_fraud_knowledge_29.txt"
+      ],
+      "topic": "诈骗类型：冒充银行积分兑换和信用卡提额诈骗",
+      "generated": true
+    },
+    {
+      "q": "怎么核实银行短信是不是真的？",
+      "sources": [
+        "anti_fraud_knowledge_29.txt"
+      ],
+      "topic": "诈骗类型：冒充银行积分兑换和信用卡提额诈骗",
+      "generated": true
+    },
+    {
+      "q": "骗子说信用卡提额需要先转账，这属于什么诈骗？",
+      "sources": [
+        "anti_fraud_knowledge_29.txt"
+      ],
+      "topic": "诈骗类型：冒充银行积分兑换和信用卡提额诈骗",
+      "generated": true
+    },
+    {
+      "q": "我收到短信说我的ETC被禁用了，让我点链接填银行卡信息，这是真的吗？",
+      "sources": [
+        "anti_fraud_knowledge_30.txt"
+      ],
+      "topic": "诈骗类型：ETC 和车辆相关短信诈骗",
+      "generated": true
+    },
+    {
+      "q": "ETC和违章相关的短信里，一般要警惕什么？",
+      "sources": [
+        "anti_fraud_knowledge_30.txt"
+      ],
+      "topic": "诈骗类型：ETC 和车辆相关短信诈骗",
+      "generated": true
+    },
+    {
+      "q": "收到说高速通行扣费失败的短信，还带个链接，我该不该点？",
+      "sources": [
+        "anti_fraud_knowledge_30.txt"
+      ],
+      "topic": "诈骗类型：ETC 和车辆相关短信诈骗",
+      "generated": true
+    },
+    {
+      "q": "怎么辨别ETC短信里的官方平台是不是正规的？",
+      "sources": [
+        "anti_fraud_knowledge_30.txt"
+      ],
+      "topic": "诈骗类型：ETC 和车辆相关短信诈骗",
+      "generated": true
+    },
+    {
+      "q": "ETC短信里让我下载附件，这个可以下载吗？",
+      "sources": [
+        "anti_fraud_knowledge_30.txt"
+      ],
+      "topic": "诈骗类型：ETC 和车辆相关短信诈骗",
+      "generated": true
+    },
+    {
+      "q": "收到车辆违章处理的短信，让我点链接验证，应该怎么处理？",
+      "sources": [
+        "anti_fraud_knowledge_30.txt"
+      ],
+      "topic": "诈骗类型：ETC 和车辆相关短信诈骗",
+      "generated": true
+    },
+    {
+      "q": "如果收到涉及ETC扣款的短信，我第一步应该做什么？",
+      "sources": [
+        "anti_fraud_knowledge_30.txt"
+      ],
+      "topic": "诈骗类型：ETC 和车辆相关短信诈骗",
+      "generated": true
+    },
+    {
+      "q": "我收到短信说车辆违章要处理，能不能直接点链接进去看？",
+      "sources": [
+        "anti_fraud_knowledge_30.txt"
+      ],
+      "topic": "诈骗类型：ETC 和车辆相关短信诈骗",
+      "generated": true
+    },
+    {
+      "q": "如果不小心点了钓鱼链接，银行卡信息可能泄露了，该怎么办？",
+      "sources": [
+        "anti_fraud_knowledge_30.txt"
+      ],
+      "topic": "诈骗类型：ETC 和车辆相关短信诈骗",
+      "generated": true
+    },
+    {
+      "q": "ETC管理中心会通过短信让我填写密码和验证码吗？",
+      "sources": [
+        "anti_fraud_knowledge_30.txt"
+      ],
+      "topic": "诈骗类型：ETC 和车辆相关短信诈骗",
+      "generated": true
+    },
+    {
+      "q": "社保局给我打电话说我医保卡被停用了，让我提供验证码，这是真的吗？",
+      "sources": [
+        "anti_fraud_knowledge_31.txt"
+      ],
+      "topic": "诈骗类型：冒充社保、医保和公积金诈骗",
+      "generated": true
+    },
+    {
+      "q": "骗子冒充医保局说我有社保补贴没领，但要先交手续费，这种情况该怎么办？",
+      "sources": [
+        "anti_fraud_knowledge_31.txt"
+      ],
+      "topic": "诈骗类型：冒充社保、医保和公积金诈骗",
+      "generated": true
+    },
+    {
+      "q": "接到电话说公积金账户异常，要求我去一个链接填写个人信息，能信吗？",
+      "sources": [
+        "anti_fraud_knowledge_31.txt"
+      ],
+      "topic": "诈骗类型：冒充社保、医保和公积金诈骗",
+      "generated": true
+    },
+    {
+      "q": "社保或者公积金业务会在电话里跟我要验证码和密码吗？",
+      "sources": [
+        "anti_fraud_knowledge_31.txt"
+      ],
+      "topic": "诈骗类型：冒充社保、医保和公积金诈骗",
+      "generated": true
+    },
+    {
+      "q": "如果接到电话说我医保卡被停用，我第一步应该做什么？",
+      "sources": [
+        "anti_fraud_knowledge_31.txt"
+      ],
+      "topic": "诈骗类型：冒充社保、医保和公积金诈骗",
+      "generated": true
+    },
+    {
+      "q": "对方说我的社保卡账户有问题，让我提供银行卡号和验证码来核实，应该给吗？",
+      "sources": [
+        "anti_fraud_knowledge_31.txt"
+      ],
+      "topic": "诈骗类型：冒充社保、医保和公积金诈骗",
+      "generated": true
+    },
+    {
+      "q": "我怎么确认自己的社保或者公积金账户是不是真的有问题？",
+      "sources": [
+        "anti_fraud_knowledge_31.txt"
+      ],
+      "topic": "诈骗类型：冒充社保、医保和公积金诈骗",
+      "generated": true
+    },
+    {
+      "q": "我已经把验证码告诉骗子了，银行卡里的钱可能被盗刷，现在该怎么办？",
+      "sources": [
+        "anti_fraud_knowledge_31.txt"
+      ],
+      "topic": "诈骗类型：冒充社保、医保和公积金诈骗",
+      "generated": true
+    },
+    {
+      "q": "骗子说我公积金账户异常，让我在仿冒页面上做认证，这种页面有什么特点？",
+      "sources": [
+        "anti_fraud_knowledge_31.txt"
+      ],
+      "topic": "诈骗类型：冒充社保、医保和公积金诈骗",
+      "generated": true
+    },
+    {
+      "q": "有人打电话说可以帮我领社保补贴，但是需要先转手续费，这是诈骗吗？",
+      "sources": [
+        "anti_fraud_knowledge_31.txt"
+      ],
+      "topic": "诈骗类型：冒充社保、医保和公积金诈骗",
+      "generated": true
+    },
+    {
+      "q": "数字人民币有理财和升值功能吗？",
+      "sources": [
+        "anti_fraud_knowledge_32.txt"
+      ],
+      "topic": "诈骗类型：虚拟货币和数字人民币投资诈骗",
+      "generated": true
+    },
+    {
+      "q": "骗子一般用什么名义来包装虚拟货币投资诈骗？",
+      "sources": [
+        "anti_fraud_knowledge_32.txt"
+      ],
+      "topic": "诈骗类型：虚拟货币和数字人民币投资诈骗",
+      "generated": true
+    },
+    {
+      "q": "有人让我下载一个App投资数字人民币，说收益很高，这靠谱吗？",
+      "sources": [
+        "anti_fraud_knowledge_32.txt"
+      ],
+      "topic": "诈骗类型：虚拟货币和数字人民币投资诈骗",
+      "generated": true
+    },
+    {
+      "q": "投资虚拟货币时，怎么判断平台是不是正规的？",
+      "sources": [
+        "anti_fraud_knowledge_32.txt"
+      ],
+      "topic": "诈骗类型：虚拟货币和数字人民币投资诈骗",
+      "generated": true
+    },
+    {
+      "q": "平台说我的账户被冻结了，需要交解冻费才能提现，这正常吗？",
+      "sources": [
+        "anti_fraud_knowledge_32.txt"
+      ],
+      "topic": "诈骗类型：虚拟货币和数字人民币投资诈骗",
+      "generated": true
+    },
+    {
+      "q": "如果已经在虚假投资平台投了大钱，现在取不出来，我该怎么办？",
+      "sources": [
+        "anti_fraud_knowledge_32.txt"
+      ],
+      "topic": "诈骗类型：虚拟货币和数字人民币投资诈骗",
+      "generated": true
+    },
+    {
+      "q": "数字人民币和虚拟货币是一回事吗？",
+      "sources": [
+        "anti_fraud_knowledge_32.txt"
+      ],
+      "topic": "诈骗类型：虚拟货币和数字人民币投资诈骗",
+      "generated": true
+    },
+    {
+      "q": "朋友说有个区块链挖矿项目保本高收益，能参与吗？",
+      "sources": [
+        "anti_fraud_knowledge_32.txt"
+      ],
+      "topic": "诈骗类型：虚拟货币和数字人民币投资诈骗",
+      "generated": true
+    },
+    {
+      "q": "下载投资App时要注意什么？",
+      "sources": [
+        "anti_fraud_knowledge_32.txt"
+      ],
+      "topic": "诈骗类型：虚拟货币和数字人民币投资诈骗",
+      "generated": true
+    },
+    {
+      "q": "报警时我应该保存哪些证据？",
+      "sources": [
+        "anti_fraud_knowledge_32.txt"
+      ],
+      "topic": "诈骗类型：虚拟货币和数字人民币投资诈骗",
+      "generated": true
+    },
+    {
+      "q": "骗子说我的京东白条利率超标，让我把额度借出来转给他才能注销，这是真的吗？",
+      "sources": [
+        "anti_fraud_knowledge_33.txt"
+      ],
+      "topic": "诈骗类型：冒充京东金融、注销白条和金条账户",
+      "generated": true
+    },
+    {
+      "q": "对方自称是京东金融客服，说我学生贷款账户没注销会影响征信，该怎么核实？",
+      "sources": [
+        "anti_fraud_knowledge_33.txt"
+      ],
+      "topic": "诈骗类型：冒充京东金融、注销白条和金条账户",
+      "generated": true
+    },
+    {
+      "q": "我接到电话说金条账户不注销会影响征信，还要我下载APP共享屏幕操作，能信吗？",
+      "sources": [
+        "anti_fraud_knowledge_33.txt"
+      ],
+      "topic": "诈骗类型：冒充京东金融、注销白条和金条账户",
+      "generated": true
+    },
+    {
+      "q": "他们让我在微粒贷、借呗借款后转到指定账户完成注销，这种操作是正常的吗？",
+      "sources": [
+        "anti_fraud_knowledge_33.txt"
+      ],
+      "topic": "诈骗类型：冒充京东金融、注销白条和金条账户",
+      "generated": true
+    },
+    {
+      "q": "骗子说能帮我消除征信不良记录，但要转账到安全账户，这个说法靠谱吗？",
+      "sources": [
+        "anti_fraud_knowledge_33.txt"
+      ],
+      "topic": "诈骗类型：冒充京东金融、注销白条和金条账户",
+      "generated": true
+    },
+    {
+      "q": "对方一直说让我清空额度、刷流水、验证资金，这些是不是诈骗话术？",
+      "sources": [
+        "anti_fraud_knowledge_33.txt"
+      ],
+      "topic": "诈骗类型：冒充京东金融、注销白条和金条账户",
+      "generated": true
+    },
+    {
+      "q": "我已经把钱转给所谓的安全账户了，现在应该怎么办？",
+      "sources": [
+        "anti_fraud_knowledge_33.txt"
+      ],
+      "topic": "诈骗类型：冒充京东金融、注销白条和金条账户",
+      "generated": true
+    },
+    {
+      "q": "对方让我把验证码告诉他，还说共享屏幕就能帮我操作注销白条，要不要给？",
+      "sources": [
+        "anti_fraud_knowledge_33.txt"
+      ],
+      "topic": "诈骗类型：冒充京东金融、注销白条和金条账户",
+      "generated": true
+    },
+    {
+      "q": "如何确认自己有没有京东白条或金条账户需要注销？应该找谁核实？",
+      "sources": [
+        "anti_fraud_knowledge_33.txt"
+      ],
+      "topic": "诈骗类型：冒充京东金融、注销白条和金条账户",
+      "generated": true
+    },
+    {
+      "q": "我要注销京东白条账户，正规流程需要我借款转账吗？",
+      "sources": [
+        "anti_fraud_knowledge_33.txt"
+      ],
+      "topic": "诈骗类型：冒充京东金融、注销白条和金条账户",
+      "generated": true
+    },
+    {
+      "q": "如果收到孩子声音说被绑架要赎金，我该怎么办？",
+      "sources": [
+        "anti_fraud_knowledge_34.txt"
+      ],
+      "topic": "AI诈骗：AI 拟声换脸求助的变体手法",
+      "generated": true
+    },
+    {
+      "q": "老板发语音指令让我转账，但声音很像，要怎么核实？",
+      "sources": [
+        "anti_fraud_knowledge_34.txt"
+      ],
+      "topic": "AI诈骗：AI 拟声换脸求助的变体手法",
+      "generated": true
+    },
+    {
+      "q": "对方不肯视频对答，只发录音让我紧急转钱，是不是诈骗？",
+      "sources": [
+        "anti_fraud_knowledge_34.txt"
+      ],
+      "topic": "AI诈骗：AI 拟声换脸求助的变体手法",
+      "generated": true
+    },
+    {
+      "q": "AI换脸视频借钱和直接视频换脸借钱有什么区别？",
+      "sources": [
+        "anti_fraud_knowledge_34.txt"
+      ],
+      "topic": "AI诈骗：AI 拟声换脸求助的变体手法",
+      "generated": true
+    },
+    {
+      "q": "骗子会用哪些AI合成的变体手法来骗钱？",
+      "sources": [
+        "anti_fraud_knowledge_34.txt"
+      ],
+      "topic": "AI诈骗：AI 拟声换脸求助的变体手法",
+      "generated": true
+    },
+    {
+      "q": "对方威胁我不许报警、不许告诉别人，这种要求说明什么？",
+      "sources": [
+        "anti_fraud_knowledge_34.txt"
+      ],
+      "topic": "AI诈骗：AI 拟声换脸求助的变体手法",
+      "generated": true
+    },
+    {
+      "q": "接到家人求救视频说要钱，我应该先做什么？",
+      "sources": [
+        "anti_fraud_knowledge_34.txt"
+      ],
+      "topic": "AI诈骗：AI 拟声换脸求助的变体手法",
+      "generated": true
+    },
+    {
+      "q": "遇到自称被控制的威胁转账，正确的处置方式是什么？",
+      "sources": [
+        "anti_fraud_knowledge_34.txt"
+      ],
+      "topic": "AI诈骗：AI 拟声换脸求助的变体手法",
+      "generated": true
+    },
+    {
+      "q": "除了回拨原号码，还可以用什么方法确认对方身份？",
+      "sources": [
+        "anti_fraud_knowledge_34.txt"
+      ],
+      "topic": "AI诈骗：AI 拟声换脸求助的变体手法",
+      "generated": true
+    },
+    {
+      "q": "AI拟声诈骗的识别要点有哪些？",
+      "sources": [
+        "anti_fraud_knowledge_34.txt"
+      ],
+      "topic": "AI诈骗：AI 拟声换脸求助的变体手法",
+      "generated": true
+    },
+    {
+      "q": "国家反诈中心App都能干啥呀？",
+      "sources": [
+        "anti_fraud_knowledge_35.txt"
+      ],
+      "topic": "安全防护：反诈预警工具和国家反诈中心 App",
+      "generated": true
+    },
+    {
+      "q": "我该咋下载国家反诈中心App？",
+      "sources": [
+        "anti_fraud_knowledge_35.txt"
+      ],
+      "topic": "安全防护：反诈预警工具和国家反诈中心 App",
+      "generated": true
+    },
+    {
+      "q": "哪些人建议安装国家反诈中心App并开启来电预警？",
+      "sources": [
+        "anti_fraud_knowledge_35.txt"
+      ],
+      "topic": "安全防护：反诈预警工具和国家反诈中心 App",
+      "generated": true
+    },
+    {
+      "q": "国家反诈中心App的来电预警和短信预警咋开启？",
+      "sources": [
+        "anti_fraud_knowledge_35.txt"
+      ],
+      "topic": "安全防护：反诈预警工具和国家反诈中心 App",
+      "generated": true
+    },
+    {
+      "q": "收到一个可疑链接，想验证一下安不安全，用App里的什么功能？",
+      "sources": [
+        "anti_fraud_knowledge_35.txt"
+      ],
+      "topic": "安全防护：反诈预警工具和国家反诈中心 App",
+      "generated": true
+    },
+    {
+      "q": "发现涉诈信息应该怎么举报？",
+      "sources": [
+        "anti_fraud_knowledge_35.txt"
+      ],
+      "topic": "安全防护：反诈预警工具和国家反诈中心 App",
+      "generated": true
+    },
+    {
+      "q": "96110这个电话是干嘛的？",
+      "sources": [
+        "anti_fraud_knowledge_35.txt"
+      ],
+      "topic": "安全防护：反诈预警工具和国家反诈中心 App",
+      "generated": true
+    },
+    {
+      "q": "除了国家反诈中心App，还有哪些反诈预警方式？",
+      "sources": [
+        "anti_fraud_knowledge_35.txt"
+      ],
+      "topic": "安全防护：反诈预警工具和国家反诈中心 App",
+      "generated": true
+    },
+    {
+      "q": "12381短信预警是啥意思？",
+      "sources": [
+        "anti_fraud_knowledge_35.txt"
+      ],
+      "topic": "安全防护：反诈预警工具和国家反诈中心 App",
+      "generated": true
+    },
+    {
+      "q": "运营商涉诈电话拦截属于什么体系？",
+      "sources": [
+        "anti_fraud_knowledge_35.txt"
+      ],
+      "topic": "安全防护：反诈预警工具和国家反诈中心 App",
+      "generated": true
+    },
+    {
+      "q": "转账前应该先问自己哪六个问题？",
+      "sources": [
+        "anti_fraud_knowledge_36.txt"
+      ],
+      "topic": "安全防护：转账前的二次核验六问",
+      "generated": true
+    },
+    {
+      "q": "如果转账时收款人不是本人或者不是可信单位，该怎么办？",
+      "sources": [
+        "anti_fraud_knowledge_36.txt"
+      ],
+      "topic": "安全防护：转账前的二次核验六问",
+      "generated": true
+    },
+    {
+      "q": "怎么判断一笔转账是不是该暂停？",
+      "sources": [
+        "anti_fraud_knowledge_36.txt"
+      ],
+      "topic": "安全防护：转账前的二次核验六问",
+      "generated": true
+    },
+    {
+      "q": "对方一直拒绝语音或视频核验，这时候要不要转账？",
+      "sources": [
+        "anti_fraud_knowledge_36.txt"
+      ],
+      "topic": "安全防护：转账前的二次核验六问",
+      "generated": true
+    },
+    {
+      "q": "遇到对方说‘越急越要钱’的情况，我该怎么处理？",
+      "sources": [
+        "anti_fraud_knowledge_36.txt"
+      ],
+      "topic": "安全防护：转账前的二次核验六问",
+      "generated": true
+    },
+    {
+      "q": "有人转账时要求我保密、别告诉家人，这正常吗？",
+      "sources": [
+        "anti_fraud_knowledge_36.txt"
+      ],
+      "topic": "安全防护：转账前的二次核验六问",
+      "generated": true
+    },
+    {
+      "q": "转账前为什么要确认账户是不是对方常用或对公账户？",
+      "sources": [
+        "anti_fraud_knowledge_36.txt"
+      ],
+      "topic": "安全防护：转账前的二次核验六问",
+      "generated": true
+    },
+    {
+      "q": "如果六问中有一项异常，我应该怎么做？",
+      "sources": [
+        "anti_fraud_knowledge_36.txt"
+      ],
+      "topic": "安全防护：转账前的二次核验六问",
+      "generated": true
+    },
+    {
+      "q": "为什么说核验不麻烦，麻烦的是转错钱后的追回流程？",
+      "sources": [
+        "anti_fraud_knowledge_36.txt"
+      ],
+      "topic": "安全防护：转账前的二次核验六问",
+      "generated": true
+    },
+    {
+      "q": "转账前通过原有联系方式确认过，是不是就可以放心转了？",
+      "sources": [
+        "anti_fraud_knowledge_36.txt"
+      ],
+      "topic": "安全防护：转账前的二次核验六问",
+      "generated": true
+    },
+    {
+      "q": "我儿子玩游戏老想买装备，怎么防止他被游戏交易诈骗？",
+      "sources": [
+        "anti_fraud_knowledge_37.txt"
+      ],
+      "topic": "安全防护：青少年和老年人重点防诈",
+      "generated": true
+    },
+    {
+      "q": "我爸接到电话说他涉嫌洗钱，要配合调查，这是不是诈骗？",
+      "sources": [
+        "anti_fraud_knowledge_37.txt"
+      ],
+      "topic": "安全防护：青少年和老年人重点防诈",
+      "generated": true
+    },
+    {
+      "q": "我妈去听养生讲座，回来就要买几万块的保健品，怎么办？",
+      "sources": [
+        "anti_fraud_knowledge_37.txt"
+      ],
+      "topic": "安全防护：青少年和老年人重点防诈",
+      "generated": true
+    },
+    {
+      "q": "我女儿追星，说要给明星应援集资，我怕她被骗，怎么提醒她？",
+      "sources": [
+        "anti_fraud_knowledge_37.txt"
+      ],
+      "topic": "安全防护：青少年和老年人重点防诈",
+      "generated": true
+    },
+    {
+      "q": "老人接到“孙子出事要打钱”的电话，应该先怎么做？",
+      "sources": [
+        "anti_fraud_knowledge_37.txt"
+      ],
+      "topic": "安全防护：青少年和老年人重点防诈",
+      "generated": true
+    },
+    {
+      "q": "怎么帮家里老人和小孩安装国家反诈中心App？",
+      "sources": [
+        "anti_fraud_knowledge_37.txt"
+      ],
+      "topic": "安全防护：青少年和老年人重点防诈",
+      "generated": true
+    },
+    {
+      "q": "家里老人总爱信那些“安全账户”的话，怎么教他识别？",
+      "sources": [
+        "anti_fraud_knowledge_37.txt"
+      ],
+      "topic": "安全防护：青少年和老年人重点防诈",
+      "generated": true
+    },
+    {
+      "q": "我把支付密码告诉孩子方便他买东西，这样安全吗？",
+      "sources": [
+        "anti_fraud_knowledge_37.txt"
+      ],
+      "topic": "安全防护：青少年和老年人重点防诈",
+      "generated": true
+    },
+    {
+      "q": "如何跟家人约定转账规则，避免被骗？",
+      "sources": [
+        "anti_fraud_knowledge_37.txt"
+      ],
+      "topic": "安全防护：青少年和老年人重点防诈",
+      "generated": true
+    },
+    {
+      "q": "刷单返利是骗子吗？青少年也会遇到？",
+      "sources": [
+        "anti_fraud_knowledge_37.txt"
+      ],
+      "topic": "安全防护：青少年和老年人重点防诈",
+      "generated": true
+    },
+    {
+      "q": "我收到快递物流通知，但让我点链接填验证码，这算诈骗吗？",
+      "sources": [
+        "anti_fraud_knowledge_38.txt"
+      ],
+      "topic": "正常场景识别：什么情况通常不算诈骗",
+      "generated": true
+    },
+    {
+      "q": "学校发来课程安排邮件，还给了附件，正常吗？",
+      "sources": [
+        "anti_fraud_knowledge_38.txt"
+      ],
+      "topic": "正常场景识别：什么情况通常不算诈骗",
+      "generated": true
+    },
+    {
+      "q": "收到官方平台系统维护提醒，让我通过短信链接操作，要不要信？",
+      "sources": [
+        "anti_fraud_knowledge_38.txt"
+      ],
+      "topic": "正常场景识别：什么情况通常不算诈骗",
+      "generated": true
+    },
+    {
+      "q": "正规公司面试邀约，但要求我先垫付培训费，是不是诈骗？",
+      "sources": [
+        "anti_fraud_knowledge_38.txt"
+      ],
+      "topic": "正常场景识别：什么情况通常不算诈骗",
+      "generated": true
+    },
+    {
+      "q": "怎么判断一个通知是不是正常通知而不是诈骗？",
+      "sources": [
+        "anti_fraud_knowledge_38.txt"
+      ],
+      "topic": "正常场景识别：什么情况通常不算诈骗",
+      "generated": true
+    },
+    {
+      "q": "客服说我订单有问题，要给我退款，但需要我共享屏幕，能信吗？",
+      "sources": [
+        "anti_fraud_knowledge_38.txt"
+      ],
+      "topic": "正常场景识别：什么情况通常不算诈骗",
+      "generated": true
+    },
+    {
+      "q": "对方说自己是官方客服，还要我发验证码，这正常吗？",
+      "sources": [
+        "anti_fraud_knowledge_38.txt"
+      ],
+      "topic": "正常场景识别：什么情况通常不算诈骗",
+      "generated": true
+    },
+    {
+      "q": "什么情况下转账才算安全？",
+      "sources": [
+        "anti_fraud_knowledge_38.txt"
+      ],
+      "topic": "正常场景识别：什么情况通常不算诈骗",
+      "generated": true
+    },
+    {
+      "q": "收到“官方”短信，里面有个链接，我该不该点？",
+      "sources": [
+        "anti_fraud_knowledge_38.txt"
+      ],
+      "topic": "正常场景识别：什么情况通常不算诈骗",
+      "generated": true
+    },
+    {
+      "q": "凡是绕开官方渠道要转账的，该怎么处理？",
+      "sources": [
+        "anti_fraud_knowledge_38.txt"
+      ],
+      "topic": "正常场景识别：什么情况通常不算诈骗",
+      "generated": true
+    },
+    {
+      "q": "什么是帮信罪啊？",
+      "sources": [
+        "anti_fraud_knowledge_39.txt"
+      ],
+      "topic": "法律法规：帮信罪和两卡犯罪",
+      "generated": true
+    },
+    {
+      "q": "把自己的银行卡借给别人用会有什么风险？",
+      "sources": [
+        "anti_fraud_knowledge_39.txt"
+      ],
+      "topic": "法律法规：帮信罪和两卡犯罪",
+      "generated": true
+    },
+    {
+      "q": "出租微信和支付宝账户是不是也可能出事？",
+      "sources": [
+        "anti_fraud_knowledge_39.txt"
+      ],
+      "topic": "法律法规：帮信罪和两卡犯罪",
+      "generated": true
+    },
+    {
+      "q": "买卖电话卡到底会有什么后果？",
+      "sources": [
+        "anti_fraud_knowledge_39.txt"
+      ],
+      "topic": "法律法规：帮信罪和两卡犯罪",
+      "generated": true
+    },
+    {
+      "q": "为什么不能把自己的银行卡卖给别人？",
+      "sources": [
+        "anti_fraud_knowledge_39.txt"
+      ],
+      "topic": "法律法规：帮信罪和两卡犯罪",
+      "generated": true
+    },
+    {
+      "q": "如果别人租我的银行卡用，我可以答应吗？",
+      "sources": [
+        "anti_fraud_knowledge_39.txt"
+      ],
+      "topic": "法律法规：帮信罪和两卡犯罪",
+      "generated": true
+    },
+    {
+      "q": "发现有人租借别人的银行卡、电话卡，我应该怎么办？",
+      "sources": [
+        "anti_fraud_knowledge_39.txt"
+      ],
+      "topic": "法律法规：帮信罪和两卡犯罪",
+      "generated": true
+    },
+    {
+      "q": "帮信罪具体是帮了什么忙才叫犯罪？",
+      "sources": [
+        "anti_fraud_knowledge_39.txt"
+      ],
+      "topic": "法律法规：帮信罪和两卡犯罪",
+      "generated": true
+    },
+    {
+      "q": "把银行卡给朋友转账收钱，这种情况算不算违法？",
+      "sources": [
+        "anti_fraud_knowledge_39.txt"
+      ],
+      "topic": "法律法规：帮信罪和两卡犯罪",
+      "generated": true
+    },
+    {
+      "q": "两卡犯罪里的“两卡”指的是什么？",
+      "sources": [
+        "anti_fraud_knowledge_39.txt"
+      ],
+      "topic": "法律法规：帮信罪和两卡犯罪",
+      "generated": true
+    },
+    {
+      "q": "骗子说要解除儿童手表或手机的无障碍权限，我该怎么办？",
+      "sources": [
+        "anti_fraud_knowledge_40.txt"
+      ],
+      "topic": "咨询问答：防诈高频问答题库",
+      "generated": true
+    },
+    {
+      "q": "收到‘ETC被禁用’短信点了链接，现在要填银行卡信息吗？",
+      "sources": [
+        "anti_fraud_knowledge_40.txt"
+      ],
+      "topic": "咨询问答：防诈高频问答题库",
+      "generated": true
+    },
+    {
+      "q": "家人被‘绑架’电话要求赎金，我应该先转账吗？",
+      "sources": [
+        "anti_fraud_knowledge_40.txt"
+      ],
+      "topic": "咨询问答：防诈高频问答题库",
+      "generated": true
+    },
+    {
+      "q": "游戏账号交易对方让我先交解冻费，能信吗？",
+      "sources": [
+        "anti_fraud_knowledge_40.txt"
+      ],
+      "topic": "咨询问答：防诈高频问答题库",
+      "generated": true
+    },
+    {
+      "q": "数字人民币有投资理财功能吗？",
+      "sources": [
+        "anti_fraud_knowledge_40.txt"
+      ],
+      "topic": "咨询问答：防诈高频问答题库",
+      "generated": true
+    },
+    {
+      "q": "裸聊被对方截图威胁发到通讯录，要不要给钱？",
+      "sources": [
+        "anti_fraud_knowledge_40.txt"
+      ],
+      "topic": "咨询问答：防诈高频问答题库",
+      "generated": true
+    },
+    {
+      "q": "演唱会票转让让我私下转账，安全吗？",
+      "sources": [
+        "anti_fraud_knowledge_40.txt"
+      ],
+      "topic": "咨询问答：防诈高频问答题库",
+      "generated": true
+    },
+    {
+      "q": "老人接到‘孩子出事’电话，第一步该做什么？",
+      "sources": [
+        "anti_fraud_knowledge_40.txt"
+      ],
+      "topic": "咨询问答：防诈高频问答题库",
+      "generated": true
+    },
+    {
+      "q": "注销京东金条要我先借款转账，是真的吗？",
+      "sources": [
+        "anti_fraud_knowledge_40.txt"
+      ],
+      "topic": "咨询问答：防诈高频问答题库",
+      "generated": true
+    },
+    {
+      "q": "正常快递短信里带的链接能点吗？",
+      "sources": [
+        "anti_fraud_knowledge_40.txt"
+      ],
+      "topic": "咨询问答：防诈高频问答题库",
+      "generated": true
+    }
   ]
 }

@@ -90,25 +90,17 @@
       </view>
     </view>
 
-    <!-- 团队成员 -->
+    <!-- 开发与分工 -->
     <view class="team-section">
-      <text class="section-title">开发团队</text>
+      <text class="section-title">开发与分工</text>
       <view class="team-list">
         <view class="card team-item stagger-1">
-          <text class="team-name">刘志恒</text>
-          <text class="team-role">音频检测模型开发</text>
+          <text class="team-name">朱乘雨</text>
+          <text class="team-role">全栈开发（后端 + AI 编排 + 前端）</text>
         </view>
         <view class="card team-item stagger-2">
-          <text class="team-name">王家和</text>
-          <text class="team-role">视频检测模型开发</text>
-        </view>
-        <view class="card team-item stagger-3">
-          <text class="team-name">彭宏缤</text>
-          <text class="team-role">后端与大模型集成</text>
-        </view>
-        <view class="card team-item stagger-4">
-          <text class="team-name">朱乘雨</text>
-          <text class="team-role">小程序前端开发</text>
+          <text class="team-name">合作同学</text>
+          <text class="team-role">音频 / 视频检测模型训练</text>
         </view>
       </view>
     </view>

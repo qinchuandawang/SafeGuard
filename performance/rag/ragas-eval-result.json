@@ -1,0 +1,36 @@
+{
+  "timestamp": "2026-09-09 12:48:31",
+  "eval_set_size": 562,
+  "ragas_sample": 150,
+  "refined_case_count": 3,
+  "baseline": {
+    "n": 555,
+    "hit@1": 0.6703,
+    "hit@3": 0.8036,
+    "hit@5": 0.8468,
+    "mrr": 0.7407,
+    "ndcg@5": 0.7864,
+    "precision@5": 0.1798
+  },
+  "agentic": {
+    "n": 557,
+    "hit@1": 0.6679,
+    "hit@3": 0.8043,
+    "hit@5": 0.8474,
+    "mrr": 0.7398,
+    "ndcg@5": 0.7875,
+    "precision@5": 0.1813
+  },
+  "ragas": {
+    "sample_size": 150,
+    "errors": 0,
+    "faithfulness": 0.9233,
+    "answer_relevancy": 0.6826,
+    "context_recall": 0.9302,
+    "context_precision": 0.8995,
+    "faithfulness_n": 91,
+    "answer_relevancy_n": 150,
+    "context_recall_n": 103,
+    "context_precision_n": 116
+  }
+}

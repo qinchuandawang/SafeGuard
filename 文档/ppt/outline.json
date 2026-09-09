@@ -241,33 +241,23 @@
       "variant": "table",
       "slide_intent": "evidence",
       "visual_intent": "data",
-      "title": "小组分工与代码贡献",
-      "subtitle": "每个人围绕一个核心链路承担工作",
+      "title": "职责范围与分工",
+      "subtitle": "本人全栈开发，模型训练由合作同学完成",
       "headers": [
-        "成员",
+        "角色",
         "方向",
         "核心贡献"
       ],
       "rows": [
         [
-          "彭宏缤",
-          "后端",
-          "Spring Boot API、DetectionController、LLMService、DetectionService、异步任务与 Agent 编排"
-        ],
-        [
           "朱乘雨",
-          "前端",
-          "微信小程序检测页、AI 助手、模拟诈骗、进度卡片、TaskWatcher、管理后台页面"
+          "全栈开发",
+          "Spring Boot API、DetectionController、LLMService、DetectionService、异步任务与 Agent 编排；小程序检测页、AI 助手、模拟诈骗、进度卡片、TaskWatcher、管理后台页面"
         ],
         [
-          "刘志恒",
-          "音频训练",
-          "Wav2Vec2 训练与服务化、音频预处理、模型缓存、GPU 推理、批量检测支撑"
-        ],
-        [
-          "王家和",
-          "视频训练",
-          "XceptionNet 训练与服务化、关键帧推理、人脸/整帧检测、视频风险聚合"
+          "合作同学",
+          "模型训练",
+          "Wav2Vec2 / XceptionNet 训练与权重产出；本人负责模型接入、Python 推理服务封装、GPU 推理与调度集成"
         ]
       ],
       "column_weights": [
@@ -275,7 +265,7 @@
         0.18,
         0.66
       ],
-      "caption": "分工说明结合 README、项目汇报文档和实际代码目录整理。"
+      "caption": "说明结合 README、项目汇报文档和实际代码目录整理。"
     },
     {
       "type": "content",

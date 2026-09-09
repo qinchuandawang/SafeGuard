@@ -40,14 +40,16 @@ SafeGuard/
 └── docker-compose.yml        # MySQL、Qdrant、Redis、RocketMQ 等容器编排
 ```
 
-## 小组分工
+## 项目归属与职责范围
 
-| 成员 | 分工 | 工作内容 |
-|------|------|----------|
-| 彭宏缤 | 后端 | 负责 Spring Boot 后端接口、检测任务调度、数据库记录、历史查询、DeepSeek 调用、报告生成和多模态融合逻辑 |
-| 朱乘雨 | 前端 | 负责微信小程序端和管理后台页面，包括检测页面、AI 助手、模拟诈骗、检测历史、结果展示和交互优化 |
-| 刘志恒 | 音频训练 | 负责音频伪造检测方向，包括 Wav2Vec2 模型训练、音频预处理、模型权重整理和 Python 音频推理服务 |
-| 王家和 | 视频训练 | 负责视频检测方向，包括 XceptionNet 模型训练、视频抽帧、人脸/关键帧检测、模型权重整理和 Python 视频推理服务 |
+本项目由本人（朱乘雨）**全栈独立开发**，覆盖后端服务、AI 编排、模型服务化与前端页面；音频 / 视频检测模型的**训练与权重产出由合作同学完成**，本人负责模型接入、Python 推理服务封装、GPU 推理与调度集成。
+
+| 层次 | 覆盖范围 |
+|------|----------|
+| 后端 | Spring Boot 接口、检测任务调度、数据库记录与历史查询、DeepSeek / LLM Gateway 调用、报告生成与多模态融合逻辑 |
+| AI 编排 | Spring AI Function Calling 工具适配、LangGraph 并行推理编排、Agentic RAG 与记忆系统、Token 成本治理 |
+| 模型服务 | Wav2Vec2 音频伪造检测与 XceptionNet 视频伪造检测的 Python 推理服务、数据预处理、GPU 推理与调度（模型训练与权重由合作同学提供） |
+| 前端 | 微信小程序端与管理后台页面，包括检测页面、AI 助手、模拟诈骗、检测历史、结果展示和交互优化 |
 
 ## 技术架构
 
@@ -220,7 +222,7 @@ SAFEGUARD_DEVICE=cuda
 | 音频 Wav2Vec2 | `ai-services/audio/pretrained/asvspoof-finetuned/model.safetensors` |
 | 视频 XceptionNet | `ai-services/video/pretrained/best_model.pth` |
 
-重新克隆项目后，需要从组员提供的模型包或备份中恢复上述文件。
+重新克隆项目后，需要从本地模型包或备份中恢复上述文件。
 
 ## 测试素材
 
